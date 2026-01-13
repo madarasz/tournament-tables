@@ -118,15 +118,15 @@ Based on plan.md project structure:
 
 ### Tests for User Story 5
 
-- [ ] T033 [P] [US5] Write `tests/Unit/Services/AuthServiceTest.php` - token validation, invalid token rejection
-- [ ] T034 [P] [US5] Write `tests/Integration/AuthenticationTest.php` - cookie flow, middleware blocking
+- [X] T033 [P] [US5] Write `tests/Unit/Services/AuthServiceTest.php` - token validation, invalid token rejection
+- [X] T034 [P] [US5] Write `tests/Integration/AuthenticationTest.php` - cookie flow, middleware blocking
 
 ### Implementation for User Story 5
 
-- [ ] T035 [US5] Create `src/Services/AuthService.php` with `validateToken()` and `setAuthCookie()` methods
-- [ ] T036 [US5] Create `src/Controllers/AuthController.php` with POST /api/auth endpoint per [contracts/api.yaml#/auth](./contracts/api.yaml)
-- [ ] T037 [US5] Create `src/Views/auth/login.php` token entry form
-- [ ] T038 [US5] Update `src/Middleware/AdminAuthMiddleware.php` to check both cookie and header
+- [X] T035 [US5] Create `src/Services/AuthService.php` with `validateToken()` and `setAuthCookie()` methods
+- [X] T036 [US5] Create `src/Controllers/AuthController.php` with POST /api/auth endpoint per [contracts/api.yaml#/auth](./contracts/api.yaml)
+- [X] T037 [US5] Create `src/Views/auth/login.php` token entry form
+- [X] T038 [US5] Update `src/Middleware/AdminAuthMiddleware.php` to check both cookie and header
 
 **Checkpoint**: Authentication works independently - can login with token and access protected routes
 
