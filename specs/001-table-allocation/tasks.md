@@ -227,16 +227,16 @@ Based on plan.md project structure:
 
 ### Tests for User Story 4
 
-- [ ] T077 [P] [US4] Write `tests/Integration/PublicViewTest.php` - unauthenticated access, round visibility
+- [X] T077 [P] [US4] Write `tests/Integration/PublicViewTest.php` - unauthenticated access, round visibility
 
 ### Implementation for User Story 4
 
-- [ ] T078 [US4] Create `src/Controllers/PublicController.php` with GET /api/public/tournaments/{id} per [contracts/api.yaml#/public](./contracts/api.yaml)
-- [ ] T079 [US4] Implement GET /api/public/tournaments/{id}/rounds/{n} per [data-model.md#get-published-allocations](./data-model.md#get-published-allocations-for-public-view)
-- [ ] T080 [US4] Create `src/Views/public/tournament.php` showing tournament info and round selector
-- [ ] T081 [US4] Create `src/Views/public/round.php` displaying allocation table per FR-012
-- [ ] T082 [US4] Implement round selector showing only published rounds per acceptance scenario 3
-- [ ] T083 [US4] Style public view for readability on venue devices (large fonts, high contrast)
+- [X] T078 [US4] Create `src/Controllers/PublicController.php` with GET /api/public/tournaments/{id} per [contracts/api.yaml#/public](./contracts/api.yaml)
+- [X] T079 [US4] Implement GET /api/public/tournaments/{id}/rounds/{n} per [data-model.md#get-published-allocations](./data-model.md#get-published-allocations-for-public-view)
+- [X] T080 [US4] Create `src/Views/public/tournament.php` showing tournament info and round selector
+- [X] T081 [US4] Create `src/Views/public/round.php` displaying allocation table per FR-012
+- [X] T082 [US4] Implement round selector showing only published rounds per acceptance scenario 3
+- [X] T083 [US4] Style public view for readability on venue devices (large fonts, high contrast)
 
 **Checkpoint**: Public view works - players can see their table assignments
 

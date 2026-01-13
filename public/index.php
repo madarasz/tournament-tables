@@ -15,6 +15,7 @@ use KTTables\Controllers\AuthController;
 use KTTables\Controllers\RoundController;
 use KTTables\Controllers\AllocationController;
 use KTTables\Controllers\PublicController;
+use KTTables\Controllers\ViewController;
 use KTTables\Middleware\AdminAuthMiddleware;
 
 // Error handling
@@ -119,6 +120,7 @@ $controllers = [
     'RoundController' => RoundController::class,
     'AllocationController' => AllocationController::class,
     'PublicController' => PublicController::class,
+    'ViewController' => ViewController::class,
 ];
 
 // Dispatch to controller
@@ -126,18 +128,6 @@ $controllerName = $matchedRoute[0];
 $action = $matchedRoute[1];
 
 if (!isset($controllers[$controllerName])) {
-    // ViewController is handled separately for now
-    if ($controllerName === 'ViewController') {
-        // For MVP, redirect view routes to appropriate handlers
-        http_response_code(501);
-        if (strpos($uri, '/api/') === 0) {
-            echo json_encode(['error' => 'not_implemented', 'message' => 'View routes not yet implemented']);
-        } else {
-            echo '<!DOCTYPE html><html><head><title>Coming Soon</title></head><body><h1>Coming Soon</h1><p>This page is under development.</p></body></html>';
-        }
-        exit;
-    }
-
     http_response_code(500);
     echo json_encode(['error' => 'internal_error', 'message' => 'Controller not found']);
     exit;
