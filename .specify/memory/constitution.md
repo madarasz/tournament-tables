@@ -1,50 +1,148 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+=============================================================================
+SYNC IMPACT REPORT
+=============================================================================
+Version Change: N/A → 1.0.0 (initial ratification)
+
+Modified Principles: N/A (initial creation)
+
+Added Sections:
+  - Core Principles (5 principles)
+  - Technical Standards
+  - Development Workflow
+  - Governance
+
+Removed Sections: N/A (initial creation)
+
+Templates Requiring Updates:
+  - .specify/templates/plan-template.md: ✅ Compatible (no changes needed)
+  - .specify/templates/spec-template.md: ✅ Compatible (no changes needed)
+  - .specify/templates/tasks-template.md: ✅ Compatible (no changes needed)
+
+Follow-up TODOs: None
+=============================================================================
+-->
+
+# Kill Team Tables Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Single Purpose Focus
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+The application MUST solve exactly one problem: generating table allocations that ensure
+tournament players experience different tables each round. All features MUST directly
+support this core function. Scope creep into tournament management, scoring, or pairing
+(handled by BCP) is explicitly prohibited.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+**Rationale**: Best Coast Pairings already handles tournament logistics. This app fills
+a specific gap without duplicating existing functionality.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Test-Driven Development (NON-NEGOTIABLE)
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+All feature implementation MUST follow the TDD cycle:
+1. Write failing test(s) that define expected behavior
+2. Obtain user approval of test cases
+3. Verify tests fail (red phase)
+4. Implement minimum code to pass tests (green phase)
+5. Refactor while keeping tests passing
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+No production code may be written without a corresponding failing test first. Test
+coverage MUST include unit tests for allocation logic and integration tests for BCP
+data import.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+**Rationale**: Table allocation algorithms have deterministic expected outputs. TDD
+ensures correctness and prevents regression when optimizing allocation strategies.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### III. Data Integrity First
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+The system MUST preserve tournament data integrity at all times:
+- All BCP-imported data MUST be validated before storage
+- Table allocation operations MUST be atomic (complete or rollback)
+- Historical allocations MUST be immutable once a round begins
+- Database operations MUST use transactions for multi-step changes
+
+**Rationale**: Tournament organizers rely on accurate data. A corrupted allocation
+mid-tournament would disrupt the event with no recovery path.
+
+### IV. Simplicity Over Flexibility
+
+Implementation MUST prefer simple, direct solutions:
+- No configuration options unless explicitly required by a user story
+- No abstraction layers until proven necessary by code duplication
+- Plain PHP with minimal framework overhead (compatible with PHP 7.4.33)
+- MySQL queries should be straightforward; avoid ORM complexity
+
+**Rationale**: This is a focused tool, not a platform. Over-engineering increases
+maintenance burden without proportional benefit for a single-purpose application.
+
+### V. Transparent Algorithm Behavior
+
+The table allocation algorithm MUST be explainable and auditable:
+- Allocation decisions MUST be reproducible given the same inputs
+- The system MUST log why each player was assigned to each table
+- When perfect allocation is impossible, the system MUST report conflicts clearly
+- Organizers MUST be able to manually override allocations with audit trail
+
+**Rationale**: Tournament organizers need to justify table assignments to players
+if questions arise. Black-box allocation erodes trust.
+
+## Technical Standards
+
+**Runtime Environment**:
+- PHP 7.4.33 (MUST maintain compatibility; no features from PHP 8+)
+- MySQL database for persistent storage
+- Web-based interface accessible from tournament venue devices
+
+**Code Standards**:
+- PSR-12 coding style for PHP
+- All database queries MUST use prepared statements (no SQL injection vectors)
+- Input validation MUST occur at system boundaries (form submissions, API imports)
+- Error messages MUST be user-friendly; technical details logged server-side only
+
+**Testing Requirements**:
+- PHPUnit for unit and integration tests
+- Test database MUST be isolated from production data
+- CI pipeline MUST pass before any merge to main branch
+
+## Development Workflow
+
+**Feature Development**:
+1. Specification created via `/speckit.specify`
+2. Plan created via `/speckit.plan` with constitution compliance check
+3. Tasks generated via `/speckit.tasks`
+4. Implementation follows TDD cycle per task
+5. Code review verifies constitution compliance
+
+**Code Review Checklist**:
+- Does the change stay within single-purpose scope?
+- Are there failing tests that preceded the implementation?
+- Is data integrity maintained (transactions, validation)?
+- Is the solution as simple as possible for the requirement?
+- Is algorithm behavior documented and reproducible?
+
+**Branching Strategy**:
+- `main` branch MUST always be deployable
+- Feature branches named `###-feature-name` (issue number prefix)
+- All changes via pull request with passing tests
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other development practices for the Kill Team Tables
+project. Compliance is mandatory for all contributions.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Amendment Process**:
+1. Propose amendment with rationale via pull request to constitution
+2. Document impact on existing code and templates
+3. Obtain project owner approval
+4. Update version number per semantic versioning:
+   - MAJOR: Principle removal or fundamental redefinition
+   - MINOR: New principle or significant guidance expansion
+   - PATCH: Clarification or wording improvements
+5. Propagate changes to affected templates and documentation
+
+**Compliance Review**:
+- Every pull request MUST include constitution compliance statement
+- Violations MUST be documented in Complexity Tracking if justified
+- Unjustified violations block merge
+
+**Version**: 1.0.0 | **Ratified**: 2026-01-13 | **Last Amended**: 2026-01-13
