@@ -1,0 +1,312 @@
+<?php
+
+declare(strict_types=1);
+
+namespace KTTables\Services;
+
+/**
+ * Service for generating table allocations.
+ *
+ * Implements priority-weighted greedy assignment algorithm per research.md.
+ *
+ * Algorithm overview:
+ * 1. Round 1: Use BCP's original table assignments (FR-007.1)
+ * 2. Round 2+: Sort pairings by combined score (descending)
+ * 3. For each pairing, calculate cost for each available table
+ * 4. Select lowest-cost table (tie-break by table number)
+ * 5. Record allocation with audit trail (FR-014)
+ */
+class AllocationService
+{
+    /** @var CostCalculator */
+    private $costCalculator;
+
+    public function __construct(CostCalculator $costCalculator)
+    {
+        $this->costCalculator = $costCalculator;
+    }
+
+    /**
+     * Generate allocations for a round.
+     *
+     * @param Pairing[] $pairings List of pairings to allocate
+     * @param array $tables Available tables [['tableNumber' => int, 'terrainTypeId' => ?int, 'terrainTypeName' => ?string], ...]
+     * @param int $roundNumber Round number
+     * @param TournamentHistory $history Tournament history service
+     * @return AllocationResult
+     */
+    public function generateAllocations(
+        array $pairings,
+        array $tables,
+        int $roundNumber,
+        TournamentHistory $history
+    ): AllocationResult {
+        $allocations = [];
+        $conflicts = [];
+        $isRound1 = ($roundNumber === 1);
+
+        // Round 1: Use BCP's original table assignments (FR-007.1)
+        if ($isRound1) {
+            return $this->generateRound1Allocations($pairings, $tables);
+        }
+
+        // Sort pairings by combined score (descending), then by BCP ID (ascending) for stability
+        $sortedPairings = $this->stableSort($pairings);
+
+        // Track which tables are used
+        $usedTables = [];
+
+        // Process each pairing in order
+        foreach ($sortedPairings as $pairing) {
+            $result = $this->allocatePairing($pairing, $tables, $usedTables, $history);
+
+            $allocations[] = $result['allocation'];
+            $usedTables[] = $result['allocation']['tableNumber'];
+
+            // Collect conflicts
+            foreach ($result['allocation']['reason']['conflicts'] as $conflict) {
+                $conflicts[] = $conflict;
+            }
+        }
+
+        // Generate summary
+        $summary = $this->generateSummary($conflicts);
+
+        return new AllocationResult($allocations, $conflicts, $summary);
+    }
+
+    /**
+     * Generate Round 1 allocations using BCP's original assignments.
+     *
+     * FR-007.1: For round 1, use BCP's table assignments.
+     */
+    private function generateRound1Allocations(array $pairings, array $tables): AllocationResult
+    {
+        $allocations = [];
+        $timestamp = date('c');
+
+        foreach ($pairings as $pairing) {
+            $tableNumber = $pairing->bcpTableNumber ?? 1;
+
+            $allocations[] = [
+                'tableNumber' => $tableNumber,
+                'player1' => [
+                    'bcpId' => $pairing->player1BcpId,
+                    'name' => $pairing->player1Name,
+                    'score' => $pairing->player1Score,
+                ],
+                'player2' => [
+                    'bcpId' => $pairing->player2BcpId,
+                    'name' => $pairing->player2Name,
+                    'score' => $pairing->player2Score,
+                ],
+                'reason' => [
+                    'timestamp' => $timestamp,
+                    'totalCost' => 0,
+                    'costBreakdown' => [
+                        'tableReuse' => 0,
+                        'terrainReuse' => 0,
+                        'tableNumber' => 0,
+                    ],
+                    'reasons' => ['Round 1 - using BCP original assignment'],
+                    'alternativesConsidered' => [],
+                    'isRound1' => true,
+                    'conflicts' => [],
+                ],
+            ];
+        }
+
+        return new AllocationResult(
+            $allocations,
+            [],
+            'Round 1 allocations use BCP original table assignments.'
+        );
+    }
+
+    /**
+     * Allocate a single pairing to the best available table.
+     */
+    private function allocatePairing(
+        Pairing $pairing,
+        array $tables,
+        array $usedTables,
+        TournamentHistory $history
+    ): array {
+        $timestamp = date('c');
+        $bestTable = null;
+        $bestCost = null;
+        $alternatives = [];
+
+        // Calculate cost for each available table
+        foreach ($tables as $table) {
+            $tableNumber = $table['tableNumber'];
+
+            // Skip already-used tables
+            if (in_array($tableNumber, $usedTables, true)) {
+                continue;
+            }
+
+            $costResult = $this->costCalculator->calculateForPairing($pairing, $table, $history);
+
+            // Track as alternative (will remove selected table later)
+            $alternatives[$tableNumber] = $costResult->totalCost;
+
+            // Select best table (lowest cost, tie-break by table number)
+            if ($bestCost === null || $costResult->totalCost < $bestCost ||
+                ($costResult->totalCost === $bestCost && $tableNumber < $bestTable['tableNumber'])) {
+                $bestCost = $costResult->totalCost;
+                $bestTable = $table;
+            }
+        }
+
+        // Should not happen if tables > pairings, but handle gracefully
+        if ($bestTable === null) {
+            throw new \RuntimeException('No available tables for allocation');
+        }
+
+        // Calculate final cost for selected table
+        $finalCost = $this->costCalculator->calculateForPairing($pairing, $bestTable, $history);
+
+        // Remove selected table from alternatives
+        unset($alternatives[$bestTable['tableNumber']]);
+
+        // Detect conflicts
+        $conflicts = $this->detectConflicts($finalCost);
+
+        return [
+            'allocation' => [
+                'tableNumber' => $bestTable['tableNumber'],
+                'terrainType' => $bestTable['terrainTypeName'] ?? null,
+                'player1' => [
+                    'bcpId' => $pairing->player1BcpId,
+                    'name' => $pairing->player1Name,
+                    'score' => $pairing->player1Score,
+                ],
+                'player2' => [
+                    'bcpId' => $pairing->player2BcpId,
+                    'name' => $pairing->player2Name,
+                    'score' => $pairing->player2Score,
+                ],
+                'reason' => [
+                    'timestamp' => $timestamp,
+                    'totalCost' => $finalCost->totalCost,
+                    'costBreakdown' => $finalCost->costBreakdown,
+                    'reasons' => $finalCost->reasons,
+                    'alternativesConsidered' => $alternatives,
+                    'isRound1' => false,
+                    'conflicts' => $conflicts,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Stable sort pairings by combined score (descending), then BCP ID (ascending).
+     *
+     * Reference: research.md#determinism-requirements
+     *
+     * PHP's usort is not stable, so we need to preserve original order for ties.
+     *
+     * @param Pairing[] $pairings
+     * @return Pairing[]
+     */
+    private function stableSort(array $pairings): array
+    {
+        // Add original index for stability
+        $indexed = [];
+        foreach ($pairings as $index => $pairing) {
+            $indexed[] = [
+                'pairing' => $pairing,
+                'index' => $index,
+                'score' => $pairing->getCombinedScore(),
+                'bcpId' => $pairing->getMinBcpId(),
+            ];
+        }
+
+        // Sort by score descending, then by BCP ID ascending, then by original index
+        usort($indexed, function ($a, $b) {
+            // Primary: score descending
+            if ($a['score'] !== $b['score']) {
+                return $b['score'] <=> $a['score'];
+            }
+            // Secondary: BCP ID ascending (deterministic)
+            if ($a['bcpId'] !== $b['bcpId']) {
+                return $a['bcpId'] <=> $b['bcpId'];
+            }
+            // Tertiary: original index (stability)
+            return $a['index'] <=> $b['index'];
+        });
+
+        // Extract sorted pairings
+        return array_map(function ($item) {
+            return $item['pairing'];
+        }, $indexed);
+    }
+
+    /**
+     * Detect conflicts from cost result.
+     *
+     * FR-010: Flag constraint violations.
+     */
+    private function detectConflicts(CostResult $costResult): array
+    {
+        $conflicts = [];
+
+        // Table reuse conflict
+        if ($costResult->costBreakdown['tableReuse'] > 0) {
+            foreach ($costResult->reasons as $reason) {
+                if (strpos($reason, 'previously played on table') !== false) {
+                    $conflicts[] = [
+                        'type' => 'TABLE_REUSE',
+                        'message' => $reason,
+                    ];
+                }
+            }
+        }
+
+        // Terrain reuse conflict (note: this is a soft constraint, less severe)
+        if ($costResult->costBreakdown['terrainReuse'] > 0) {
+            foreach ($costResult->reasons as $reason) {
+                if (strpos($reason, 'previously experienced') !== false) {
+                    $conflicts[] = [
+                        'type' => 'TERRAIN_REUSE',
+                        'message' => $reason,
+                    ];
+                }
+            }
+        }
+
+        return $conflicts;
+    }
+
+    /**
+     * Generate allocation summary.
+     */
+    private function generateSummary(array $conflicts): string
+    {
+        if (empty($conflicts)) {
+            return 'All allocations optimal - no constraint violations.';
+        }
+
+        $tableReuseCount = 0;
+        $terrainReuseCount = 0;
+
+        foreach ($conflicts as $conflict) {
+            if ($conflict['type'] === 'TABLE_REUSE') {
+                $tableReuseCount++;
+            } elseif ($conflict['type'] === 'TERRAIN_REUSE') {
+                $terrainReuseCount++;
+            }
+        }
+
+        $parts = [];
+        if ($tableReuseCount > 0) {
+            $parts[] = "{$tableReuseCount} table reuse conflict(s)";
+        }
+        if ($terrainReuseCount > 0) {
+            $parts[] = "{$terrainReuseCount} terrain reuse conflict(s)";
+        }
+
+        return 'Best effort allocation with ' . implode(', ', $parts) . '.';
+    }
+}

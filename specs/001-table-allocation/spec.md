@@ -9,7 +9,7 @@
 
 ### Session 2026-01-13
 
-- Q: How is BCP data extracted (API, server-rendered HTML, JS-rendered, manual)? → A: BCP uses JavaScript rendering, requiring headless browser for data extraction.
+- Q: How is BCP data extracted (API, server-rendered HTML, JS-rendered, manual)? → A: BCP provides a public REST API at `newprod-api.bestcoastpairings.com` for pairing data extraction.
 - Q: What is the tournament data retention policy? → A: Keep indefinitely; no automatic deletion.
 - Q: How are BCP data changes handled after initial import? → A: Manual refresh button overwrites existing pairing data for that round.
 - Q: Can published allocations be edited? → A: Yes, editable after publish with no special tracking required.
@@ -176,7 +176,7 @@ As an organizer returning to manage my tournament, I want to authenticate using 
 
 - BCP event URLs follow the format `https://www.bestcoastpairings.com/event/{eventId}` with optional query parameters for round selection.
 - BCP provides pairing data that includes player IDs, names, scores, and (for round 1) table assignments.
-- BCP pages use JavaScript rendering; data extraction requires a headless browser to execute page scripts before parsing content.
+- BCP provides a public REST API at `https://newprod-api.bestcoastpairings.com/v1/events/{eventId}/pairings` that returns JSON pairing data.
 - Terrain types are pre-populated in the database and managed separately from this feature.
 - Tournament organizers will have internet access at the venue to fetch BCP data.
 - A typical tournament has 4-6 rounds with 8-20 tables.

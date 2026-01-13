@@ -142,46 +142,46 @@ Based on plan.md project structure:
 
 ### Tests for User Story 1
 
-- [ ] T039 [P] [US1] Write `tests/Unit/Services/CostCalculatorTest.php` - verify cost weights per [research.md#cost-function](./research.md#cost-function)
-- [ ] T040 [P] [US1] Write `tests/Unit/Services/AllocationServiceTest.php` - test all 4 priority rules (FR-007.1-4)
-- [ ] T041 [P] [US1] Write `tests/Unit/Services/TournamentHistoryTest.php` - player table/terrain history queries
-- [ ] T042 [P] [US1] Write `tests/Integration/AllocationGenerationTest.php` - end-to-end allocation with conflicts
-- [ ] T043 [P] [US1] Write `tests/Integration/BCPScraperTest.php` using fixtures in `tests/fixtures/bcp_pairings.html`
+- [X] T039 [P] [US1] Write `tests/Unit/Services/CostCalculatorTest.php` - verify cost weights per [research.md#cost-function](./research.md#cost-function)
+- [X] T040 [P] [US1] Write `tests/Unit/Services/AllocationServiceTest.php` - test all 4 priority rules (FR-007.1-4)
+- [X] T041 [P] [US1] Write `tests/Unit/Services/TournamentHistoryTest.php` - player table/terrain history queries
+- [X] T042 [P] [US1] Write `tests/Integration/AllocationGenerationTest.php` - end-to-end allocation with conflicts
+- [X] T043 [P] [US1] Write `tests/Integration/BCPScraperTest.php` using fixtures in `tests/fixtures/bcp_pairings.html`
 
 ### Implementation for User Story 1
 
 #### BCP Integration
 
-- [ ] T044 [US1] Create `tests/fixtures/bcp_pairings.html` with sample BCP DOM structure
-- [ ] T045 [US1] Create `src/Services/BCPScraperService.php` per [research.md#implementation-approach](./research.md#implementation-approach)
-- [ ] T046 [US1] Implement `fetchPairings(eventId, round)` with Chrome PHP headless browser
-- [ ] T047 [US1] Implement HTML parser extracting player names, IDs, scores, tables per [research.md#expected-data-fields](./research.md#expected-data-fields)
-- [ ] T048 [US1] Implement retry with exponential backoff per [research.md#best-practices](./research.md#best-practices-for-bcp-scraping)
+- [X] T044 [US1] Create `tests/fixtures/bcp_pairings.html` with sample BCP DOM structure
+- [X] T045 [US1] Create `src/Services/BCPScraperService.php` per [research.md#implementation-approach](./research.md#implementation-approach)
+- [X] T046 [US1] Implement `fetchPairings(eventId, round)` with Chrome PHP headless browser
+- [X] T047 [US1] Implement HTML parser extracting player names, IDs, scores, tables per [research.md#expected-data-fields](./research.md#expected-data-fields)
+- [X] T048 [US1] Implement retry with exponential backoff per [research.md#best-practices](./research.md#best-practices-for-bcp-scraping)
 
 #### Allocation Algorithm
 
-- [ ] T049 [US1] Create `src/Services/TournamentHistory.php` with player history queries per [data-model.md#query-patterns](./data-model.md#query-patterns)
-- [ ] T050 [US1] Implement `hasPlayerUsedTable()` per [data-model.md#get-player-table-history](./data-model.md#get-player-table-history)
-- [ ] T051 [US1] Implement `hasPlayerExperiencedTerrain()` per [data-model.md#get-player-terrain-history](./data-model.md#get-player-terrain-history)
-- [ ] T052 [US1] Create `src/Services/CostCalculator.php` with cost constants: TABLE_REUSE=100000, TERRAIN_REUSE=10000, TABLE_NUMBER=1
-- [ ] T053 [US1] Create `src/Services/AllocationService.php` with `generateAllocations()` method
-- [ ] T054 [US1] Implement stable sort wrapper per [research.md#determinism-requirements](./research.md#determinism-requirements)
-- [ ] T055 [US1] Implement priority-weighted greedy assignment per [research.md#algorithm-overview](./research.md#algorithm-overview)
-- [ ] T056 [US1] Implement `AllocationReason` JSON structure per [data-model.md#allocation_reason-json-structure](./data-model.md#allocation_reason-json-structure-fr-014)
-- [ ] T057 [US1] Implement conflict detection and flagging per FR-010
+- [X] T049 [US1] Create `src/Services/TournamentHistory.php` with player history queries per [data-model.md#query-patterns](./data-model.md#query-patterns)
+- [X] T050 [US1] Implement `hasPlayerUsedTable()` per [data-model.md#get-player-table-history](./data-model.md#get-player-table-history)
+- [X] T051 [US1] Implement `hasPlayerExperiencedTerrain()` per [data-model.md#get-player-terrain-history](./data-model.md#get-player-terrain-history)
+- [X] T052 [US1] Create `src/Services/CostCalculator.php` with cost constants: TABLE_REUSE=100000, TERRAIN_REUSE=10000, TABLE_NUMBER=1
+- [X] T053 [US1] Create `src/Services/AllocationService.php` with `generateAllocations()` method
+- [X] T054 [US1] Implement stable sort wrapper per [research.md#determinism-requirements](./research.md#determinism-requirements)
+- [X] T055 [US1] Implement priority-weighted greedy assignment per [research.md#algorithm-overview](./research.md#algorithm-overview)
+- [X] T056 [US1] Implement `AllocationReason` JSON structure per [data-model.md#allocation_reason-json-structure](./data-model.md#allocation_reason-json-structure-fr-014)
+- [X] T057 [US1] Implement conflict detection and flagging per FR-010
 
 #### API Endpoints
 
-- [ ] T058 [US1] Create `src/Controllers/RoundController.php` with POST /api/tournaments/{id}/rounds/{n}/import
-- [ ] T059 [US1] Implement POST /api/tournaments/{id}/rounds/{n}/generate per [contracts/api.yaml#/generate](./contracts/api.yaml)
-- [ ] T060 [US1] Implement GET /api/tournaments/{id}/rounds/{n} (admin view with conflicts)
+- [X] T058 [US1] Create `src/Controllers/RoundController.php` with POST /api/tournaments/{id}/rounds/{n}/import
+- [X] T059 [US1] Implement POST /api/tournaments/{id}/rounds/{n}/generate per [contracts/api.yaml#/generate](./contracts/api.yaml)
+- [X] T060 [US1] Implement GET /api/tournaments/{id}/rounds/{n} (admin view with conflicts)
 
 #### Admin UI
 
-- [ ] T061 [US1] Create `src/Views/round/manage.php` showing pairings and allocations
-- [ ] T062 [US1] Add refresh button with HTMX to re-import from BCP per FR-015
-- [ ] T063 [US1] Add generate button with HTMX to trigger allocation
-- [ ] T064 [US1] Display allocation results with conflict highlighting per FR-010
+- [X] T061 [US1] Create `src/Views/round/manage.php` showing pairings and allocations
+- [X] T062 [US1] Add refresh button with HTMX to re-import from BCP per FR-015
+- [X] T063 [US1] Add generate button with HTMX to trigger allocation
+- [X] T064 [US1] Display allocation results with conflict highlighting per FR-010
 
 **Checkpoint**: Core allocation generation works - can import pairings and generate optimized table assignments
 

@@ -1,0 +1,107 @@
+{
+  "active": [
+    {
+      "id": "pairing1",
+      "table": 1,
+      "round": 1,
+      "player1": {
+        "id": "player1_bcp_id",
+        "user": {"firstName": "Alice", "lastName": "Anderson"},
+        "faction": "Nemesis Claw"
+      },
+      "player2": {
+        "id": "player2_bcp_id",
+        "user": {"firstName": "Bob", "lastName": "Brown"},
+        "faction": "Blades of Khaine"
+      },
+      "player1Game": {"result": 2, "points": 2},
+      "player2Game": {"result": 0, "points": 2}
+    },
+    {
+      "id": "pairing2",
+      "table": 2,
+      "round": 1,
+      "player1": {
+        "id": "player3_bcp_id",
+        "user": {"firstName": "Charlie", "lastName": "Clark"},
+        "faction": "Mandrakes"
+      },
+      "player2": {
+        "id": "player4_bcp_id",
+        "user": {"firstName": "Diana", "lastName": "Davis"},
+        "faction": "Deathwatch"
+      },
+      "player1Game": {"result": 2, "points": 2},
+      "player2Game": {"result": 0, "points": 2}
+    },
+    {
+      "id": "pairing3",
+      "table": 3,
+      "round": 1,
+      "player1": {
+        "id": "player5_bcp_id",
+        "user": {"firstName": "Eve", "lastName": "Evans"},
+        "faction": "Sanctifiers"
+      },
+      "player2": {
+        "id": "player6_bcp_id",
+        "user": {"firstName": "Frank", "lastName": "Foster"},
+        "faction": "Tempestus Aquilons"
+      },
+      "player1Game": {"result": 2, "points": 1},
+      "player2Game": {"result": 0, "points": 1}
+    },
+    {
+      "id": "pairing4",
+      "table": 4,
+      "round": 1,
+      "player1": {
+        "id": "player7_bcp_id",
+        "user": {"firstName": "Grace", "lastName": "Garcia"},
+        "faction": "Hearthkyn Salvagers"
+      },
+      "player2": {
+        "id": "player8_bcp_id",
+        "user": {"firstName": "Henry", "lastName": "Harris"},
+        "faction": "Kasrkin"
+      },
+      "player1Game": {"result": 2, "points": 1},
+      "player2Game": {"result": 0, "points": 1}
+    },
+    {
+      "id": "pairing5",
+      "table": 5,
+      "round": 1,
+      "player1": {
+        "id": "player9_bcp_id",
+        "user": {"firstName": "Ivy", "lastName": "Irwin"},
+        "faction": "Pathfinders"
+      },
+      "player2": {
+        "id": "player10_bcp_id",
+        "user": {"firstName": "Jack", "lastName": "Johnson"},
+        "faction": "Void-Dancer Troupe"
+      },
+      "player1Game": {"result": 2, "points": 0},
+      "player2Game": {"result": 0, "points": 0}
+    },
+    {
+      "id": "pairing6",
+      "table": 6,
+      "round": 1,
+      "player1": {
+        "id": "player11_bcp_id",
+        "user": {"firstName": "Kelly", "lastName": "King"},
+        "faction": "Imperial Navy Breachers"
+      },
+      "player2": {
+        "id": "player12_bcp_id",
+        "user": {"firstName": "Liam", "lastName": "Lee"},
+        "faction": "Phobos Strike Team"
+      },
+      "player1Game": {"result": 2, "points": 0},
+      "player2Game": {"result": 0, "points": 0}
+    }
+  ],
+  "deleted": []
+}

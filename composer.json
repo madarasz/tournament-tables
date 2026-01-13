@@ -5,7 +5,6 @@
     "license": "MIT",
     "require": {
         "php": "^7.4",
-        "chrome-php/chrome": "^1.8",
         "ext-pdo": "*",
         "ext-json": "*"
     },

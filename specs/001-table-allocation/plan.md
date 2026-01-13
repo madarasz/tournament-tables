@@ -5,14 +5,13 @@
 
 ## Summary
 
-Build a web application that generates table allocations for Kill Team tournaments, ensuring players experience different tables each round. The system integrates with Best Coast Pairings (BCP) for pairing data via headless browser scraping, implements a priority-based allocation algorithm, and provides both organizer management and public viewing interfaces.
+Build a web application that generates table allocations for Kill Team tournaments, ensuring players experience different tables each round. The system integrates with Best Coast Pairings (BCP) for pairing data via REST API, implements a priority-based allocation algorithm, and provides both organizer management and public viewing interfaces.
 
 ## Technical Context
 
 **Language/Version**: PHP 7.4.33 (strict compatibility required per constitution)
 **Primary Dependencies**:
 - Frontend: HTMX 1.9.x + Pico CSS 1.5.x (no build step, server-rendered)
-- Headless Browser: chrome-php/chrome ^1.8 (BCP scraping)
 - Testing: PHPUnit 9.5
 **Storage**: MySQL 5.7+
 **Testing**: PHPUnit 9.5 (per constitution)
@@ -25,8 +24,7 @@ Build a web application that generates table allocations for Kill Team tournamen
 **Constraints**:
 - PHP 7.4.33 compatibility (no PHP 8+ features)
 - Tournament data retained indefinitely
-- BCP requires JavaScript rendering (headless browser via chrome-php)
-- Server must have Chrome/Chromium installed
+- BCP API access requires internet connectivity
 **Scale/Scope**:
 - 4-6 rounds per tournament
 - 8-20 tables typical
@@ -169,13 +167,11 @@ This section defines the implementation sequence with cross-references to detail
 
 | Step | Task | Reference Documents |
 |------|------|---------------------|
-| 5.1 | Create `Services/BCPScraperService.php` | [research.md#2-headless-browser](./research.md#2-headless-browser-for-bcp-scraping) |
-| 5.2 | Implement `fetchPairings(eventId, round)` | [research.md#implementation-approach](./research.md#implementation-approach) |
-| 5.3 | Create HTML parser for BCP DOM | [research.md#expected-data-fields](./research.md#expected-data-fields) |
-| 5.4 | Write integration tests with mock HTML | Store fixtures in `tests/fixtures/` |
+| 5.1 | Update `Services/BCPScraperService.php` to use REST API | [research.md#2-bcp-rest-api](./research.md#2-bcp-rest-api) |
+| 5.2 | Implement `fetchPairings(eventId, round)` using API endpoint | API: `newprod-api.bestcoastpairings.com/v1/events/{id}/pairings` |
+| 5.3 | Create JSON parser for BCP API response | [research.md#expected-data-fields](./research.md#expected-data-fields) |
+| 5.4 | Write integration tests with mock JSON | Store fixtures in `tests/fixtures/` |
 | 5.5 | Implement retry with exponential backoff | [research.md#best-practices](./research.md#best-practices-for-bcp-scraping) |
-
-**Note**: BCP DOM selectors must be discovered via manual inspection of live page. Create proof-of-concept first per [research.md#implementation-recommendation](./research.md#implementation-recommendation).
 
 **Output**: Working BCP import that extracts player names, IDs, scores, table assignments
 
