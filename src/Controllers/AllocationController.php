@@ -9,6 +9,8 @@ use KTTables\Models\Round;
 use KTTables\Models\Table;
 use KTTables\Middleware\AdminAuthMiddleware;
 use KTTables\Database\Connection;
+use KTTables\Services\AllocationEditService;
+use KTTables\Services\CostCalculator;
 
 /**
  * Allocation editing controller.
@@ -17,6 +19,13 @@ use KTTables\Database\Connection;
  */
 class AllocationController extends BaseController
 {
+    private AllocationEditService $editService;
+
+    public function __construct()
+    {
+        $db = Connection::getInstance()->getPdo();
+        $this->editService = new AllocationEditService($db, new CostCalculator());
+    }
     /**
      * PATCH /api/allocations/{id} - Edit table assignment.
      *
@@ -71,13 +80,21 @@ class AllocationController extends BaseController
             return;
         }
 
-        // Update the allocation
-        $allocation->tableId = $newTableId;
+        // Update the allocation using the edit service (includes conflict recalculation per FR-010)
+        try {
+            $result = $this->editService->editTableAssignment($allocation->id, $newTableId);
 
-        // TODO: Recalculate conflicts after edit (FR-010) - Phase 6 (US3)
-        $allocation->save();
+            // Reload allocation to get updated data
+            $allocation = Allocation::find($allocationId);
 
-        $this->success($allocation->toArray());
+            $this->success([
+                'id' => $allocation->id,
+                'tableId' => $allocation->tableId,
+                'conflicts' => $result['conflicts'],
+            ]);
+        } catch (\RuntimeException $e) {
+            $this->error('conflict', $e->getMessage(), 400);
+        }
     }
 
     /**
@@ -131,26 +148,29 @@ class AllocationController extends BaseController
             return;
         }
 
-        // Swap table IDs in a transaction
-        Connection::beginTransaction();
-
+        // Swap tables using the edit service (includes conflict recalculation per FR-010)
         try {
-            $tempTableId = $allocation1->tableId;
-            $allocation1->tableId = $allocation2->tableId;
-            $allocation2->tableId = $tempTableId;
+            $result = $this->editService->swapTables($allocationId1, $allocationId2);
 
-            // TODO: Recalculate conflicts after swap (FR-010) - Phase 6 (US3)
-            $allocation1->save();
-            $allocation2->save();
-
-            Connection::commit();
+            // Reload allocations to get updated data
+            $allocation1 = Allocation::find($allocationId1);
+            $allocation2 = Allocation::find($allocationId2);
 
             $this->success([
-                'allocation1' => $allocation1->toArray(),
-                'allocation2' => $allocation2->toArray(),
+                'allocation1' => [
+                    'id' => $allocation1->id,
+                    'tableId' => $allocation1->tableId,
+                    'conflicts' => $result['allocation1']['conflicts'],
+                ],
+                'allocation2' => [
+                    'id' => $allocation2->id,
+                    'tableId' => $allocation2->tableId,
+                    'conflicts' => $result['allocation2']['conflicts'],
+                ],
             ]);
+        } catch (\RuntimeException $e) {
+            $this->error('conflict', $e->getMessage(), 400);
         } catch (\Exception $e) {
-            Connection::rollBack();
             $this->error('internal_error', 'Failed to swap tables', 500);
         }
     }

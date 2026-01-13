@@ -135,6 +135,14 @@ $isPublished = $round->isPublished;
             <p><?= htmlspecialchars($tournament->name) ?></p>
         </header>
 
+        <?php if ($isPublished): ?>
+        <!-- Warning when editing published round (FR-013, T076) -->
+        <article style="background-color: #fff3e0; border-left: 4px solid #ff9800;">
+            <h4>⚠️ Published Round</h4>
+            <p>This round has been published and is visible to players. Any changes you make will be immediately visible to all players viewing the allocations.</p>
+        </article>
+        <?php endif; ?>
+
         <section>
             <div class="action-buttons">
                 <!-- Refresh from BCP button -->
@@ -179,6 +187,21 @@ $isPublished = $round->isPublished;
 
                 <span id="publish-status"></span>
             </div>
+
+            <!-- Swap controls (T074) -->
+            <?php if (!empty($allocations)): ?>
+            <div class="action-buttons" style="margin-top: 1em;">
+                <button
+                    onclick="swapSelectedTables()"
+                    class="secondary"
+                    id="swap-button"
+                    disabled
+                >
+                    Swap Selected Tables
+                </button>
+                <small id="swap-status" style="line-height: 2.5;">Select two allocations to swap</small>
+            </div>
+            <?php endif; ?>
         </section>
 
         <?php if ($hasConflicts): ?>
@@ -203,6 +226,7 @@ $isPublished = $round->isPublished;
             <table class="allocation-table" role="grid">
                 <thead>
                     <tr>
+                        <th style="width: 50px;">Select</th>
                         <th>Table</th>
                         <th>Terrain</th>
                         <th>Player 1</th>
@@ -210,10 +234,15 @@ $isPublished = $round->isPublished;
                         <th>Player 2</th>
                         <th>Score</th>
                         <th>Status</th>
+                        <th style="width: 150px;">Change Table</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($allocations as $allocation):
+                    <?php
+                    // Get all tables for dropdown
+                    $allTables = \KTTables\Models\Table::findByTournament($tournament->id);
+
+                    foreach ($allocations as $allocation):
                         $allocationConflicts = $allocation->getConflicts();
                         $hasTableReuse = false;
                         $hasTerrainReuse = false;
@@ -231,6 +260,16 @@ $isPublished = $round->isPublished;
                         $terrainType = $table ? $table->getTerrainType() : null;
                     ?>
                     <tr class="<?= $rowClass ?>">
+                        <!-- Checkbox for swap selection (T074) -->
+                        <td>
+                            <input
+                                type="checkbox"
+                                class="swap-checkbox"
+                                data-allocation-id="<?= $allocation->id ?>"
+                                onchange="updateSwapButton()"
+                            />
+                        </td>
+
                         <td><strong><?= $table ? $table->tableNumber : 'N/A' ?></strong></td>
                         <td class="terrain-type"><?= $terrainType ? htmlspecialchars($terrainType->name) : '-' ?></td>
                         <td><?= $player1 ? htmlspecialchars($player1->name) : 'Unknown' ?></td>
@@ -245,6 +284,23 @@ $isPublished = $round->isPublished;
                             <?php else: ?>
                                 &#10003; OK
                             <?php endif; ?>
+                        </td>
+
+                        <!-- Inline table edit dropdown (T073) -->
+                        <td>
+                            <select
+                                onchange="changeTableAssignment(<?= $allocation->id ?>, this.value)"
+                                style="width: 100%; font-size: 0.875em;"
+                            >
+                                <?php foreach ($allTables as $t): ?>
+                                    <option
+                                        value="<?= $t->id ?>"
+                                        <?= ($table && $t->id === $table->id) ? 'selected' : '' ?>
+                                    >
+                                        Table <?= $t->tableNumber ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -278,6 +334,105 @@ $isPublished = $round->isPublished;
                 alert('Error: ' + (response.message || 'Unknown error'));
             }
         });
+
+        // Update swap button state based on checkbox selection (T074)
+        function updateSwapButton() {
+            var checkboxes = document.querySelectorAll('.swap-checkbox:checked');
+            var button = document.getElementById('swap-button');
+            var status = document.getElementById('swap-status');
+
+            if (checkboxes.length === 2) {
+                button.disabled = false;
+                status.textContent = 'Ready to swap ' + checkboxes.length + ' allocations';
+            } else if (checkboxes.length === 1) {
+                button.disabled = true;
+                status.textContent = 'Select one more allocation to swap';
+            } else {
+                button.disabled = true;
+                status.textContent = 'Select two allocations to swap';
+            }
+        }
+
+        // Swap selected tables (T074)
+        function swapSelectedTables() {
+            var checkboxes = document.querySelectorAll('.swap-checkbox:checked');
+
+            if (checkboxes.length !== 2) {
+                alert('Please select exactly two allocations to swap');
+                return;
+            }
+
+            var allocationId1 = parseInt(checkboxes[0].dataset.allocationId);
+            var allocationId2 = parseInt(checkboxes[1].dataset.allocationId);
+
+            if (confirm('Swap tables for these two pairings?')) {
+                fetch('/api/allocations/swap', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Token': getCookie('admin_token')
+                    },
+                    body: JSON.stringify({
+                        allocationId1: allocationId1,
+                        allocationId2: allocationId2
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error: ' + data.message);
+                    } else {
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    alert('Failed to swap tables: ' + error.message);
+                });
+            }
+        }
+
+        // Change table assignment (T073)
+        function changeTableAssignment(allocationId, newTableId) {
+            if (confirm('Change table assignment for this pairing?')) {
+                fetch('/api/allocations/' + allocationId, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Admin-Token': getCookie('admin_token')
+                    },
+                    body: JSON.stringify({
+                        tableId: parseInt(newTableId)
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error: ' + data.message);
+                    } else {
+                        // Show conflicts if any
+                        if (data.conflicts && data.conflicts.length > 0) {
+                            var conflictMsg = 'Table assignment changed, but conflicts detected:\n';
+                            data.conflicts.forEach(function(c) {
+                                conflictMsg += '- ' + c.message + '\n';
+                            });
+                            alert(conflictMsg);
+                        }
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    alert('Failed to change table assignment: ' + error.message);
+                });
+            }
+        }
+
+        // Get cookie value
+        function getCookie(name) {
+            var value = '; ' + document.cookie;
+            var parts = value.split('; ' + name + '=');
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return '';
+        }
     </script>
 </body>
 </html>

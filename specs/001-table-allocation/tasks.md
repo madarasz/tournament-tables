@@ -197,21 +197,21 @@ Based on plan.md project structure:
 
 ### Tests for User Story 3
 
-- [ ] T065 [P] [US3] Write `tests/Unit/Services/AllocationEditServiceTest.php` - table assignment change, swap logic
-- [ ] T066 [P] [US3] Write `tests/Integration/AllocationEditTest.php` - edit persistence, conflict recalculation
-- [ ] T067 [P] [US3] Write `tests/Integration/PublishTest.php` - publish state change, public visibility
+- [X] T065 [P] [US3] Write `tests/Unit/Services/AllocationEditServiceTest.php` - table assignment change, swap logic
+- [X] T066 [P] [US3] Write `tests/Integration/AllocationEditTest.php` - edit persistence, conflict recalculation
+- [X] T067 [P] [US3] Write `tests/Integration/PublishTest.php` - publish state change, public visibility
 
 ### Implementation for User Story 3
 
-- [ ] T068 [US3] Create `src/Services/AllocationEditService.php` with `editTableAssignment()` and `swapTables()` methods
-- [ ] T069 [US3] Implement conflict recalculation after manual edit per FR-010
-- [ ] T070 [US3] Create `src/Controllers/AllocationController.php` with PATCH /api/allocations/{id} per [contracts/api.yaml#/allocations](./contracts/api.yaml)
-- [ ] T071 [US3] Implement POST /api/allocations/swap per FR-009
-- [ ] T072 [US3] Implement POST /api/tournaments/{id}/rounds/{n}/publish per FR-011
-- [ ] T073 [US3] Update `src/Views/round/manage.php` with inline edit controls using HTMX
-- [ ] T074 [US3] Add swap UI with drag-drop or selection per [research.md#htmx-patterns](./research.md#implementation-notes)
-- [ ] T075 [US3] Add publish button with confirmation dialog per [research.md#htmx-patterns](./research.md#implementation-notes)
-- [ ] T076 [US3] Display warning when editing published round per acceptance scenario 5
+- [X] T068 [US3] Create `src/Services/AllocationEditService.php` with `editTableAssignment()` and `swapTables()` methods
+- [X] T069 [US3] Implement conflict recalculation after manual edit per FR-010
+- [X] T070 [US3] Create `src/Controllers/AllocationController.php` with PATCH /api/allocations/{id} per [contracts/api.yaml#/allocations](./contracts/api.yaml)
+- [X] T071 [US3] Implement POST /api/allocations/swap per FR-009
+- [X] T072 [US3] Implement POST /api/tournaments/{id}/rounds/{n}/publish per FR-011
+- [X] T073 [US3] Update `src/Views/round/manage.php` with inline edit controls using HTMX
+- [X] T074 [US3] Add swap UI with drag-drop or selection per [research.md#htmx-patterns](./research.md#implementation-notes)
+- [X] T075 [US3] Add publish button with confirmation dialog per [research.md#htmx-patterns](./research.md#implementation-notes)
+- [X] T076 [US3] Display warning when editing published round per acceptance scenario 5
 
 **Checkpoint**: Editing and publishing work - can adjust allocations and make visible to players
 
