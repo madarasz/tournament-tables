@@ -1,0 +1,29 @@
+# Dependencies
+/vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment and config
+/config/database.php
+/config/chrome.php
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# PHPUnit
+.phpunit.result.cache
+/coverage/
+
+# Composer
+composer.lock

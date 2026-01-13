@@ -1,0 +1,23 @@
+services:
+  php:
+    image: php:7.4.33-apache
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/app
+      - ./config/apache.conf:/etc/apache2/sites-available/000-default.conf
+    depends_on:
+      - mysql
+  
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: kt_tables
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

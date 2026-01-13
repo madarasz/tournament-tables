@@ -1,0 +1,31 @@
+{
+    "name": "kt-tables/kt-tables",
+    "description": "Kill Team tournament table allocation system",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^7.4",
+        "chrome-php/chrome": "^1.8",
+        "ext-pdo": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "KTTables\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "KTTables\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "7.4.33"
+        }
+    }
+}

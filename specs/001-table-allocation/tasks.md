@@ -30,12 +30,12 @@ Based on plan.md project structure:
 
 **Reference**: [plan.md#phase-1-project-foundation](./plan.md#phase-1-project-foundation)
 
-- [ ] T001 Create `composer.json` with dependencies per [research.md#updated-dependencies](./research.md#updated-dependencies)
-- [ ] T002 Create directory structure: `src/Models/`, `src/Services/`, `src/Controllers/`, `src/Database/`, `src/Views/`, `tests/Unit/`, `tests/Integration/`, `tests/fixtures/`, `public/css/`, `public/js/`, `config/`, `bin/`
-- [ ] T003 [P] Create `config/database.example.php` with placeholder credentials per [quickstart.md](./quickstart.md#2-configure-database)
-- [ ] T004 [P] Create `config/chrome.example.php` with Chrome path per [quickstart.md](./quickstart.md#5-configure-chrome-path-if-needed)
-- [ ] T005 [P] Create `phpunit.xml` with test suites for Unit and Integration tests
-- [ ] T006 Run `composer install` to verify dependencies
+- [X] T001 Create `composer.json` with dependencies per [research.md#updated-dependencies](./research.md#updated-dependencies)
+- [X] T002 Create directory structure: `src/Models/`, `src/Services/`, `src/Controllers/`, `src/Database/`, `src/Views/`, `tests/Unit/`, `tests/Integration/`, `tests/fixtures/`, `public/css/`, `public/js/`, `config/`, `bin/`
+- [X] T003 [P] Create `config/database.example.php` with placeholder credentials per [quickstart.md](./quickstart.md#2-configure-database)
+- [X] T004 [P] Create `config/chrome.example.php` with Chrome path per [quickstart.md](./quickstart.md#5-configure-chrome-path-if-needed)
+- [X] T005 [P] Create `phpunit.xml` with test suites for Unit and Integration tests
+- [X] T006 Run `composer install` to verify dependencies
 
 **Checkpoint**: Empty project skeleton with dependencies installed
 
@@ -49,26 +49,26 @@ Based on plan.md project structure:
 
 ### Database Infrastructure
 
-- [ ] T007 Create `bin/migrate.php` script using SQL from [data-model.md#database-schema](./data-model.md#database-schema-mysql)
-- [ ] T008 Create `bin/seed-terrain-types.php` using INSERT from [data-model.md#initial-data](./data-model.md#initial-data)
-- [ ] T009 Create `src/Database/Connection.php` with PDO singleton and prepared statement helpers
-- [ ] T010 Write `tests/Integration/DatabaseConnectionTest.php` to verify database connectivity
+- [X] T007 Create `bin/migrate.php` script using SQL from [data-model.md#database-schema](./data-model.md#database-schema-mysql)
+- [X] T008 Create `bin/seed-terrain-types.php` using INSERT from [data-model.md#initial-data](./data-model.md#initial-data)
+- [X] T009 Create `src/Database/Connection.php` with PDO singleton and prepared statement helpers
+- [X] T010 Write `tests/Integration/DatabaseConnectionTest.php` to verify database connectivity
 
 ### Entity Models (all stories depend on these)
 
-- [ ] T011 [P] Create `src/Models/TerrainType.php` per [data-model.md#terraintype](./data-model.md#terraintype)
-- [ ] T012 [P] Create `src/Models/Tournament.php` per [data-model.md#tournament](./data-model.md#tournament)
-- [ ] T013 [P] Create `src/Models/Table.php` per [data-model.md#table](./data-model.md#table)
-- [ ] T014 [P] Create `src/Models/Round.php` per [data-model.md#round](./data-model.md#round)
-- [ ] T015 [P] Create `src/Models/Player.php` per [data-model.md#player](./data-model.md#player)
-- [ ] T016 [P] Create `src/Models/Allocation.php` per [data-model.md#allocation](./data-model.md#allocation)
+- [X] T011 [P] Create `src/Models/TerrainType.php` per [data-model.md#terraintype](./data-model.md#terraintype)
+- [X] T012 [P] Create `src/Models/Tournament.php` per [data-model.md#tournament](./data-model.md#tournament)
+- [X] T013 [P] Create `src/Models/Table.php` per [data-model.md#table](./data-model.md#table)
+- [X] T014 [P] Create `src/Models/Round.php` per [data-model.md#round](./data-model.md#round)
+- [X] T015 [P] Create `src/Models/Player.php` per [data-model.md#player](./data-model.md#player)
+- [X] T016 [P] Create `src/Models/Allocation.php` per [data-model.md#allocation](./data-model.md#allocation)
 
 ### Request Handling Infrastructure
 
-- [ ] T017 Create `public/index.php` front controller with basic routing
-- [ ] T018 Create `src/Controllers/BaseController.php` with JSON response helpers
-- [ ] T019 Create `src/Middleware/AdminAuthMiddleware.php` checking X-Admin-Token header per [contracts/api.yaml#securitySchemes](./contracts/api.yaml)
-- [ ] T020 Create base layout template `src/Views/layout.php` with Pico CSS + HTMX per [research.md#implementation-notes](./research.md#implementation-notes)
+- [X] T017 Create `public/index.php` front controller with basic routing
+- [X] T018 Create `src/Controllers/BaseController.php` with JSON response helpers
+- [X] T019 Create `src/Middleware/AdminAuthMiddleware.php` checking X-Admin-Token header per [contracts/api.yaml#securitySchemes](./contracts/api.yaml)
+- [X] T020 Create base layout template `src/Views/layout.php` with Pico CSS + HTMX per [research.md#implementation-notes](./research.md#implementation-notes)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -86,21 +86,21 @@ Based on plan.md project structure:
 
 ### Tests for User Story 2
 
-- [ ] T021 [P] [US2] Write `tests/Unit/Services/TokenGeneratorTest.php` - verify 16-char base64 output
-- [ ] T022 [P] [US2] Write `tests/Unit/Services/TournamentServiceTest.php` - validate BCP URL format, table count range
-- [ ] T023 [P] [US2] Write `tests/Integration/TournamentCreationTest.php` - end-to-end tournament creation
+- [X] T021 [P] [US2] Write `tests/Unit/Services/TokenGeneratorTest.php` - verify 16-char base64 output
+- [X] T022 [P] [US2] Write `tests/Unit/Services/TournamentServiceTest.php` - validate BCP URL format, table count range
+- [X] T023 [P] [US2] Write `tests/Integration/TournamentCreationTest.php` - end-to-end tournament creation
 
 ### Implementation for User Story 2
 
-- [ ] T024 [US2] Create `src/Services/TokenGenerator.php` - generate 16-char base64 tokens (FR-002)
-- [ ] T025 [US2] Create `src/Services/TournamentService.php` with `createTournament()` method per [contracts/api.yaml#CreateTournamentRequest](./contracts/api.yaml)
-- [ ] T026 [US2] Implement BCP URL validation (pattern: `https://www.bestcoastpairings.com/event/{eventId}`) per [data-model.md#tournament](./data-model.md#tournament)
-- [ ] T027 [US2] Implement table creation in transaction with tournament per [data-model.md#transaction-boundaries](./data-model.md#transaction-boundaries)
-- [ ] T028 [US2] Create `src/Controllers/TournamentController.php` with POST /api/tournaments endpoint
-- [ ] T029 [US2] Implement admin token cookie setting (30-day retention) per FR-003
-- [ ] T030 [US2] Create `src/Controllers/TerrainTypeController.php` with GET /api/terrain-types endpoint
-- [ ] T031 [US2] Create `src/Views/tournament/create.php` form view with HTMX
-- [ ] T032 [US2] Implement PUT /api/tournaments/{id}/tables for terrain type assignment per FR-005
+- [X] T024 [US2] Create `src/Services/TokenGenerator.php` - generate 16-char base64 tokens (FR-002)
+- [X] T025 [US2] Create `src/Services/TournamentService.php` with `createTournament()` method per [contracts/api.yaml#CreateTournamentRequest](./contracts/api.yaml)
+- [X] T026 [US2] Implement BCP URL validation (pattern: `https://www.bestcoastpairings.com/event/{eventId}`) per [data-model.md#tournament](./data-model.md#tournament)
+- [X] T027 [US2] Implement table creation in transaction with tournament per [data-model.md#transaction-boundaries](./data-model.md#transaction-boundaries)
+- [X] T028 [US2] Create `src/Controllers/TournamentController.php` with POST /api/tournaments endpoint
+- [X] T029 [US2] Implement admin token cookie setting (30-day retention) per FR-003
+- [X] T030 [US2] Create `src/Controllers/TerrainTypeController.php` with GET /api/terrain-types endpoint
+- [X] T031 [US2] Create `src/Views/tournament/create.php` form view with HTMX
+- [X] T032 [US2] Implement PUT /api/tournaments/{id}/tables for terrain type assignment per FR-005
 
 **Checkpoint**: Tournament creation works independently - can create tournament and receive admin token
 
