@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Tests\Integration;
+namespace TournamentTables\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
-use KTTables\Services\AuthService;
-use KTTables\Services\TournamentService;
-use KTTables\Middleware\AdminAuthMiddleware;
-use KTTables\Models\Tournament;
-use KTTables\Database\Connection;
+use TournamentTables\Services\AuthService;
+use TournamentTables\Services\TournamentService;
+use TournamentTables\Middleware\AdminAuthMiddleware;
+use TournamentTables\Models\Tournament;
+use TournamentTables\Database\Connection;
 
 /**
  * Integration tests for authentication flow.

@@ -1,4 +1,4 @@
-# Research: Kill Team Tables - Tournament Table Allocation
+# Research: Tournament Tables - Tournament Table Allocation
 
 **Generated**: 2026-01-13 | **Branch**: `001-table-allocation`
 

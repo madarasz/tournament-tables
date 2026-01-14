@@ -23,7 +23,7 @@ Follow-up TODOs: None
 =============================================================================
 -->
 
-# Kill Team Tables Constitution
+# Tournament Tables Constitution
 
 ## Core Principles
 
@@ -127,7 +127,7 @@ if questions arise. Black-box allocation erodes trust.
 
 ## Governance
 
-This constitution supersedes all other development practices for the Kill Team Tables
+This constitution supersedes all other development practices for the Tournament Tables
 project. Compliance is mandatory for all contributions.
 
 **Amendment Process**:

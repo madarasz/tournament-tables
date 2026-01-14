@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Tests\Integration;
+namespace TournamentTables\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
-use KTTables\Database\Connection;
+use TournamentTables\Database\Connection;
 use PDO;
 use PDOException;
 

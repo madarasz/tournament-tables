@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Services;
+namespace TournamentTables\Services;
 
 /**
  * Service for fetching pairing data from Best Coast Pairings (BCP) REST API.

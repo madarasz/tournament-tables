@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Tests\Unit\Services;
+namespace TournamentTables\Tests\Unit\Services;
 
 use PHPUnit\Framework\TestCase;
-use KTTables\Services\AuthService;
+use TournamentTables\Services\AuthService;
 
 /**
  * Tests for AuthService.

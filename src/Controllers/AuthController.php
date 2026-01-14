@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Controllers;
+namespace TournamentTables\Controllers;
 
-use KTTables\Services\AuthService;
+use TournamentTables\Services\AuthService;
 
 /**
  * Authentication controller.

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Controllers;
+namespace TournamentTables\Controllers;
 
-use KTTables\Services\TournamentService;
-use KTTables\Models\Tournament;
-use KTTables\Middleware\AdminAuthMiddleware;
+use TournamentTables\Services\TournamentService;
+use TournamentTables\Models\Tournament;
+use TournamentTables\Middleware\AdminAuthMiddleware;
 
 /**
  * Tournament management controller.

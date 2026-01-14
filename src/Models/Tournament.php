@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Models;
+namespace TournamentTables\Models;
 
-use KTTables\Database\Connection;
+use TournamentTables\Database\Connection;
 
 /**
  * Tournament entity.
  *
- * Represents a Kill Team event managed through BCP.
+ * Represents a tournament event managed through BCP.
  * Reference: specs/001-table-allocation/data-model.md#tournament
  */
 class Tournament

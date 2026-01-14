@@ -1,4 +1,4 @@
-# Tasks: Kill Team Tables - Tournament Table Allocation
+# Tasks: Tournament Tables - Tournament Table Allocation
 
 **Input**: Design documents from `/specs/001-table-allocation/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/api.yaml

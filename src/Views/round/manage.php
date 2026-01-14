@@ -161,7 +161,7 @@ $hasTableCollisions = !empty($tableCollisions);
     <main class="container">
         <nav>
             <ul>
-                <li><strong>Kill Team Tables</strong></li>
+                <li><strong>Tournament Tables</strong></li>
             </ul>
             <ul>
                 <li><a href="/tournament/<?= $tournament->id ?>">Tournament Dashboard</a></li>
@@ -293,7 +293,7 @@ $hasTableCollisions = !empty($tableCollisions);
                 <tbody>
                     <?php
                     // Get all tables for dropdown
-                    $allTables = \KTTables\Models\Table::findByTournament($tournament->id);
+                    $allTables = \TournamentTables\Models\Table::findByTournament($tournament->id);
 
                     foreach ($allocations as $allocation):
                         $allocationConflicts = $allocation->getConflicts();
@@ -368,7 +368,7 @@ $hasTableCollisions = !empty($tableCollisions);
 
         <footer>
             <small>
-                Kill Team Tables - Tournament Table Allocation
+                Tournament Tables - Tournament Table Allocation
                 | Round <?= $round->roundNumber ?>
                 | <?= count($allocations) ?> allocation(s)
             </small>

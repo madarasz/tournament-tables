@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Services;
+namespace TournamentTables\Services;
 
 /**
  * Value object representing the cost calculation result.

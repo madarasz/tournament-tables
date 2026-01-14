@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Tests\Unit\Services;
+namespace TournamentTables\Tests\Unit\Services;
 
 use PHPUnit\Framework\TestCase;
-use KTTables\Services\AllocationService;
-use KTTables\Services\CostCalculator;
-use KTTables\Services\TournamentHistory;
-use KTTables\Services\Pairing;
-use KTTables\Services\AllocationResult;
+use TournamentTables\Services\AllocationService;
+use TournamentTables\Services\CostCalculator;
+use TournamentTables\Services\TournamentHistory;
+use TournamentTables\Services\Pairing;
+use TournamentTables\Services\AllocationResult;
 
 /**
  * Unit tests for AllocationService.

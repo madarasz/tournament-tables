@@ -1,4 +1,4 @@
-# Quickstart: Kill Team Tables
+# Quickstart: Tournament Tables
 
 **Generated**: 2026-01-13 | **Branch**: `001-table-allocation`
 
@@ -15,7 +15,7 @@
 
 ```bash
 git clone <repository-url>
-cd kt-tables
+cd tournament-tables
 
 # Install PHP dependencies
 composer install
@@ -34,7 +34,7 @@ Edit `config/database.php`:
 <?php
 return [
     'host' => 'localhost',
-    'database' => 'kt_tables',
+    'database' => 'tournament_tables',
     'username' => 'your_user',
     'password' => 'your_password',
     'charset' => 'utf8mb4',
@@ -45,16 +45,20 @@ return [
 
 ```bash
 # Create the database
-mysql -u root -p -e "CREATE DATABASE kt_tables CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p -e "CREATE DATABASE tournament_tables CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # Run migrations
 php bin/migrate.php
+# For Docker:
+docker-compose exec -w /var/www/app php php bin/migrate.php
 ```
 
 ### 4. Seed Terrain Types
 
 ```bash
 php bin/seed-terrain-types.php
+# For Docker:
+docker-compose exec -w /var/www/app php php bin/seed-terrain-types.php
 ```
 
 ### 5. Configure Chrome Path (if needed)
@@ -82,7 +86,7 @@ Visit `http://localhost:8080`
 ## Directory Structure
 
 ```
-kt-tables/
+tournament-tables/
 ├── public/                  # Web root
 │   ├── index.php           # Front controller
 │   ├── css/
@@ -114,6 +118,8 @@ kt-tables/
 ```bash
 # All tests
 ./vendor/bin/phpunit
+# For Docker
+docker-compose exec -w /var/www/app php ./vendor/bin/phpunit
 
 # Unit tests only
 ./vendor/bin/phpunit --testsuite unit
@@ -160,7 +166,7 @@ See [contracts/api.yaml](./contracts/api.yaml) for full API documentation.
 curl -X POST http://localhost:8080/api/tournaments \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Kill Team GT January 2026",
+    "name": "Tournament GT January 2026",
     "bcpUrl": "https://www.bestcoastpairings.com/event/t6OOun8POR60",
     "tableCount": 12
   }'
@@ -171,7 +177,7 @@ Response:
 {
   "tournament": {
     "id": 1,
-    "name": "Kill Team GT January 2026",
+    "name": "Tournament GT January 2026",
     "bcpEventId": "t6OOun8POR60",
     "tableCount": 12
   },
@@ -221,7 +227,7 @@ curl http://localhost:8080/api/public/tournaments/1/rounds/2
 
 1. Verify MySQL is running: `systemctl status mysql`
 2. Check credentials in `config/database.php`
-3. Ensure database exists: `mysql -e "SHOW DATABASES LIKE 'kt_tables';"`
+3. Ensure database exists: `mysql -e "SHOW DATABASES LIKE 'tournament_tables';"`
 
 ### Permission Issues
 

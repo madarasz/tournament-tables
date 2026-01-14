@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Controllers;
+namespace TournamentTables\Controllers;
 
-use KTTables\Models\Tournament;
-use KTTables\Models\Round;
+use TournamentTables\Models\Tournament;
+use TournamentTables\Models\Round;
 
 /**
  * Public (unauthenticated) controller.

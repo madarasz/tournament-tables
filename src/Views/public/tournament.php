@@ -18,7 +18,7 @@ $hasPublishedRounds = !empty($publishedRounds);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $pageTitle ?> - Kill Team Tables</title>
+    <title><?= $pageTitle ?> - Tournament Tables</title>
 
     <!-- Pico CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
@@ -225,7 +225,7 @@ $hasPublishedRounds = !empty($publishedRounds);
     </main>
 
     <footer class="public-footer">
-        Kill Team Tables - Tournament Table Allocation System
+        Tournament Tables - Tournament Table Allocation System
     </footer>
 </body>
 </html>

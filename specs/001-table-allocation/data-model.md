@@ -1,4 +1,4 @@
-# Data Model: Kill Team Tables
+# Data Model: Tournament Tables
 
 **Generated**: 2026-01-13 | **Branch**: `001-table-allocation`
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Controllers;
+namespace TournamentTables\Controllers;
 
 /**
  * Base controller with common functionality.
@@ -158,9 +158,9 @@ abstract class BaseController
     /**
      * Get the current authenticated tournament from middleware.
      *
-     * @return \KTTables\Models\Tournament|null
+     * @return \TournamentTables\Models\Tournament|null
      */
-    protected function getAuthenticatedTournament(): ?\KTTables\Models\Tournament
+    protected function getAuthenticatedTournament(): ?\TournamentTables\Models\Tournament
     {
         global $authenticatedTournament;
         return $authenticatedTournament ?? null;

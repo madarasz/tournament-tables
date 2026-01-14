@@ -1,11 +1,11 @@
-# Implementation Plan: Kill Team Tables - Tournament Table Allocation
+# Implementation Plan: BCP Tables - Tournament Table Allocation
 
 **Branch**: `001-table-allocation` | **Date**: 2026-01-13 | **Spec**: [spec.md](./spec.md)
 **Input**: Feature specification from `/specs/001-table-allocation/spec.md`
 
 ## Summary
 
-Build a web application that generates table allocations for Kill Team tournaments, ensuring players experience different tables each round. The system integrates with Best Coast Pairings (BCP) for pairing data via REST API, implements a priority-based allocation algorithm, and provides both organizer management and public viewing interfaces.
+Build a web application that generates table allocations for BCP tournaments, ensuring players experience different tables each round. The system integrates with Best Coast Pairings (BCP) for pairing data via REST API, implements a priority-based allocation algorithm, and provides both organizer management and public viewing interfaces.
 
 ## Technical Context
 

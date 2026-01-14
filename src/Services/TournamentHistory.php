@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Services;
+namespace TournamentTables\Services;
 
-use KTTables\Database\Connection;
+use TournamentTables\Database\Connection;
 
 /**
  * Service for querying tournament history (player table/terrain usage).

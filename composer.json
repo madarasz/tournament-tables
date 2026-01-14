@@ -1,6 +1,6 @@
 {
-    "name": "kt-tables/kt-tables",
-    "description": "Kill Team tournament table allocation system",
+    "name": "tournament-tables/tournament-tables",
+    "description": "Tournament table allocation system",
     "type": "project",
     "license": "MIT",
     "require": {
@@ -13,12 +13,12 @@
     },
     "autoload": {
         "psr-4": {
-            "KTTables\\": "src/"
+            "TournamentTables\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "KTTables\\Tests\\": "tests/"
+            "TournamentTables\\Tests\\": "tests/"
         }
     },
     "config": {

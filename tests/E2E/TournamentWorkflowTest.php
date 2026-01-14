@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Tests\E2E;
+namespace TournamentTables\Tests\E2E;
 
 use PHPUnit\Framework\TestCase;
-use KTTables\Database\Connection;
-use KTTables\Models\Tournament;
-use KTTables\Models\Round;
-use KTTables\Models\Table;
-use KTTables\Models\Player;
-use KTTables\Models\Allocation;
-use KTTables\Services\TournamentService;
-use KTTables\Services\AllocationService;
-use KTTables\Services\CostCalculator;
-use KTTables\Services\TournamentHistory;
-use KTTables\Services\Pairing;
+use TournamentTables\Database\Connection;
+use TournamentTables\Models\Tournament;
+use TournamentTables\Models\Round;
+use TournamentTables\Models\Table;
+use TournamentTables\Models\Player;
+use TournamentTables\Models\Allocation;
+use TournamentTables\Services\TournamentService;
+use TournamentTables\Services\AllocationService;
+use TournamentTables\Services\CostCalculator;
+use TournamentTables\Services\TournamentHistory;
+use TournamentTables\Services\Pairing;
 
 /**
  * End-to-end tests for the complete tournament workflow.

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Services;
+namespace TournamentTables\Services;
 
 /**
  * Secure token generator for admin authentication.

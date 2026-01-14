@@ -12,13 +12,13 @@ ob_start();
 <article>
     <header>
         <h1>Create New Tournament</h1>
-        <p>Set up a new Kill Team tournament with BCP integration.</p>
+        <p>Set up a new tournament with BCP integration.</p>
     </header>
 
     <form id="createTournamentForm" hx-post="/api/tournaments" hx-target="#result" hx-swap="innerHTML">
         <label for="name">
             Tournament Name
-            <input type="text" id="name" name="name" placeholder="Kill Team GT January 2026" required>
+            <input type="text" id="name" name="name" placeholder="My Tournament January 2026" required>
         </label>
 
         <label for="bcpUrl">

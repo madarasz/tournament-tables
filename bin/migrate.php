@@ -6,7 +6,7 @@ declare(strict_types=1);
 /**
  * Database migration script
  *
- * Creates all required tables for the Kill Team Tables application.
+ * Creates all required tables for the Tournament Tables application.
  * Reference: specs/001-table-allocation/data-model.md#database-schema-mysql
  */
 

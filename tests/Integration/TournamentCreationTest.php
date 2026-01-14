@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Tests\Integration;
+namespace TournamentTables\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
-use KTTables\Services\TournamentService;
-use KTTables\Models\Tournament;
-use KTTables\Models\Table;
-use KTTables\Database\Connection;
+use TournamentTables\Services\TournamentService;
+use TournamentTables\Models\Tournament;
+use TournamentTables\Models\Table;
+use TournamentTables\Database\Connection;
 
 /**
  * Integration tests for tournament creation.

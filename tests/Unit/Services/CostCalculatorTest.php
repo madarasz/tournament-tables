@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Tests\Unit\Services;
+namespace TournamentTables\Tests\Unit\Services;
 
 use PHPUnit\Framework\TestCase;
-use KTTables\Services\CostCalculator;
-use KTTables\Services\CostResult;
-use KTTables\Services\TournamentHistory;
+use TournamentTables\Services\CostCalculator;
+use TournamentTables\Services\CostResult;
+use TournamentTables\Services\TournamentHistory;
 
 /**
  * Unit tests for CostCalculator.

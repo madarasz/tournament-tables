@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 return [
     'host' => 'localhost',
-    'database' => 'kt_tables',
+    'database' => 'tournament_tables',
     'username' => 'your_user',
     'password' => 'your_password',
     'charset' => 'utf8mb4',

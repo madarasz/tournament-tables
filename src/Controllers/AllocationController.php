@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Controllers;
+namespace TournamentTables\Controllers;
 
-use KTTables\Models\Allocation;
-use KTTables\Models\Round;
-use KTTables\Models\Table;
-use KTTables\Middleware\AdminAuthMiddleware;
-use KTTables\Database\Connection;
-use KTTables\Services\AllocationEditService;
-use KTTables\Services\CostCalculator;
+use TournamentTables\Models\Allocation;
+use TournamentTables\Models\Round;
+use TournamentTables\Models\Table;
+use TournamentTables\Middleware\AdminAuthMiddleware;
+use TournamentTables\Database\Connection;
+use TournamentTables\Services\AllocationEditService;
+use TournamentTables\Services\CostCalculator;
 
 /**
  * Allocation editing controller.

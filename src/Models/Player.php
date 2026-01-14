@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Models;
+namespace TournamentTables\Models;
 
-use KTTables\Database\Connection;
+use TournamentTables\Database\Connection;
 
 /**
  * Player entity.

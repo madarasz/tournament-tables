@@ -3,20 +3,20 @@
 declare(strict_types=1);
 
 /**
- * Front controller for Kill Team Tables application.
+ * Front controller for Tournament Tables application.
  */
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use KTTables\Controllers\BaseController;
-use KTTables\Controllers\TournamentController;
-use KTTables\Controllers\TerrainTypeController;
-use KTTables\Controllers\AuthController;
-use KTTables\Controllers\RoundController;
-use KTTables\Controllers\AllocationController;
-use KTTables\Controllers\PublicController;
-use KTTables\Controllers\ViewController;
-use KTTables\Middleware\AdminAuthMiddleware;
+use TournamentTables\Controllers\BaseController;
+use TournamentTables\Controllers\TournamentController;
+use TournamentTables\Controllers\TerrainTypeController;
+use TournamentTables\Controllers\AuthController;
+use TournamentTables\Controllers\RoundController;
+use TournamentTables\Controllers\AllocationController;
+use TournamentTables\Controllers\PublicController;
+use TournamentTables\Controllers\ViewController;
+use TournamentTables\Middleware\AdminAuthMiddleware;
 
 // Error handling
 error_reporting(E_ALL);

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Tests\Integration;
+namespace TournamentTables\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
-use KTTables\Services\BCPScraperService;
-use KTTables\Services\Pairing;
+use TournamentTables\Services\BCPScraperService;
+use TournamentTables\Services\Pairing;
 
 /**
  * Integration tests for BCP scraper service.

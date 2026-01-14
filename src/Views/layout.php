@@ -9,9 +9,9 @@
  * @var bool $isPublic Whether this is a public page (no admin nav)
  */
 
-use KTTables\Services\CsrfService;
+use TournamentTables\Services\CsrfService;
 
-$title = $title ?? 'Kill Team Tables';
+$title = $title ?? 'Tournament Tables';
 $isPublic = $isPublic ?? false;
 ?>
 <!DOCTYPE html>
@@ -19,7 +19,7 @@ $isPublic = $isPublic ?? false;
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= htmlspecialchars($title) ?> - Kill Team Tables</title>
+    <title><?= htmlspecialchars($title) ?> - Tournament Tables</title>
     <?= CsrfService::getMetaTag() ?>
 
     <!-- Pico CSS -->
@@ -161,7 +161,7 @@ $isPublic = $isPublic ?? false;
     <nav>
         <div class="container">
             <ul>
-                <li><a href="/" class="brand">Kill Team Tables</a></li>
+                <li><a href="/" class="brand">Tournament Tables</a></li>
                 <li><a href="/tournament/create">New Tournament</a></li>
                 <li><a href="/login">Login</a></li>
             </ul>
@@ -171,7 +171,7 @@ $isPublic = $isPublic ?? false;
     <nav>
         <div class="container">
             <ul>
-                <li><a href="/" class="brand">Kill Team Tables</a></li>
+                <li><a href="/" class="brand">Tournament Tables</a></li>
             </ul>
         </div>
     </nav>
@@ -183,7 +183,7 @@ $isPublic = $isPublic ?? false;
 
     <footer>
         <div class="container">
-            Kill Team Tables - Tournament Table Allocation System
+            Tournament Tables - Tournament Table Allocation System
         </div>
     </footer>
 

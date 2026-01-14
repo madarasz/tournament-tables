@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Controllers;
+namespace TournamentTables\Controllers;
 
-use KTTables\Models\Tournament;
-use KTTables\Models\Round;
-use KTTables\Models\Allocation;
+use TournamentTables\Models\Tournament;
+use TournamentTables\Models\Round;
+use TournamentTables\Models\Allocation;
 
 /**
  * View controller for HTML page rendering.
@@ -189,7 +189,7 @@ class ViewController extends BaseController
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 Not Found - Kill Team Tables</title>
+    <title>404 Not Found - Tournament Tables</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <style>
         .error-container {

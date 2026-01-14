@@ -6,7 +6,7 @@ declare(strict_types=1);
 /**
  * Seed terrain types
  *
- * Populates the terrain_types table with predefined Kill Team terrain types.
+ * Populates the terrain_types table with predefined terrain types.
  * Reference: specs/001-table-allocation/data-model.md#initial-data
  */
 

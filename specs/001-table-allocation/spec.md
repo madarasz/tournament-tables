@@ -1,4 +1,4 @@
-# Feature Specification: Kill Team Tables - Tournament Table Allocation
+# Feature Specification: Tournament Tables - Tournament Table Allocation
 
 **Feature Branch**: `001-table-allocation`
 **Created**: 2026-01-13

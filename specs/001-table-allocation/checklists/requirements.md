@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Kill Team Tables - Tournament Table Allocation
+# Specification Quality Checklist: Tournament Tables - Tournament Table Allocation
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-01-13

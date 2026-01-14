@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Controllers;
+namespace TournamentTables\Controllers;
 
-use KTTables\Models\TerrainType;
+use TournamentTables\Models\TerrainType;
 
 /**
  * Terrain type controller.

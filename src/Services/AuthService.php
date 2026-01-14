@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Services;
+namespace TournamentTables\Services;
 
-use KTTables\Models\Tournament;
+use TournamentTables\Models\Tournament;
 
 /**
  * Authentication service.

@@ -1,10 +1,10 @@
-# Kill Team Tables - Routes Documentation
+# Tournament Tables - Routes Documentation
 
 **Generated**: 2026-01-13 | **Branch**: `001-table-allocation`
 
 ## Overview
 
-This document describes all available web pages and API endpoints in the Kill Team Tables application.
+This document describes all available web pages and API endpoints in the Tournament Tables application.
 
 ---
 

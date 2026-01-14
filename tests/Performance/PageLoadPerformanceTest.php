@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Tests\Performance;
+namespace TournamentTables\Tests\Performance;
 
 use PHPUnit\Framework\TestCase;
-use KTTables\Database\Connection;
-use KTTables\Models\Tournament;
-use KTTables\Models\Round;
-use KTTables\Models\Table;
-use KTTables\Models\Player;
-use KTTables\Models\Allocation;
+use TournamentTables\Database\Connection;
+use TournamentTables\Models\Tournament;
+use TournamentTables\Models\Round;
+use TournamentTables\Models\Table;
+use TournamentTables\Models\Player;
+use TournamentTables\Models\Allocation;
 
 /**
  * Performance tests for page load times.

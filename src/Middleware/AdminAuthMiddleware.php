@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Middleware;
+namespace TournamentTables\Middleware;
 
-use KTTables\Models\Tournament;
+use TournamentTables\Models\Tournament;
 
 /**
  * Admin authentication middleware.

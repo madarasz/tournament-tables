@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Services;
+namespace TournamentTables\Services;
 
 /**
  * Service for generating table allocations.

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Database;
+namespace TournamentTables\Database;
 
 use PDO;
 use PDOStatement;

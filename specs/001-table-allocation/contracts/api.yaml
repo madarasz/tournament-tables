@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Kill Team Tables API
+  title: Tournament Tables API
   description: |
     API for tournament table allocation management.
 

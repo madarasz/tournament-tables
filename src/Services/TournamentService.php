@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace KTTables\Services;
+namespace TournamentTables\Services;
 
-use KTTables\Models\Tournament;
-use KTTables\Models\Table;
-use KTTables\Database\Connection;
+use TournamentTables\Models\Tournament;
+use TournamentTables\Models\Table;
+use TournamentTables\Database\Connection;
 use InvalidArgumentException;
 use RuntimeException;
 

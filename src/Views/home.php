@@ -2,7 +2,7 @@
 /**
  * Home page view.
  *
- * Landing page for Kill Team Tables application.
+ * Landing page for Tournament Tables application.
  */
 ?>
 <!DOCTYPE html>
@@ -10,7 +10,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kill Team Tables - Tournament Table Allocation</title>
+    <title>Tournament Tables - Tournament Table Allocation</title>
 
     <!-- Pico CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
@@ -114,8 +114,8 @@
 </head>
 <body>
     <header class="hero">
-        <h1>Kill Team Tables</h1>
-        <p>Smart table allocation for Kill Team tournaments. Ensure every player gets a unique gaming experience.</p>
+        <h1>Tournament Tables</h1>
+        <p>Smart table allocation for BCP tournaments. Ensure every player gets a unique gaming experience.</p>
 
         <div class="actions">
             <a href="/tournament/create" class="btn-primary">Create Tournament</a>
@@ -158,7 +158,7 @@
     </main>
 
     <footer>
-        Kill Team Tables - Tournament Table Allocation System
+        Tournament Tables - Tournament Table Allocation System
     </footer>
 </body>
 </html>
