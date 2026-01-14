@@ -114,6 +114,7 @@ class AllocationEditServiceTest extends TestCase
 
     /**
      * Test editing with duplicate table assignment (table already used in round).
+     * Collisions are now warnings (TABLE_COLLISION conflict) instead of blocking errors.
      */
     public function testEditTableAssignmentDuplicateTable(): void
     {
@@ -123,7 +124,7 @@ class AllocationEditServiceTest extends TestCase
         // Create statement mock for different calls
         $stmt = $this->createMock(PDOStatement::class);
 
-        // Sequence of fetch calls
+        // Sequence of fetch calls - now includes additional calls for conflict calculation
         $stmt->method('fetch')->willReturnOnConsecutiveCalls(
             // 1. getAllocation
             [
@@ -151,16 +152,39 @@ class AllocationEditServiceTest extends TestCase
                 'id' => 2, // Different allocation already using table 5
                 'round_id' => 1,
                 'table_id' => $newTableId,
-            ]
+            ],
+            // 5. getTable for calculateConflicts
+            [
+                'id' => $newTableId,
+                'tournament_id' => 1,
+                'table_number' => 5,
+                'terrain_type_id' => null,
+            ],
+            // 6-7. hasPlayerUsedTable queries return count 0
+            ['count' => 0],
+            ['count' => 0]
         );
 
         $this->mockDb->method('prepare')->willReturn($stmt);
         $stmt->method('execute')->willReturn(true);
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Table 5 is already assigned in this round');
+        // Now returns success with TABLE_COLLISION conflict instead of throwing
+        $result = $this->service->editTableAssignment($allocationId, $newTableId);
 
-        $this->service->editTableAssignment($allocationId, $newTableId);
+        $this->assertTrue($result['success']);
+        $this->assertEquals($allocationId, $result['allocationId']);
+        $this->assertEquals($newTableId, $result['newTableId']);
+
+        // Should have TABLE_COLLISION conflict
+        $hasCollisionConflict = false;
+        foreach ($result['conflicts'] as $conflict) {
+            if ($conflict['type'] === 'TABLE_COLLISION') {
+                $hasCollisionConflict = true;
+                $this->assertEquals(2, $conflict['otherAllocationId']);
+                break;
+            }
+        }
+        $this->assertTrue($hasCollisionConflict, 'Expected TABLE_COLLISION conflict');
     }
 
     /**

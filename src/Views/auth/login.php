@@ -49,32 +49,60 @@ ob_start();
 </article>
 
 <script>
+// Helper to safely create an article with header and content
+function createAlertArticle(className, title) {
+    const article = document.createElement('article');
+    article.className = className;
+    const header = document.createElement('header');
+    const h3 = document.createElement('h3');
+    h3.textContent = title;
+    header.appendChild(h3);
+    article.appendChild(header);
+    return article;
+}
+
 // Handle successful authentication
 document.body.addEventListener('htmx:afterRequest', function(event) {
     if (event.detail.pathInfo.requestPath === '/api/auth' && event.detail.successful) {
+        const resultEl = document.getElementById('result');
+        resultEl.innerHTML = '';
+
         try {
             const response = JSON.parse(event.detail.xhr.responseText);
             if (response.tournamentId) {
-                document.getElementById('result').innerHTML = `
-                    <article class="alert-success">
-                        <header>
-                            <h3>Login Successful</h3>
-                        </header>
-                        <p>Welcome back! You now have access to <strong>${response.tournamentName}</strong>.</p>
-                        <p>
-                            <a href="/tournament/${response.tournamentId}" role="button">Go to Tournament</a>
-                        </p>
-                    </article>
-                `;
+                const article = createAlertArticle('alert-success', 'Login Successful');
+
+                const p1 = document.createElement('p');
+                p1.appendChild(document.createTextNode('Welcome back! You now have access to '));
+                const strong = document.createElement('strong');
+                strong.textContent = response.tournamentName || 'this tournament';
+                p1.appendChild(strong);
+                p1.appendChild(document.createTextNode('.'));
+                article.appendChild(p1);
+
+                const p2 = document.createElement('p');
+                const link = document.createElement('a');
+                // Validate tournamentId is numeric to prevent URL injection
+                const tournamentId = parseInt(response.tournamentId, 10);
+                if (!isNaN(tournamentId) && tournamentId > 0) {
+                    link.href = '/tournament/' + tournamentId;
+                } else {
+                    link.href = '/';
+                }
+                link.setAttribute('role', 'button');
+                link.textContent = 'Go to Tournament';
+                p2.appendChild(link);
+                article.appendChild(p2);
+
+                resultEl.appendChild(article);
             }
         } catch (e) {
             // JSON parse error, show generic success
-            document.getElementById('result').innerHTML = `
-                <article class="alert-success">
-                    <header><h3>Login Successful</h3></header>
-                    <p>You are now authenticated.</p>
-                </article>
-            `;
+            const article = createAlertArticle('alert-success', 'Login Successful');
+            const p = document.createElement('p');
+            p.textContent = 'You are now authenticated.';
+            article.appendChild(p);
+            resultEl.appendChild(article);
         }
     }
 });
@@ -82,33 +110,42 @@ document.body.addEventListener('htmx:afterRequest', function(event) {
 // Handle authentication errors
 document.body.addEventListener('htmx:afterRequest', function(event) {
     if (event.detail.pathInfo.requestPath === '/api/auth' && !event.detail.successful) {
+        const resultEl = document.getElementById('result');
+        resultEl.innerHTML = '';
+
         try {
             const response = JSON.parse(event.detail.xhr.responseText);
-            let errorHtml = '<article class="alert-error"><header><h3>Authentication Failed</h3></header>';
+            const article = createAlertArticle('alert-error', 'Authentication Failed');
 
-            if (response.fields) {
-                errorHtml += '<ul>';
+            if (response.fields && typeof response.fields === 'object') {
+                const ul = document.createElement('ul');
                 for (const [field, errors] of Object.entries(response.fields)) {
-                    errors.forEach(error => {
-                        errorHtml += `<li>${error}</li>`;
-                    });
+                    if (Array.isArray(errors)) {
+                        errors.forEach(error => {
+                            const li = document.createElement('li');
+                            li.textContent = String(error);
+                            ul.appendChild(li);
+                        });
+                    }
                 }
-                errorHtml += '</ul>';
+                article.appendChild(ul);
             } else if (response.message) {
-                errorHtml += `<p>${response.message}</p>`;
+                const p = document.createElement('p');
+                p.textContent = String(response.message);
+                article.appendChild(p);
             } else {
-                errorHtml += '<p>Invalid token. Please check and try again.</p>';
+                const p = document.createElement('p');
+                p.textContent = 'Invalid token. Please check and try again.';
+                article.appendChild(p);
             }
 
-            errorHtml += '</article>';
-            document.getElementById('result').innerHTML = errorHtml;
+            resultEl.appendChild(article);
         } catch (e) {
-            document.getElementById('result').innerHTML = `
-                <article class="alert-error">
-                    <header><h3>Error</h3></header>
-                    <p>An unexpected error occurred. Please try again.</p>
-                </article>
-            `;
+            const article = createAlertArticle('alert-error', 'Error');
+            const p = document.createElement('p');
+            p.textContent = 'An unexpected error occurred. Please try again.';
+            article.appendChild(p);
+            resultEl.appendChild(article);
         }
     }
 });

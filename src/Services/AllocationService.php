@@ -83,10 +83,63 @@ class AllocationService
     private function generateRound1Allocations(array $pairings, array $tables): AllocationResult
     {
         $allocations = [];
+        $conflicts = [];
         $timestamp = date('c');
 
+        // Build set of available table numbers
+        $availableTableNumbers = [];
+        foreach ($tables as $table) {
+            $tableNumber = is_array($table) ? $table['tableNumber'] : $table->tableNumber;
+            $availableTableNumbers[$tableNumber] = true;
+        }
+
+        // Track assigned table numbers to prevent collisions
+        $assignedTableNumbers = [];
+
         foreach ($pairings as $pairing) {
-            $tableNumber = $pairing->bcpTableNumber ?? 1;
+            $tableNumber = $pairing->bcpTableNumber;
+            $reason = 'Round 1 - using BCP original assignment';
+            $pairingConflicts = [];
+
+            // Validate table number: must be in available tables and not already assigned
+            $needsReassignment = false;
+            if ($tableNumber === null) {
+                $needsReassignment = true;
+                $reason = 'Round 1 - BCP table number missing, assigned next available';
+            } elseif (!isset($availableTableNumbers[$tableNumber])) {
+                $needsReassignment = true;
+                $reason = "Round 1 - BCP table {$tableNumber} not in tournament tables, assigned next available";
+            } elseif (isset($assignedTableNumbers[$tableNumber])) {
+                $needsReassignment = true;
+                $reason = "Round 1 - BCP table {$tableNumber} already assigned, assigned next available";
+            }
+
+            if ($needsReassignment) {
+                // Find next available table
+                $tableNumber = null;
+                foreach ($availableTableNumbers as $num => $available) {
+                    if (!isset($assignedTableNumbers[$num])) {
+                        $tableNumber = $num;
+                        break;
+                    }
+                }
+
+                if ($tableNumber === null) {
+                    // No tables available - add conflict but continue with placeholder
+                    $pairingConflicts[] = [
+                        'type' => 'NO_TABLE_AVAILABLE',
+                        'message' => "No available tables for pairing {$pairing->player1Name} vs {$pairing->player2Name}",
+                    ];
+                    $conflicts[] = $pairingConflicts[0];
+                    // Use 0 as placeholder for unassigned
+                    $tableNumber = 0;
+                }
+            }
+
+            // Mark table as assigned (if valid)
+            if ($tableNumber > 0) {
+                $assignedTableNumbers[$tableNumber] = true;
+            }
 
             $allocations[] = [
                 'tableNumber' => $tableNumber,
@@ -108,19 +161,19 @@ class AllocationService
                         'terrainReuse' => 0,
                         'tableNumber' => 0,
                     ],
-                    'reasons' => ['Round 1 - using BCP original assignment'],
+                    'reasons' => [$reason],
                     'alternativesConsidered' => [],
                     'isRound1' => true,
-                    'conflicts' => [],
+                    'conflicts' => $pairingConflicts,
                 ],
             ];
         }
 
-        return new AllocationResult(
-            $allocations,
-            [],
-            'Round 1 allocations use BCP original table assignments.'
-        );
+        $summary = count($conflicts) > 0
+            ? 'Round 1 allocations generated with ' . count($conflicts) . ' conflict(s).'
+            : 'Round 1 allocations use BCP original table assignments.';
+
+        return new AllocationResult($allocations, $conflicts, $summary);
     }
 
     /**

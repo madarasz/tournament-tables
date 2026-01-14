@@ -54,9 +54,9 @@ document.body.addEventListener('htmx:afterRequest', function(event) {
                         <h3>Tournament Created!</h3>
                     </header>
                     <p><strong>Important:</strong> Save your admin token. You'll need it to manage this tournament.</p>
-                    <p class="token-display">${response.adminToken}</p>
+                    <p class="token-display">${escapeHtml(response.adminToken)}</p>
                     <p>
-                        <a href="/tournament/${response.tournament.id}" role="button">Go to Tournament</a>
+                        <a href="/tournament/${encodeURIComponent(response.tournament.id)}" role="button">Go to Tournament</a>
                     </p>
                 </article>
             `;
@@ -75,7 +75,7 @@ document.body.addEventListener('htmx:afterRequest', function(event) {
                 errorHtml += '<ul>';
                 for (const [field, errors] of Object.entries(response.fields)) {
                     errors.forEach(error => {
-                        errorHtml += `<li><strong>${field}:</strong> ${error}</li>`;
+                        errorHtml += `<li><strong>${escapeHtml(field)}:</strong> ${escapeHtml(error)}</li>`;
                     });
                 }
                 errorHtml += '</ul>';

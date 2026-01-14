@@ -208,6 +208,51 @@ class Round
     }
 
     /**
+     * Check if round has table collisions (same table assigned to multiple allocations).
+     */
+    public function hasTableCollisions(): bool
+    {
+        $count = Connection::fetchColumn(
+            'SELECT COUNT(*) FROM (
+                SELECT table_id FROM allocations
+                WHERE round_id = ?
+                GROUP BY table_id
+                HAVING COUNT(*) > 1
+            ) AS duplicates',
+            [$this->id]
+        );
+        return (int) $count > 0;
+    }
+
+    /**
+     * Get table collisions in this round.
+     *
+     * @return array List of collisions with table info and allocation IDs
+     */
+    public function getTableCollisions(): array
+    {
+        $rows = Connection::fetchAll(
+            'SELECT a.table_id, t.table_number, GROUP_CONCAT(a.id) as allocation_ids
+             FROM allocations a
+             JOIN tables t ON a.table_id = t.id
+             WHERE a.round_id = ?
+             GROUP BY a.table_id, t.table_number
+             HAVING COUNT(*) > 1',
+            [$this->id]
+        );
+
+        $collisions = [];
+        foreach ($rows as $row) {
+            $collisions[] = [
+                'tableId' => (int) $row['table_id'],
+                'tableNumber' => (int) $row['table_number'],
+                'allocationIds' => array_map('intval', explode(',', $row['allocation_ids'])),
+            ];
+        }
+        return $collisions;
+    }
+
+    /**
      * Convert to array for JSON serialization.
      */
     public function toArray(): array

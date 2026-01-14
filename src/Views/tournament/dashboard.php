@@ -162,14 +162,14 @@ document.getElementById('import-form').addEventListener('submit', function(e) {
 
         if (response.status >= 200 && response.status < 300) {
             result.innerHTML = '<div class="alert alert-success">' +
-                'Successfully imported ' + response.data.pairingsImported + ' pairings for Round ' + roundNumber + '. ' +
+                'Successfully imported ' + escapeHtml(String(response.data.pairingsImported)) + ' pairings for Round ' + escapeHtml(roundNumber) + '. ' +
                 '<a href="/tournament/<?= $tournament->id ?>/round/' + roundNumber + '">Manage Round ' + roundNumber + '</a>' +
                 '</div>';
             // Reload after a short delay to show updated rounds list
             setTimeout(function() { location.reload(); }, 2000);
         } else {
             result.innerHTML = '<div class="alert alert-error">' +
-                'Error: ' + (response.data.message || 'Failed to import round') +
+                'Error: ' + escapeHtml(response.data.message || 'Failed to import round') +
                 '</div>';
         }
     })
@@ -177,7 +177,7 @@ document.getElementById('import-form').addEventListener('submit', function(e) {
         button.disabled = false;
         indicator.style.display = 'none';
         text.style.display = 'inline';
-        result.innerHTML = '<div class="alert alert-error">Network error: ' + error.message + '</div>';
+        result.innerHTML = '<div class="alert alert-error">Network error: ' + escapeHtml(error.message) + '</div>';
     });
 });
 </script>

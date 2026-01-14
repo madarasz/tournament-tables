@@ -66,11 +66,6 @@ class AllocationEditService
         // Check if table is already used in this round (by a different allocation)
         $existingAllocation = $this->getAllocationByRoundAndTable($allocation['round_id'], $newTableId);
 
-        // Throw exception if table is already assigned to a different allocation
-        if ($existingAllocation && $existingAllocation['id'] !== $allocationId) {
-            throw new RuntimeException('Table ' . $newTable['table_number'] . ' is already assigned in this round');
-        }
-
         // Update allocation
         $stmt = $this->db->prepare(
             'UPDATE allocations SET table_id = ? WHERE id = ?'

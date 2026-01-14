@@ -28,6 +28,9 @@ $isPublic = $isPublic ?? false;
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 
+    <!-- App utilities -->
+    <script src="/js/utils.js"></script>
+
     <style>
         /* Custom styles */
         :root {

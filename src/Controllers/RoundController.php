@@ -336,6 +336,19 @@ class RoundController extends BaseController
             return;
         }
 
+        // Check for table collisions before publishing
+        if ($round->hasTableCollisions()) {
+            $collisions = $round->getTableCollisions();
+            $tableNumbers = array_column($collisions, 'tableNumber');
+            $this->error(
+                'table_collision',
+                'Cannot publish: Table collision detected on table(s) ' . implode(', ', $tableNumbers) .
+                '. Each table can only be assigned to one pairing per round.',
+                400
+            );
+            return;
+        }
+
         $round->publish();
 
         $this->success([

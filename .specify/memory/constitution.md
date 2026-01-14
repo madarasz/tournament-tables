@@ -2,17 +2,14 @@
 =============================================================================
 SYNC IMPACT REPORT
 =============================================================================
-Version Change: N/A → 1.0.0 (initial ratification)
+Version Change: 1.0.0 → 1.1.0
 
-Modified Principles: N/A (initial creation)
+Modified Principles: None
 
 Added Sections:
-  - Core Principles (5 principles)
-  - Technical Standards
-  - Development Workflow
-  - Governance
+  - Technical Standards > JavaScript Standards (new subsection)
 
-Removed Sections: N/A (initial creation)
+Removed Sections: None
 
 Templates Requiring Updates:
   - .specify/templates/plan-template.md: ✅ Compatible (no changes needed)
@@ -99,6 +96,13 @@ if questions arise. Black-box allocation erodes trust.
 - Input validation MUST occur at system boundaries (form submissions, API imports)
 - Error messages MUST be user-friendly; technical details logged server-side only
 
+**JavaScript Standards**:
+- Client-side code MUST escape all dynamic content before DOM insertion to prevent XSS
+  (use `escapeHtml()` for HTML context, `encodeURIComponent()` for URL parameters)
+- Shared JavaScript utilities MUST be placed in `public/js/utils.js` and loaded via layout
+- Inline `<script>` blocks in views MUST NOT duplicate functions available in shared utilities
+- ES5 syntax MUST be used for broad browser compatibility (no arrow functions, const/let, etc.)
+
 **Testing Requirements**:
 - PHPUnit for unit and integration tests
 - Test database MUST be isolated from production data
@@ -145,4 +149,4 @@ project. Compliance is mandatory for all contributions.
 - Violations MUST be documented in Complexity Tracking if justified
 - Unjustified violations block merge
 
-**Version**: 1.0.0 | **Ratified**: 2026-01-13 | **Last Amended**: 2026-01-13
+**Version**: 1.1.0 | **Ratified**: 2026-01-13 | **Last Amended**: 2026-01-14
