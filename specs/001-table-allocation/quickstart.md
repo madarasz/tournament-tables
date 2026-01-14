@@ -72,10 +72,12 @@ return [
 ### 6. Start Development Server
 
 ```bash
-php -S localhost:8080 -t public
+php -S localhost:8080 -t public public/index.php
 ```
 
 Visit `http://localhost:8080`
+
+**Note**: The `public/index.php` argument is required to enable URL routing. Without it, the PHP built-in server will return 404 for clean URLs like `/tournament/create`.
 
 ## Directory Structure
 
@@ -118,6 +120,12 @@ kt-tables/
 
 # Integration tests only
 ./vendor/bin/phpunit --testsuite integration
+
+# Performance tests
+./vendor/bin/phpunit --testsuite performance
+
+# End-to-end tests
+./vendor/bin/phpunit --testsuite e2e
 
 # Specific test file
 ./vendor/bin/phpunit tests/Unit/Services/AllocationServiceTest.php

@@ -23,7 +23,7 @@ class AllocationController extends BaseController
 
     public function __construct()
     {
-        $db = Connection::getInstance()->getPdo();
+        $db = Connection::getInstance();
         $this->editService = new AllocationEditService($db, new CostCalculator());
     }
     /**
@@ -73,14 +73,8 @@ class AllocationController extends BaseController
             return;
         }
 
-        // Check if the new table is already assigned in this round
-        $existingAllocation = Allocation::findByRoundAndTable($round->id, $newTableId);
-        if ($existingAllocation !== null && $existingAllocation->id !== $allocation->id) {
-            $this->error('conflict', 'Table is already assigned to another pairing in this round', 409);
-            return;
-        }
-
         // Update the allocation using the edit service (includes conflict recalculation per FR-010)
+        // Note: Duplicate table assignments are allowed but will be flagged as conflicts
         try {
             $result = $this->editService->editTableAssignment($allocation->id, $newTableId);
 

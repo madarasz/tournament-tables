@@ -81,6 +81,10 @@ class RoundController extends BaseController
                 $playersImported = 0;
                 $pairingsImported = 0;
 
+                // Get all tables for this tournament (needed for assigning to rounds > 1)
+                $tables = Table::findByTournament($tournamentId);
+                $tableIndex = 0;
+
                 foreach ($pairings as $pairing) {
                     // Find or create players
                     $player1 = Player::findOrCreate(
@@ -94,30 +98,53 @@ class RoundController extends BaseController
                         $pairing->player2Name
                     );
 
-                    // For round 1 with BCP table assignment, create preliminary allocation
+                    // Determine table assignment
+                    $table = null;
+                    $reason = [];
+
                     if ($roundNumber === 1 && $pairing->bcpTableNumber !== null) {
+                        // Round 1: Use BCP's table assignment
                         $table = Table::findByTournamentAndNumber($tournamentId, $pairing->bcpTableNumber);
-                        if ($table !== null) {
-                            $allocation = new Allocation(
-                                null,
-                                $round->id,
-                                $table->id,
-                                $player1->id,
-                                $player2->id,
-                                $pairing->player1Score,
-                                $pairing->player2Score,
-                                [
-                                    'timestamp' => date('c'),
-                                    'totalCost' => 0,
-                                    'costBreakdown' => ['tableReuse' => 0, 'terrainReuse' => 0, 'tableNumber' => 0],
-                                    'reasons' => ['Round 1 - BCP original assignment'],
-                                    'alternativesConsidered' => [],
-                                    'isRound1' => true,
-                                    'conflicts' => [],
-                                ]
-                            );
-                            $allocation->save();
+                        $reason = [
+                            'timestamp' => date('c'),
+                            'totalCost' => 0,
+                            'costBreakdown' => ['tableReuse' => 0, 'terrainReuse' => 0, 'tableNumber' => 0],
+                            'reasons' => ['Round 1 - BCP original assignment'],
+                            'alternativesConsidered' => [],
+                            'isRound1' => true,
+                            'conflicts' => [],
+                        ];
+                    } else {
+                        // Round 2+: Assign tables sequentially as placeholders
+                        // These will be optimized when "Generate allocations" is called
+                        if ($tableIndex < count($tables)) {
+                            $table = $tables[$tableIndex];
+                            $tableIndex++;
                         }
+                        $reason = [
+                            'timestamp' => date('c'),
+                            'totalCost' => 0,
+                            'costBreakdown' => ['tableReuse' => 0, 'terrainReuse' => 0, 'tableNumber' => 0],
+                            'reasons' => ['Imported from BCP - pending optimization'],
+                            'alternativesConsidered' => [],
+                            'isRound1' => false,
+                            'conflicts' => [],
+                        ];
+                    }
+
+                    // Create allocation if we have a valid table
+                    if ($table !== null) {
+                        $allocation = new Allocation(
+                            null,
+                            $round->id,
+                            $table->id,
+                            $player1->id,
+                            $player2->id,
+                            $pairing->player1Score,
+                            $pairing->player2Score,
+                            $reason
+                        );
+                        $allocation->save();
                     }
 
                     $playersImported += 2;

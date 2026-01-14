@@ -65,9 +65,6 @@ class AllocationEditService
 
         // Check if table is already used in this round (by a different allocation)
         $existingAllocation = $this->getAllocationByRoundAndTable($allocation['round_id'], $newTableId);
-        if ($existingAllocation && $existingAllocation['id'] !== $allocationId) {
-            throw new RuntimeException('Table ' . $newTable['table_number'] . ' is already assigned in this round');
-        }
 
         // Update allocation
         $stmt = $this->db->prepare(
@@ -83,6 +80,15 @@ class AllocationEditService
             $round['tournament_id'],
             $round['round_number']
         );
+
+        // Add table collision conflict if another allocation uses this table
+        if ($existingAllocation && $existingAllocation['id'] !== $allocationId) {
+            $conflicts[] = [
+                'type' => 'TABLE_COLLISION',
+                'message' => 'Table ' . $newTable['table_number'] . ' is also assigned to another pairing in this round',
+                'otherAllocationId' => $existingAllocation['id'],
+            ];
+        }
 
         return [
             'success' => true,

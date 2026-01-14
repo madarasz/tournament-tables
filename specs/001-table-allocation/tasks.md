@@ -100,6 +100,7 @@ Based on plan.md project structure:
 - [X] T029 [US2] Implement admin token cookie setting (30-day retention) per FR-003
 - [X] T030 [US2] Create `src/Controllers/TerrainTypeController.php` with GET /api/terrain-types endpoint
 - [X] T031 [US2] Create `src/Views/tournament/create.php` form view with HTMX
+- [X] T031b [US2] Create `src/Views/tournament/dashboard.php` admin view with rounds list and import controls
 - [X] T032 [US2] Implement PUT /api/tournaments/{id}/tables for terrain type assignment per FR-005
 
 **Checkpoint**: Tournament creation works independently - can create tournament and receive admin token
@@ -250,24 +251,24 @@ Based on plan.md project structure:
 
 ### Performance Validation
 
-- [ ] T084 Write performance test: allocation generation < 10 seconds for 40 players per SC-002
-- [ ] T085 Write performance test: page load < 3 seconds per SC-004
-- [ ] T086 Optimize database queries with proper indexing if needed
+- [X] T084 Write performance test: allocation generation < 10 seconds for 40 players per SC-002
+- [X] T085 Write performance test: page load < 3 seconds per SC-004
+- [X] T086 Optimize database queries with proper indexing if needed
 
 ### Security Hardening
 
-- [ ] T087 Audit all SQL queries use prepared statements per Constitution Principle III
-- [ ] T088 Validate all user input at system boundaries per [data-model.md#validation-at-system-boundaries](./data-model.md#validation-at-system-boundaries)
-- [ ] T089 Implement CSRF protection for form submissions
-- [ ] T090 Set secure cookie flags (HttpOnly, SameSite)
+- [X] T087 Audit all SQL queries use prepared statements per Constitution Principle III
+- [X] T088 Validate all user input at system boundaries per [data-model.md#validation-at-system-boundaries](./data-model.md#validation-at-system-boundaries)
+- [X] T089 Implement CSRF protection for form submissions
+- [X] T090 Set secure cookie flags (HttpOnly, SameSite)
 
 ### Final Integration
 
-- [ ] T091 End-to-end test: tournament creation to first allocation < 5 minutes per SC-001
-- [ ] T092 Test conflict detection rate = 100% per SC-006
-- [ ] T093 Test allocation priority rules applied correctly per SC-007
-- [ ] T094 Run full test suite and verify all tests pass
-- [ ] T095 Validate quickstart.md instructions work on fresh setup
+- [X] T091 End-to-end test: tournament creation to first allocation < 5 minutes per SC-001
+- [X] T092 Test conflict detection rate = 100% per SC-006
+- [X] T093 Test allocation priority rules applied correctly per SC-007
+- [X] T094 Run full test suite and verify all tests pass
+- [X] T095 Validate quickstart.md instructions work on fresh setup
 
 ---
 

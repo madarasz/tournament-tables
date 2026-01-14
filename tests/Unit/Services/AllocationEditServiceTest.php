@@ -45,15 +45,42 @@ class AllocationEditServiceTest extends TestCase
         $allocationId = 1;
         $newTableId = 5;
 
-        // Mock allocation exists
+        // Create statement mock for different calls
         $stmt = $this->createMock(PDOStatement::class);
-        $stmt->method('fetch')->willReturn([
-            'id' => $allocationId,
-            'round_id' => 1,
-            'table_id' => 3,
-            'player1_id' => 10,
-            'player2_id' => 11,
-        ]);
+
+        $tableRow = [
+            'id' => $newTableId,
+            'tournament_id' => 1,
+            'table_number' => 5,
+            'terrain_type_id' => null,
+        ];
+
+        // Sequence of fetch calls: allocation, table, round, existing allocation check, table again for conflicts, history checks
+        $stmt->method('fetch')->willReturnOnConsecutiveCalls(
+            // 1. getAllocation
+            [
+                'id' => $allocationId,
+                'round_id' => 1,
+                'table_id' => 3,
+                'player1_id' => 10,
+                'player2_id' => 11,
+            ],
+            // 2. getTable
+            $tableRow,
+            // 3. getRound
+            [
+                'id' => 1,
+                'tournament_id' => 1,
+                'round_number' => 2,
+            ],
+            // 4. getAllocationByRoundAndTable - null (no existing allocation)
+            false,
+            // 5. getTable again for calculateConflicts
+            $tableRow,
+            // 6-7. hasPlayerUsedTable checks (count queries)
+            ['count' => 0],
+            ['count' => 0]
+        );
 
         $this->mockDb->method('prepare')->willReturn($stmt);
         $stmt->method('execute')->willReturn(true);
@@ -93,27 +120,42 @@ class AllocationEditServiceTest extends TestCase
         $allocationId = 1;
         $newTableId = 5;
 
-        // Mock allocation exists
-        $stmt1 = $this->createMock(PDOStatement::class);
-        $stmt1->method('fetch')->willReturn([
-            'id' => $allocationId,
-            'round_id' => 1,
-            'table_id' => 3,
-            'player1_id' => 10,
-            'player2_id' => 11,
-        ]);
+        // Create statement mock for different calls
+        $stmt = $this->createMock(PDOStatement::class);
 
-        // Mock table already used in this round
-        $stmt2 = $this->createMock(PDOStatement::class);
-        $stmt2->method('fetch')->willReturn([
-            'id' => 2, // Different allocation already using table 5
-        ]);
+        // Sequence of fetch calls
+        $stmt->method('fetch')->willReturnOnConsecutiveCalls(
+            // 1. getAllocation
+            [
+                'id' => $allocationId,
+                'round_id' => 1,
+                'table_id' => 3,
+                'player1_id' => 10,
+                'player2_id' => 11,
+            ],
+            // 2. getTable
+            [
+                'id' => $newTableId,
+                'tournament_id' => 1,
+                'table_number' => 5,
+                'terrain_type_id' => null,
+            ],
+            // 3. getRound
+            [
+                'id' => 1,
+                'tournament_id' => 1,
+                'round_number' => 2,
+            ],
+            // 4. getAllocationByRoundAndTable - existing allocation found
+            [
+                'id' => 2, // Different allocation already using table 5
+                'round_id' => 1,
+                'table_id' => $newTableId,
+            ]
+        );
 
-        $this->mockDb->method('prepare')
-            ->willReturnOnConsecutiveCalls($stmt1, $stmt2);
-
-        $stmt1->method('execute')->willReturn(true);
-        $stmt2->method('execute')->willReturn(true);
+        $this->mockDb->method('prepare')->willReturn($stmt);
+        $stmt->method('execute')->willReturn(true);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Table 5 is already assigned in this round');
@@ -132,6 +174,7 @@ class AllocationEditServiceTest extends TestCase
         // Mock both allocations exist and are in same round
         $stmt = $this->createMock(PDOStatement::class);
         $stmt->method('fetch')->willReturnOnConsecutiveCalls(
+            // 1. getAllocation - allocation 1
             [
                 'id' => $allocationId1,
                 'round_id' => 1,
@@ -139,13 +182,32 @@ class AllocationEditServiceTest extends TestCase
                 'player1_id' => 10,
                 'player2_id' => 11,
             ],
+            // 2. getAllocation - allocation 2
             [
                 'id' => $allocationId2,
                 'round_id' => 1,
                 'table_id' => 5,
                 'player1_id' => 12,
                 'player2_id' => 13,
-            ]
+            ],
+            // 3. getRound
+            [
+                'id' => 1,
+                'tournament_id' => 1,
+                'round_number' => 2,
+            ],
+            // 4-7. getTable calls for conflict calculations
+            ['id' => 5, 'tournament_id' => 1, 'table_number' => 5, 'terrain_type_id' => null],
+            ['count' => 0], // player table history check
+            ['count' => 0],
+            ['id' => 3, 'tournament_id' => 1, 'table_number' => 3, 'terrain_type_id' => null],
+            ['count' => 0],
+            ['count' => 0],
+            // 8-9. getPlayer calls for conflict messages
+            ['id' => 10, 'name' => 'Player 10'],
+            ['id' => 11, 'name' => 'Player 11'],
+            ['id' => 12, 'name' => 'Player 12'],
+            ['id' => 13, 'name' => 'Player 13']
         );
 
         $this->mockDb->method('prepare')->willReturn($stmt);

@@ -12,20 +12,20 @@ This document describes all available web pages and API endpoints in the Kill Te
 
 ### Public Pages
 
-| Route | Description |
-|-------|-------------|
-| `GET /` | Home page - landing page with feature overview |
-| `GET /tournament/create` | Tournament creation form |
-| `GET /login` | Admin login page |
-| `GET /public/{id}` | Public tournament view with round selector |
-| `GET /public/{id}/round/{n}` | Public round allocations display |
+| Route | Description | Ready |
+|-------|-------------|-------|
+| `GET /` | Home page - landing page with feature overview | Yes |
+| `GET /tournament/create` | Tournament creation form | Yes |
+| `GET /login` | Admin login page | Yes |
+| `GET /public/{id}` | Public tournament view with round selector | Yes |
+| `GET /public/{id}/round/{n}` | Public round allocations display | Yes |
 
 ### Admin Pages (Authentication Required)
 
-| Route | Description |
-|-------|-------------|
-| `GET /tournament/{id}` | Tournament dashboard |
-| `GET /tournament/{id}/round/{n}` | Round management view |
+| Route | Description | Ready |
+|-------|-------------|-------|
+| `GET /tournament/{id}` | Tournament dashboard | No |
+| `GET /tournament/{id}/round/{n}` | Round management view | Yes |
 
 ---
 
@@ -41,48 +41,48 @@ All admin endpoints require authentication via one of:
 
 ### Tournament Management
 
-| Method | Route | Description | Auth |
-|--------|-------|-------------|------|
-| `POST` | `/api/tournaments` | Create a new tournament | No |
-| `GET` | `/api/tournaments/{id}` | Get tournament details | Yes |
-| `PUT` | `/api/tournaments/{id}/tables` | Update table terrain types | Yes |
+| Method | Route | Description | Auth | Ready |
+|--------|-------|-------------|------|-------|
+| `POST` | `/api/tournaments` | Create a new tournament | No | Yes |
+| `GET` | `/api/tournaments/{id}` | Get tournament details | Yes | Yes |
+| `PUT` | `/api/tournaments/{id}/tables` | Update table terrain types | Yes | Yes |
 
 ### Round Management
 
-| Method | Route | Description | Auth |
-|--------|-------|-------------|------|
-| `GET` | `/api/tournaments/{id}/rounds/{n}` | Get round allocations (admin view) | Yes |
-| `POST` | `/api/tournaments/{id}/rounds/{n}/import` | Import pairings from BCP | Yes |
-| `POST` | `/api/tournaments/{id}/rounds/{n}/generate` | Generate table allocations | Yes |
-| `POST` | `/api/tournaments/{id}/rounds/{n}/publish` | Publish round to public | Yes |
+| Method | Route | Description | Auth | Ready |
+|--------|-------|-------------|------|-------|
+| `GET` | `/api/tournaments/{id}/rounds/{n}` | Get round allocations (admin view) | Yes | Yes |
+| `POST` | `/api/tournaments/{id}/rounds/{n}/import` | Import pairings from BCP | Yes | Yes |
+| `POST` | `/api/tournaments/{id}/rounds/{n}/generate` | Generate table allocations | Yes | Yes |
+| `POST` | `/api/tournaments/{id}/rounds/{n}/publish` | Publish round to public | Yes | Yes |
 
 ### Allocation Management
 
-| Method | Route | Description | Auth |
-|--------|-------|-------------|------|
-| `PATCH` | `/api/allocations/{id}` | Edit table assignment | Yes |
-| `POST` | `/api/allocations/swap` | Swap tables between two pairings | Yes |
+| Method | Route | Description | Auth | Ready |
+|--------|-------|-------------|------|-------|
+| `PATCH` | `/api/allocations/{id}` | Edit table assignment | Yes | Yes |
+| `POST` | `/api/allocations/swap` | Swap tables between two pairings | Yes | Yes |
 
 ### Authentication
 
-| Method | Route | Description | Auth |
-|--------|-------|-------------|------|
-| `POST` | `/api/auth` | Authenticate with admin token | No |
+| Method | Route | Description | Auth | Ready |
+|--------|-------|-------------|------|-------|
+| `POST` | `/api/auth` | Authenticate with admin token | No | Yes |
 
 ### Reference Data
 
-| Method | Route | Description | Auth |
-|--------|-------|-------------|------|
-| `GET` | `/api/terrain-types` | List all terrain types | No |
+| Method | Route | Description | Auth | Ready |
+|--------|-------|-------------|------|-------|
+| `GET` | `/api/terrain-types` | List all terrain types | No | Yes |
 
 ### Public Endpoints
 
 These endpoints require no authentication and are intended for player-facing displays.
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| `GET` | `/api/public/tournaments/{id}` | Get public tournament info and published rounds list |
-| `GET` | `/api/public/tournaments/{id}/rounds/{n}` | Get published round allocations |
+| Method | Route | Description | Ready |
+|--------|-------|-------------|-------|
+| `GET` | `/api/public/tournaments/{id}` | Get public tournament info and published rounds list | Yes |
+| `GET` | `/api/public/tournaments/{id}/rounds/{n}` | Get published round allocations | Yes |
 
 ---
 

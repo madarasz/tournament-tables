@@ -8,6 +8,8 @@ services:
       - ./config/apache.conf:/etc/apache2/sites-available/000-default.conf
     depends_on:
       - mysql
+    command: >
+      bash -c "a2enmod rewrite && docker-php-ext-install pdo pdo_mysql && apache2-foreground"
   
   mysql:
     image: mysql:8.0

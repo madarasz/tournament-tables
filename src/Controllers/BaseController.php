@@ -127,10 +127,19 @@ abstract class BaseController
      */
     protected function clearCookie(string $name): void
     {
-        setcookie($name, '', [
+        $options = [
             'expires' => time() - 3600,
             'path' => '/',
-        ]);
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ];
+
+        // Set secure flag if using HTTPS
+        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+            $options['secure'] = true;
+        }
+
+        setcookie($name, '', $options);
     }
 
     /**

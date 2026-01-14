@@ -140,13 +140,33 @@ try {
     // Get request body for POST/PUT/PATCH
     $body = null;
     if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
-        $rawBody = file_get_contents('php://input');
-        if (!empty($rawBody)) {
-            $body = json_decode($rawBody, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                http_response_code(400);
-                echo json_encode(['error' => 'invalid_json', 'message' => 'Invalid JSON in request body']);
-                exit;
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+
+        // Handle JSON content type
+        if (strpos($contentType, 'application/json') !== false) {
+            $rawBody = file_get_contents('php://input');
+            if (!empty($rawBody)) {
+                $body = json_decode($rawBody, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    http_response_code(400);
+                    echo json_encode(['error' => 'invalid_json', 'message' => 'Invalid JSON in request body']);
+                    exit;
+                }
+            }
+        }
+        // Handle form-urlencoded content type (HTMX default)
+        elseif (strpos($contentType, 'application/x-www-form-urlencoded') !== false) {
+            $body = $_POST;
+        }
+        // Fallback: try JSON first, then form data
+        else {
+            $rawBody = file_get_contents('php://input');
+            if (!empty($rawBody)) {
+                $body = json_decode($rawBody, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    // Not valid JSON, check if we have POST data
+                    $body = !empty($_POST) ? $_POST : null;
+                }
             }
         }
     }

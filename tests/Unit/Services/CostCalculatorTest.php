@@ -84,7 +84,8 @@ class CostCalculatorTest extends TestCase
     {
         $history = $this->createMockHistoryBothPlayers(true, false);
 
-        $result = $this->calculator->calculate(1, 3, null, null, $history);
+        // Pass both player1Id and player2Id to check both players
+        $result = $this->calculator->calculate(1, 3, null, null, $history, 2);
 
         // 200000 (table reuse x2) + 3 (table number) = 200003
         $this->assertEquals(200003, $result->totalCost);
@@ -117,7 +118,8 @@ class CostCalculatorTest extends TestCase
     {
         $history = $this->createMockHistoryBothPlayers(false, true);
 
-        $result = $this->calculator->calculate(1, 3, 1, 'Volkus', $history);
+        // Pass both player1Id and player2Id to check both players
+        $result = $this->calculator->calculate(1, 3, 1, 'Volkus', $history, 2);
 
         // 20000 (terrain reuse x2) + 3 (table number) = 20003
         $this->assertEquals(20003, $result->totalCost);

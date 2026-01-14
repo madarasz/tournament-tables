@@ -57,14 +57,8 @@ class TournamentController extends BaseController
             );
 
             // Set admin token cookie (30-day retention) per FR-003
+            // Cookie has HttpOnly, SameSite=Lax, and Secure (when HTTPS) flags
             $this->setCookie('admin_token', $result['adminToken'], 30 * 24 * 60 * 60);
-
-            // Also set Set-Cookie header explicitly for API response
-            header(sprintf(
-                'Set-Cookie: admin_token=%s; Max-Age=%d; Path=/; HttpOnly; SameSite=Lax',
-                $result['adminToken'],
-                30 * 24 * 60 * 60
-            ));
 
             $this->success([
                 'tournament' => $result['tournament']->toArray(),

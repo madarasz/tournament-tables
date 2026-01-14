@@ -9,6 +9,8 @@
  * @var bool $isPublic Whether this is a public page (no admin nav)
  */
 
+use KTTables\Services\CsrfService;
+
 $title = $title ?? 'Kill Team Tables';
 $isPublic = $isPublic ?? false;
 ?>
@@ -18,6 +20,7 @@ $isPublic = $isPublic ?? false;
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= htmlspecialchars($title) ?> - Kill Team Tables</title>
+    <?= CsrfService::getMetaTag() ?>
 
     <!-- Pico CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
@@ -183,5 +186,15 @@ $isPublic = $isPublic ?? false;
             Kill Team Tables - Tournament Table Allocation System
         </div>
     </footer>
+
+    <script>
+        // Configure HTMX to include CSRF token in requests
+        document.body.addEventListener('htmx:configRequest', function(event) {
+            var csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (csrfToken) {
+                event.detail.headers['X-CSRF-Token'] = csrfToken.getAttribute('content');
+            }
+        });
+    </script>
 </body>
 </html>

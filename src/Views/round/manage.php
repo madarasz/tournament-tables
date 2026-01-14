@@ -19,6 +19,25 @@
 $pageTitle = "{$tournament->name} - Round {$round->roundNumber}";
 $hasConflicts = !empty($conflicts);
 $isPublished = $round->isPublished;
+
+// Detect table collisions (multiple allocations with same table)
+$tableUsage = [];
+$tableCollisions = [];
+foreach ($allocations as $allocation) {
+    $tableId = $allocation->tableId;
+    if (!isset($tableUsage[$tableId])) {
+        $tableUsage[$tableId] = [];
+    }
+    $tableUsage[$tableId][] = $allocation->id;
+}
+foreach ($tableUsage as $tableId => $allocationIds) {
+    if (count($allocationIds) > 1) {
+        foreach ($allocationIds as $allocId) {
+            $tableCollisions[$allocId] = true;
+        }
+    }
+}
+$hasTableCollisions = !empty($tableCollisions);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,13 +47,40 @@ $isPublished = $round->isPublished;
     <title><?= htmlspecialchars($pageTitle) ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script>
+        // Helper to get cookie value - must be defined before HTMX buttons
+        function getCookie(name) {
+            var value = '; ' + document.cookie;
+            var parts = value.split('; ' + name + '=');
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return '';
+        }
+
+        // Add admin token to all HTMX requests
+        document.addEventListener('htmx:configRequest', function(event) {
+            var token = getCookie('admin_token');
+            if (token) {
+                event.detail.headers['X-Admin-Token'] = token;
+            }
+        });
+    </script>
     <style>
-        .conflict-table-reuse {
-            background-color: #ffebee;
+        .conflict-table-collision,
+        .conflict-table-collision:nth-child(odd),
+        .conflict-table-collision:nth-child(even) {
+            background-color: hsla(0, 77%, 61%, 1.00) !important;
+            border-left: 4px solid #c62828;
+        }
+        .conflict-table-reuse,
+        .conflict-table-reuse:nth-child(odd),
+        .conflict-table-reuse:nth-child(even) {
+            background-color: #ffcdd2 !important;
             border-left: 4px solid #f44336;
         }
-        .conflict-terrain-reuse {
-            background-color: #fff3e0;
+        .conflict-terrain-reuse,
+        .conflict-terrain-reuse:nth-child(odd),
+        .conflict-terrain-reuse:nth-child(even) {
+            background-color: #ffe0b2 !important;
             border-left: 4px solid #ff9800;
         }
         .published-badge {
@@ -128,7 +174,9 @@ $isPublished = $round->isPublished;
                 <?php if ($isPublished): ?>
                     <span class="published-badge">Published</span>
                 <?php endif; ?>
-                <?php if ($hasConflicts): ?>
+                <?php if ($hasTableCollisions): ?>
+                    <span class="conflict-badge">Table Collision!</span>
+                <?php elseif ($hasConflicts): ?>
                     <span class="conflict-badge"><?= count($conflicts) ?> Conflict(s)</span>
                 <?php endif; ?>
             </h1>
@@ -171,16 +219,21 @@ $isPublished = $round->isPublished;
                 </button>
 
                 <?php if (!$isPublished): ?>
-                <!-- Publish button -->
+                <!-- Publish button (disabled if table collisions exist) -->
                 <button
                     hx-post="/api/tournaments/<?= $tournament->id ?>/rounds/<?= $round->roundNumber ?>/publish"
                     hx-target="#publish-status"
                     hx-swap="innerHTML"
                     hx-confirm="Publish allocations? Players will be able to see their table assignments."
                     class="contrast"
+                    id="publish-button"
+                    <?= $hasTableCollisions ? 'disabled title="Cannot publish while table collisions exist"' : '' ?>
                 >
                     Publish Allocations
                 </button>
+                <?php if ($hasTableCollisions): ?>
+                <small style="color: #d32f2f; line-height: 2.5;">Fix table collisions before publishing</small>
+                <?php endif; ?>
                 <?php else: ?>
                 <span id="publish-status" class="published-badge">Already Published</span>
                 <?php endif; ?>
@@ -246,12 +299,14 @@ $isPublished = $round->isPublished;
                         $allocationConflicts = $allocation->getConflicts();
                         $hasTableReuse = false;
                         $hasTerrainReuse = false;
+                        $hasTableCollision = isset($tableCollisions[$allocation->id]);
                         foreach ($allocationConflicts as $c) {
                             if ($c['type'] === 'TABLE_REUSE') $hasTableReuse = true;
                             if ($c['type'] === 'TERRAIN_REUSE') $hasTerrainReuse = true;
                         }
                         $rowClass = '';
-                        if ($hasTableReuse) $rowClass = 'conflict-table-reuse';
+                        if ($hasTableCollision) $rowClass = 'conflict-table-collision';
+                        elseif ($hasTableReuse) $rowClass = 'conflict-table-reuse';
                         elseif ($hasTerrainReuse) $rowClass = 'conflict-terrain-reuse';
 
                         $table = $allocation->getTable();
@@ -277,7 +332,9 @@ $isPublished = $round->isPublished;
                         <td><?= $player2 ? htmlspecialchars($player2->name) : 'Unknown' ?></td>
                         <td class="score"><?= $allocation->player2Score ?></td>
                         <td>
-                            <?php if ($hasTableReuse): ?>
+                            <?php if ($hasTableCollision): ?>
+                                <span title="Multiple pairings assigned to same table" style="color: #d32f2f; font-weight: bold;">&#9888; TABLE COLLISION</span>
+                            <?php elseif ($hasTableReuse): ?>
                                 <span title="Table reuse conflict">&#9888; Table Reuse</span>
                             <?php elseif ($hasTerrainReuse): ?>
                                 <span title="Terrain reuse">&#9888; Terrain Reuse</span>
@@ -393,45 +450,30 @@ $isPublished = $round->isPublished;
 
         // Change table assignment (T073)
         function changeTableAssignment(allocationId, newTableId) {
-            if (confirm('Change table assignment for this pairing?')) {
-                fetch('/api/allocations/' + allocationId, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Admin-Token': getCookie('admin_token')
-                    },
-                    body: JSON.stringify({
-                        tableId: parseInt(newTableId)
-                    })
+            fetch('/api/allocations/' + allocationId, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Token': getCookie('admin_token')
+                },
+                body: JSON.stringify({
+                    tableId: parseInt(newTableId)
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert('Error: ' + data.message);
-                    } else {
-                        // Show conflicts if any
-                        if (data.conflicts && data.conflicts.length > 0) {
-                            var conflictMsg = 'Table assignment changed, but conflicts detected:\n';
-                            data.conflicts.forEach(function(c) {
-                                conflictMsg += '- ' + c.message + '\n';
-                            });
-                            alert(conflictMsg);
-                        }
-                        location.reload();
-                    }
-                })
-                .catch(error => {
-                    alert('Failed to change table assignment: ' + error.message);
-                });
-            }
-        }
-
-        // Get cookie value
-        function getCookie(name) {
-            var value = '; ' + document.cookie;
-            var parts = value.split('; ' + name + '=');
-            if (parts.length === 2) return parts.pop().split(';').shift();
-            return '';
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.message);
+                    location.reload(); // Reload to reset dropdown
+                } else {
+                    // Reload page - conflicts will be shown in the UI
+                    location.reload();
+                }
+            })
+            .catch(error => {
+                alert('Failed to change table assignment: ' + error.message);
+                location.reload();
+            });
         }
     </script>
 </body>

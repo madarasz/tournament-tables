@@ -12,6 +12,12 @@
         <testsuite name="integration">
             <directory>tests/Integration</directory>
         </testsuite>
+        <testsuite name="performance">
+            <directory>tests/Performance</directory>
+        </testsuite>
+        <testsuite name="e2e">
+            <directory>tests/E2E</directory>
+        </testsuite>
     </testsuites>
 
     <coverage processUncoveredFiles="true">

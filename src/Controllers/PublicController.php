@@ -51,6 +51,12 @@ class PublicController extends BaseController
         $tournamentId = (int) ($params['id'] ?? 0);
         $roundNumber = (int) ($params['n'] ?? 0);
 
+        // Validate round number range (per data-model.md validation rules)
+        if ($roundNumber < 1 || $roundNumber > 20) {
+            $this->validationError(['roundNumber' => ['Round number must be between 1 and 20']]);
+            return;
+        }
+
         $tournament = Tournament::find($tournamentId);
         if ($tournament === null) {
             $this->notFound('Tournament');
