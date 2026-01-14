@@ -1,0 +1,30 @@
+{
+    "name": "tournament-tables/tournament-tables",
+    "description": "Tournament table allocation system",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^7.4",
+        "ext-pdo": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "TournamentTables\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "TournamentTables\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "7.4.33"
+        }
+    }
+}

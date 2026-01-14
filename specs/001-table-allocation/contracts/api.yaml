@@ -1,0 +1,775 @@
+openapi: 3.0.3
+info:
+  title: Tournament Tables API
+  description: |
+    API for tournament table allocation management.
+
+    Authentication: Admin endpoints require the `X-Admin-Token` header with the 16-character base64 token.
+    Public endpoints require no authentication.
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Relative API path
+
+tags:
+  - name: Tournaments
+    description: Tournament creation and management
+  - name: Rounds
+    description: Round management and allocation generation
+  - name: Allocations
+    description: Table allocation editing
+  - name: Public
+    description: Public endpoints (no authentication)
+
+paths:
+  # ============================================================================
+  # Tournament Management (Admin)
+  # ============================================================================
+  /tournaments:
+    post:
+      tags: [Tournaments]
+      summary: Create a new tournament (FR-001)
+      description: |
+        Creates a tournament with BCP integration and table configuration.
+        Returns a 16-character admin token that must be saved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTournamentRequest'
+      responses:
+        '201':
+          description: Tournament created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTournamentResponse'
+          headers:
+            Set-Cookie:
+              description: Admin token cookie (30-day retention)
+              schema:
+                type: string
+                example: admin_token=Abc123XyzDef456G; Max-Age=2592000; Path=/; HttpOnly
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /tournaments/{tournamentId}:
+    get:
+      tags: [Tournaments]
+      summary: Get tournament details
+      security:
+        - AdminToken: []
+      parameters:
+        - $ref: '#/components/parameters/TournamentId'
+      responses:
+        '200':
+          description: Tournament details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tournament'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tournaments/{tournamentId}/tables:
+    put:
+      tags: [Tournaments]
+      summary: Update table terrain types (FR-005)
+      description: Assign terrain types to tournament tables
+      security:
+        - AdminToken: []
+      parameters:
+        - $ref: '#/components/parameters/TournamentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTablesRequest'
+      responses:
+        '200':
+          description: Tables updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TablesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================================
+  # Round Management (Admin)
+  # ============================================================================
+  /tournaments/{tournamentId}/rounds/{roundNumber}/import:
+    post:
+      tags: [Rounds]
+      summary: Import pairings from BCP (FR-006, FR-015)
+      description: |
+        Fetches pairing data from BCP for the specified round.
+        If pairings already exist for this round, they are overwritten.
+      security:
+        - AdminToken: []
+      parameters:
+        - $ref: '#/components/parameters/TournamentId'
+        - $ref: '#/components/parameters/RoundNumber'
+      responses:
+        '200':
+          description: Pairings imported successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '502':
+          description: BCP unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tournaments/{tournamentId}/rounds/{roundNumber}/generate:
+    post:
+      tags: [Rounds]
+      summary: Generate table allocations (FR-007)
+      description: |
+        Generates table allocations following priority rules:
+        1. Round 1 uses BCP's original table assignments
+        2. Avoid tables players have used before
+        3. Prefer terrain types not yet experienced
+        4. Higher-scoring players get lower table numbers
+
+        Returns allocation results with any conflicts flagged.
+      security:
+        - AdminToken: []
+      parameters:
+        - $ref: '#/components/parameters/TournamentId'
+        - $ref: '#/components/parameters/RoundNumber'
+      responses:
+        '200':
+          description: Allocations generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateResponse'
+        '400':
+          description: No pairings available for this round
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tournaments/{tournamentId}/rounds/{roundNumber}/publish:
+    post:
+      tags: [Rounds]
+      summary: Publish allocations (FR-011)
+      description: Makes round allocations visible to public users
+      security:
+        - AdminToken: []
+      parameters:
+        - $ref: '#/components/parameters/TournamentId'
+        - $ref: '#/components/parameters/RoundNumber'
+      responses:
+        '200':
+          description: Round published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tournaments/{tournamentId}/rounds/{roundNumber}:
+    get:
+      tags: [Rounds]
+      summary: Get round allocations (Admin view)
+      description: Returns all allocations for a round with conflict indicators
+      security:
+        - AdminToken: []
+      parameters:
+        - $ref: '#/components/parameters/TournamentId'
+        - $ref: '#/components/parameters/RoundNumber'
+      responses:
+        '200':
+          description: Round allocations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoundAllocations'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================================
+  # Allocation Editing (Admin)
+  # ============================================================================
+  /allocations/{allocationId}:
+    patch:
+      tags: [Allocations]
+      summary: Edit table assignment (FR-008)
+      description: Change the table assigned to a pairing
+      security:
+        - AdminToken: []
+      parameters:
+        - name: allocationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditAllocationRequest'
+      responses:
+        '200':
+          description: Allocation updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Allocation'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /allocations/swap:
+    post:
+      tags: [Allocations]
+      summary: Swap two tables (FR-009)
+      description: Exchange table assignments between two pairings
+      security:
+        - AdminToken: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwapRequest'
+      responses:
+        '200':
+          description: Tables swapped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ============================================================================
+  # Authentication (Admin)
+  # ============================================================================
+  /auth:
+    post:
+      tags: [Tournaments]
+      summary: Authenticate with admin token (FR-004)
+      description: |
+        Authenticates using the 16-character admin token.
+        Sets a new 30-day cookie on success.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          headers:
+            Set-Cookie:
+              description: Admin token cookie (30-day retention)
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ============================================================================
+  # Public Endpoints
+  # ============================================================================
+  /public/tournaments/{tournamentId}:
+    get:
+      tags: [Public]
+      summary: Get public tournament info
+      description: Returns basic tournament info and list of published rounds
+      parameters:
+        - $ref: '#/components/parameters/TournamentId'
+      responses:
+        '200':
+          description: Tournament info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicTournament'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /public/tournaments/{tournamentId}/rounds/{roundNumber}:
+    get:
+      tags: [Public]
+      summary: Get published allocations (FR-012)
+      description: Returns table allocations for a published round
+      parameters:
+        - $ref: '#/components/parameters/TournamentId'
+        - $ref: '#/components/parameters/RoundNumber'
+      responses:
+        '200':
+          description: Published allocations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicAllocations'
+        '404':
+          description: Tournament not found or round not published
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Reference Data
+  # ============================================================================
+  /terrain-types:
+    get:
+      tags: [Tournaments]
+      summary: List terrain types (FR-005)
+      description: Returns all available terrain types for table configuration
+      responses:
+        '200':
+          description: Terrain types list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TerrainTypesResponse'
+
+components:
+  # ============================================================================
+  # Security Schemes
+  # ============================================================================
+  securitySchemes:
+    AdminToken:
+      type: apiKey
+      in: header
+      name: X-Admin-Token
+      description: 16-character base64 admin token
+
+  # ============================================================================
+  # Parameters
+  # ============================================================================
+  parameters:
+    TournamentId:
+      name: tournamentId
+      in: path
+      required: true
+      description: Tournament ID
+      schema:
+        type: integer
+
+    RoundNumber:
+      name: roundNumber
+      in: path
+      required: true
+      description: Round number (1-based)
+      schema:
+        type: integer
+        minimum: 1
+
+  # ============================================================================
+  # Responses
+  # ============================================================================
+  responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+    Unauthorized:
+      description: Invalid or missing admin token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  # ============================================================================
+  # Schemas
+  # ============================================================================
+  schemas:
+    # --------------------------------------------------------------------------
+    # Request Schemas
+    # --------------------------------------------------------------------------
+    CreateTournamentRequest:
+      type: object
+      required: [name, bcpUrl, tableCount]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "Kill Team GT January 2026"
+        bcpUrl:
+          type: string
+          pattern: '^https://www\.bestcoastpairings\.com/event/[A-Za-z0-9]+$'
+          example: "https://www.bestcoastpairings.com/event/t6OOun8POR60"
+        tableCount:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 12
+        tables:
+          type: array
+          description: Optional terrain type assignments
+          items:
+            $ref: '#/components/schemas/TableConfig'
+
+    TableConfig:
+      type: object
+      required: [tableNumber]
+      properties:
+        tableNumber:
+          type: integer
+          minimum: 1
+        terrainTypeId:
+          type: integer
+          nullable: true
+
+    UpdateTablesRequest:
+      type: object
+      required: [tables]
+      properties:
+        tables:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableConfig'
+
+    EditAllocationRequest:
+      type: object
+      required: [tableId]
+      properties:
+        tableId:
+          type: integer
+          description: New table ID to assign
+
+    SwapRequest:
+      type: object
+      required: [allocationId1, allocationId2]
+      properties:
+        allocationId1:
+          type: integer
+        allocationId2:
+          type: integer
+
+    AuthRequest:
+      type: object
+      required: [token]
+      properties:
+        token:
+          type: string
+          minLength: 16
+          maxLength: 16
+          example: "Abc123XyzDef456G"
+
+    # --------------------------------------------------------------------------
+    # Response Schemas
+    # --------------------------------------------------------------------------
+    CreateTournamentResponse:
+      type: object
+      properties:
+        tournament:
+          $ref: '#/components/schemas/Tournament'
+        adminToken:
+          type: string
+          description: "SAVE THIS! 16-character admin token for authentication"
+          example: "Abc123XyzDef456G"
+
+    Tournament:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        bcpEventId:
+          type: string
+        bcpUrl:
+          type: string
+        tableCount:
+          type: integer
+        tables:
+          type: array
+          items:
+            $ref: '#/components/schemas/Table'
+        rounds:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoundSummary'
+
+    Table:
+      type: object
+      properties:
+        id:
+          type: integer
+        tableNumber:
+          type: integer
+        terrainType:
+          $ref: '#/components/schemas/TerrainType'
+
+    TerrainType:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          example: "Volkus"
+        sortOrder:
+          type: integer
+          description: Display order in UI (lower values first)
+
+    RoundSummary:
+      type: object
+      properties:
+        roundNumber:
+          type: integer
+        isPublished:
+          type: boolean
+        allocationCount:
+          type: integer
+
+    TablesResponse:
+      type: object
+      properties:
+        tables:
+          type: array
+          items:
+            $ref: '#/components/schemas/Table'
+
+    ImportResponse:
+      type: object
+      properties:
+        roundNumber:
+          type: integer
+        pairingsImported:
+          type: integer
+        playersImported:
+          type: integer
+        message:
+          type: string
+          example: "Imported 12 pairings for round 2"
+
+    GenerateResponse:
+      type: object
+      properties:
+        roundNumber:
+          type: integer
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Allocation'
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conflict'
+        summary:
+          type: string
+          example: "All allocations optimal—no constraint violations."
+
+    Allocation:
+      type: object
+      properties:
+        id:
+          type: integer
+        tableNumber:
+          type: integer
+        terrainType:
+          type: string
+          nullable: true
+        player1:
+          $ref: '#/components/schemas/PlayerSummary'
+        player2:
+          $ref: '#/components/schemas/PlayerSummary'
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conflict'
+
+    PlayerSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        score:
+          type: integer
+
+    Conflict:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [TABLE_REUSE, TERRAIN_REUSE, DUPLICATE_TABLE]
+        message:
+          type: string
+          example: "John Smith previously played on table 5"
+        playerId:
+          type: integer
+          nullable: true
+
+    RoundAllocations:
+      type: object
+      properties:
+        roundNumber:
+          type: integer
+        isPublished:
+          type: boolean
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Allocation'
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conflict'
+
+    PublishResponse:
+      type: object
+      properties:
+        roundNumber:
+          type: integer
+        message:
+          type: string
+          example: "Round 3 allocations are now public"
+
+    SwapResponse:
+      type: object
+      properties:
+        allocation1:
+          $ref: '#/components/schemas/Allocation'
+        allocation2:
+          $ref: '#/components/schemas/Allocation'
+
+    AuthResponse:
+      type: object
+      properties:
+        tournamentId:
+          type: integer
+        tournamentName:
+          type: string
+        message:
+          type: string
+          example: "Authentication successful"
+
+    PublicTournament:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        tableCount:
+          type: integer
+        publishedRounds:
+          type: array
+          items:
+            type: integer
+          example: [1, 2, 3]
+
+    PublicAllocations:
+      type: object
+      properties:
+        tournamentName:
+          type: string
+        roundNumber:
+          type: integer
+        allocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicAllocation'
+
+    PublicAllocation:
+      type: object
+      properties:
+        tableNumber:
+          type: integer
+        terrainType:
+          type: string
+          nullable: true
+        player1Name:
+          type: string
+        player1Score:
+          type: integer
+        player2Name:
+          type: string
+        player2Score:
+          type: integer
+
+    TerrainTypesResponse:
+      type: object
+      properties:
+        terrainTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TerrainType'
+
+    # --------------------------------------------------------------------------
+    # Error Schemas
+    # --------------------------------------------------------------------------
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "validation_error"
+        message:
+          type: string
+          example: "Invalid input"
+        fields:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            bcpUrl: ["Must be a valid BCP event URL"]
+            tableCount: ["Must be between 1 and 100"]

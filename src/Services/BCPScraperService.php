@@ -1,0 +1,256 @@
+<?php
+
+declare(strict_types=1);
+
+namespace TournamentTables\Services;
+
+/**
+ * Service for fetching pairing data from Best Coast Pairings (BCP) REST API.
+ *
+ * Reference: specs/001-table-allocation/research.md#2-bcp-rest-api
+ *
+ * BCP provides a public REST API that returns JSON data.
+ */
+class BCPScraperService
+{
+    const BCP_API_BASE_URL = 'https://newprod-api.bestcoastpairings.com/v1/events';
+
+    /** @var int */
+    private $maxRetries = 3;
+
+    /** @var int */
+    private $baseDelayMs = 1000;
+
+    /** @var float */
+    private $backoffMultiplier = 2.0;
+
+    public function __construct()
+    {
+        // No configuration needed for API-based approach
+    }
+
+    /**
+     * Fetch pairings from BCP for a given event and round.
+     *
+     * @param string $eventId BCP event ID
+     * @param int $round Round number
+     * @return Pairing[]
+     * @throws \RuntimeException If API request fails after retries
+     */
+    public function fetchPairings(string $eventId, int $round): array
+    {
+        $url = $this->buildPairingsUrl($eventId, $round);
+        $data = $this->fetchJsonWithRetry($url);
+        return $this->parseApiResponse($data);
+    }
+
+    /**
+     * Build the API URL for fetching pairings.
+     */
+    public function buildPairingsUrl(string $eventId, int $round): string
+    {
+        return self::BCP_API_BASE_URL . "/{$eventId}/pairings?eventId={$eventId}&round={$round}&pairingType=Pairing";
+    }
+
+    /**
+     * Extract event ID from a BCP URL.
+     *
+     * @throws \InvalidArgumentException If URL is not a valid BCP event URL
+     */
+    public function extractEventId(string $url): string
+    {
+        $pattern = '#bestcoastpairings\.com/event/([A-Za-z0-9]+)#';
+
+        if (preg_match($pattern, $url, $matches)) {
+            return $matches[1];
+        }
+
+        throw new \InvalidArgumentException('Invalid BCP event URL: ' . $url);
+    }
+
+    /**
+     * Fetch JSON from URL with retry and exponential backoff.
+     *
+     * Reference: specs/001-table-allocation/research.md#best-practices
+     *
+     * @return array Decoded JSON response
+     * @throws \RuntimeException If all retries fail
+     */
+    private function fetchJsonWithRetry(string $url): array
+    {
+        $lastException = null;
+        $delay = $this->baseDelayMs;
+
+        for ($attempt = 1; $attempt <= $this->maxRetries; $attempt++) {
+            try {
+                return $this->fetchJson($url);
+            } catch (\Exception $e) {
+                $lastException = $e;
+
+                if ($attempt < $this->maxRetries) {
+                    usleep($delay * 1000); // Convert ms to microseconds
+                    $delay = (int) ($delay * $this->backoffMultiplier);
+                }
+            }
+        }
+
+        throw new \RuntimeException(
+            "Failed to fetch BCP pairings after {$this->maxRetries} attempts: " .
+            ($lastException ? $lastException->getMessage() : 'Unknown error'),
+            0,
+            $lastException
+        );
+    }
+
+    /**
+     * Fetch JSON from BCP API using native PHP HTTP client.
+     *
+     * @return array Decoded JSON response
+     * @throws \RuntimeException If request fails or returns invalid JSON
+     */
+    private function fetchJson(string $url): array
+    {
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => implode("\r\n", [
+                    'Accept: application/json',
+                    'client-id: web-app',
+                    'env: bcp',
+                    'content-type: application/json'
+                ]),
+                'timeout' => 10
+            ]
+        ]);
+
+        $response = @file_get_contents($url, false, $context);
+        if ($response === false) {
+            throw new \RuntimeException("Failed to fetch URL: {$url}");
+        }
+
+        // Check HTTP status code
+        if (isset($http_response_header[0])) {
+            if (!preg_match('/HTTP\/\d\.\d\s+2\d{2}/', $http_response_header[0])) {
+                throw new \RuntimeException("HTTP error: {$http_response_header[0]}");
+            }
+        }
+        
+        $data = json_decode($response, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \RuntimeException("Invalid JSON response: " . json_last_error_msg());
+        }
+
+        return $data;
+    }
+
+    /**
+     * Parse pairings from BCP API response.
+     *
+     * Reference: specs/001-table-allocation/research.md#api-response-structure
+     *
+     * @param array $data Decoded JSON from BCP API
+     * @return Pairing[]
+     */
+    public function parseApiResponse(array $data): array
+    {
+        if (!isset($data['active']) || !is_array($data['active'])) {
+            return [];
+        }
+
+        $pairings = [];
+
+        foreach ($data['active'] as $item) {
+            $pairing = $this->parsePairingItem($item);
+            if ($pairing !== null) {
+                $pairings[] = $pairing;
+            }
+        }
+
+        // Sort by table number (ascending)
+        usort($pairings, function (Pairing $a, Pairing $b) {
+            if ($a->bcpTableNumber === null && $b->bcpTableNumber === null) {
+                return 0;
+            }
+            if ($a->bcpTableNumber === null) {
+                return 1;
+            }
+            if ($b->bcpTableNumber === null) {
+                return -1;
+            }
+            return $a->bcpTableNumber <=> $b->bcpTableNumber;
+        });
+
+        return $pairings;
+    }
+
+    /**
+     * Parse a single pairing item from API response.
+     *
+     * @param array $item Single pairing data from API
+     * @return Pairing|null Returns null if required fields are missing
+     */
+    private function parsePairingItem(array $item): ?Pairing
+    {
+        // Validate required fields
+        if (!isset($item['player1'], $item['player2'], $item['player1Game'], $item['player2Game'])) {
+            return null;
+        }
+
+        // Extract player data
+        $player1BcpId = $item['player1']['id'] ?? '';
+        $player1Name = $this->formatPlayerName($item['player1']['user'] ?? []);
+        $player1Score = (int)($item['player1Game']['points'] ?? 0);
+
+        $player2BcpId = $item['player2']['id'] ?? '';
+        $player2Name = $this->formatPlayerName($item['player2']['user'] ?? []);
+        $player2Score = (int)($item['player2Game']['points'] ?? 0);
+
+        // Table number (nullable)
+        $bcpTableNumber = isset($item['table']) ? (int)$item['table'] : null;
+
+        // Skip if missing player IDs
+        if (empty($player1BcpId) || empty($player2BcpId)) {
+            return null;
+        }
+
+        return new Pairing(
+            $player1BcpId,
+            $player1Name,
+            $player1Score,
+            $player2BcpId,
+            $player2Name,
+            $player2Score,
+            $bcpTableNumber
+        );
+    }
+
+    /**
+     * Format player name from user data.
+     *
+     * @param array $user User data containing firstName and lastName
+     * @return string Formatted name (firstName lastName)
+     */
+    private function formatPlayerName(array $user): string
+    {
+        $firstName = $user['firstName'] ?? '';
+        $lastName = $user['lastName'] ?? '';
+        return trim("{$firstName} {$lastName}");
+    }
+
+    // Getters for retry configuration (used in tests)
+
+    public function getMaxRetries(): int
+    {
+        return $this->maxRetries;
+    }
+
+    public function getBaseDelayMs(): int
+    {
+        return $this->baseDelayMs;
+    }
+
+    public function getBackoffMultiplier(): float
+    {
+        return $this->backoffMultiplier;
+    }
+}
