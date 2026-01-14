@@ -128,6 +128,9 @@ class AllocationEditService
 
         // Get round info for conflict calculation
         $round = $this->getRound($allocation1['round_id']);
+        if (!$round) {
+            throw new RuntimeException('Round not found');
+        }
 
         // Perform swap in transaction
         $this->db->beginTransaction();

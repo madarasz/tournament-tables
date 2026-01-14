@@ -125,11 +125,6 @@ class AllocationController extends BaseController
             return;
         }
 
-        if ($allocation1 === null || $allocation2 === null) {
-            $this->notFound('Allocation');
-            return;
-        }
-
         // Verify both allocations are in the same round
         if ($allocation1->roundId !== $allocation2->roundId) {
             $this->error('validation_error', 'Allocations must be in the same round', 400);
@@ -157,6 +152,11 @@ class AllocationController extends BaseController
             // Reload allocations to get updated data
             $allocation1 = Allocation::find($allocationId1);
             $allocation2 = Allocation::find($allocationId2);
+
+            if ($allocation1 === null || $allocation2 === null) {
+                $this->error('internal_error', 'Allocation was deleted during swap', 500);
+                return;
+            }
 
             $this->success([
                 'allocation1' => [
