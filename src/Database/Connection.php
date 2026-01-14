@@ -62,8 +62,9 @@ class Connection
         $config = self::loadConfig();
 
         $dsn = sprintf(
-            'mysql:host=%s;dbname=%s;charset=%s',
+            'mysql:host=%s;port=%s;dbname=%s;charset=%s',
             $config['host'],
+            $config['port'] ?? 3306,
             $config['database'],
             $config['charset']
         );

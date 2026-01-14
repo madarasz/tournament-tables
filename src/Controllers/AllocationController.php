@@ -80,6 +80,10 @@ class AllocationController extends BaseController
 
             // Reload allocation to get updated data
             $allocation = Allocation::find($allocationId);
+            if ($allocation === null) {
+                $this->error('internal_error', 'Allocation was deleted during update', 500);
+                return;
+            }
 
             $this->success([
                 'id' => $allocation->id,
@@ -116,6 +120,10 @@ class AllocationController extends BaseController
 
         $allocation1 = Allocation::find($allocationId1);
         $allocation2 = Allocation::find($allocationId2);
+        if ($allocation1 === null || $allocation2 === null) {
+            $this->error('internal_error', 'Allocation was deleted during swap', 500);
+            return;
+        }
 
         if ($allocation1 === null || $allocation2 === null) {
             $this->notFound('Allocation');

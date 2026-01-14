@@ -222,7 +222,7 @@ $hasTableCollisions = !empty($tableCollisions);
                 <!-- Publish button (disabled if table collisions exist) -->
                 <button
                     hx-post="/api/tournaments/<?= $tournament->id ?>/rounds/<?= $round->roundNumber ?>/publish"
-                    hx-target="#publish-status"
+                    hx-target=".publish-status"
                     hx-swap="innerHTML"
                     hx-confirm="Publish allocations? Players will be able to see their table assignments."
                     class="contrast"
@@ -235,10 +235,10 @@ $hasTableCollisions = !empty($tableCollisions);
                 <small style="color: #d32f2f; line-height: 2.5;">Fix table collisions before publishing</small>
                 <?php endif; ?>
                 <?php else: ?>
-                <span id="publish-status" class="published-badge">Already Published</span>
+                <span class="publish-status published-badge">Already Published</span>
                 <?php endif; ?>
 
-                <span id="publish-status"></span>
+                <span class="publish-status"></span>
             </div>
 
             <!-- Swap controls (T074) -->

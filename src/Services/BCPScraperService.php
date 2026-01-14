@@ -128,6 +128,13 @@ class BCPScraperService
             throw new \RuntimeException("Failed to fetch URL: {$url}");
         }
 
+        // Check HTTP status code
+        if (isset($http_response_header[0])) {
+            if (!preg_match('/HTTP\/\d\.\d\s+2\d{2}/', $http_response_header[0])) {
+                throw new \RuntimeException("HTTP error: {$http_response_header[0]}");
+            }
+        }
+        
         $data = json_decode($response, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new \RuntimeException("Invalid JSON response: " . json_last_error_msg());

@@ -63,7 +63,7 @@ All admin endpoints require authentication via one of:
 | `PATCH` | `/api/allocations/{id}` | Edit table assignment | Yes | Yes |
 | `POST` | `/api/allocations/swap` | Swap tables between two pairings | Yes | Yes |
 
-### Authentication
+### Authentication endpoint
 
 | Method | Route | Description | Auth | Ready |
 |--------|-------|-------------|------|-------|

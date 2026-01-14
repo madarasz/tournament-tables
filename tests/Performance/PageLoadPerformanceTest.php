@@ -60,7 +60,6 @@ class PageLoadPerformanceTest extends TestCase
 
         // Simulate loading public round view data
         $allocations = Allocation::findByRound($round->id);
-        $tournamentData = $this->tournament->toArray();
 
         // Build response data (what the view would use)
         $responseData = [];
@@ -221,7 +220,7 @@ class PageLoadPerformanceTest extends TestCase
     {
         $startTime = microtime(true);
 
-        $terrainTypes = Connection::fetchAll(
+        Connection::fetchAll(
             'SELECT * FROM terrain_types ORDER BY sort_order'
         );
 

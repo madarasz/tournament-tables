@@ -69,7 +69,6 @@ class AllocationEditTest extends TestCase
         $this->assertCount(4, $allocations);
 
         $originalAllocation = $allocations[0];
-        $originalTableId = $originalAllocation->tableId;
 
         // Get a table that's not currently used in this round
         $tables = Table::findByTournament($this->tournament->id);
