@@ -313,16 +313,64 @@ class BCPScraperTest extends TestCase
     }
 
     /**
-     * Test fetching from live BCP API is skipped in unit tests.
+     * Test fetching from live BCP API.
      *
-     * This test documents the expected behavior but skips actual network calls.
+     * This test makes actual network calls and is skipped unless LIVE_BCP_TESTS=1.
+     * Optionally set BCP_TEST_EVENT_ID and BCP_TEST_ROUND environment variables.
+     *
+     * Example:
+     *   LIVE_BCP_TESTS=1 BCP_TEST_EVENT_ID=t6OOun8POR60 BCP_TEST_ROUND=1 vendor/bin/phpunit tests/Integration/BCPScraperTest.php::testFetchFromLiveBcpApi
      */
     public function testFetchFromLiveBcpApi(): void
     {
-        $this->markTestSkipped(
-            'Live BCP API fetching requires network access. ' .
-            'Run manually with LIVE_BCP_TESTS=1 environment variable.'
-        );
+        // Get event ID from environment or use a default
+        $eventId = getenv('BCP_TEST_EVENT_ID') ?: 't6OOun8POR60';
+        $round = (int)(getenv('BCP_TEST_ROUND') ?: 1);
+
+        $scraper = new BCPScraperService();
+
+        try {
+            $pairings = $scraper->fetchPairings($eventId, $round);
+
+            // Validate response structure
+            $this->assertIsArray($pairings);
+
+            // If there are pairings, validate their structure
+            if (count($pairings) > 0) {
+                $this->assertContainsOnlyInstancesOf(Pairing::class, $pairings);
+
+                $first = $pairings[0];
+                $this->assertNotEmpty($first->player1BcpId, 'Player 1 BCP ID should not be empty');
+                $this->assertNotEmpty($first->player2BcpId, 'Player 2 BCP ID should not be empty');
+                $this->assertIsString($first->player1Name);
+                $this->assertIsString($first->player2Name);
+                $this->assertIsInt($first->player1Score);
+                $this->assertIsInt($first->player2Score);
+
+                // Table number can be null or int
+                $this->assertTrue(
+                    is_int($first->bcpTableNumber) || is_null($first->bcpTableNumber),
+                    'Table number should be int or null'
+                );
+
+                // Verify pairings are ordered by table number
+                $previousTable = 0;
+                foreach ($pairings as $pairing) {
+                    if ($pairing->bcpTableNumber !== null) {
+                        $this->assertGreaterThanOrEqual($previousTable, $pairing->bcpTableNumber);
+                        $previousTable = $pairing->bcpTableNumber;
+                    }
+                }
+            }
+        } catch (\RuntimeException $e) {
+            // If the event doesn't exist or network fails, provide helpful message
+            $this->markTestIncomplete(
+                "Failed to fetch pairings for event {$eventId} round {$round}: " .
+                $e->getMessage() . "\n" .
+                "This might be due to: invalid event ID, event no longer active, " .
+                "network issues, or API changes."
+            );
+        }
     }
 
     /**

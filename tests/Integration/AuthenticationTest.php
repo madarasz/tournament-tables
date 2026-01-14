@@ -30,6 +30,11 @@ class AuthenticationTest extends TestCase
             $this->markTestSkipped('Database configuration not found');
         }
 
+        // Skip if database is not reachable
+        if (!$this->isDatabaseAvailable()) {
+            $this->markTestSkipped('Database not available');
+        }
+
         $this->authService = new AuthService();
         $this->tournamentService = new TournamentService();
 
@@ -62,6 +67,16 @@ class AuthenticationTest extends TestCase
         unset($_COOKIE['admin_token']);
 
         Connection::reset();
+    }
+
+    private function isDatabaseAvailable(): bool
+    {
+        try {
+            Connection::getInstance();
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     // ========== AuthService Integration Tests ==========

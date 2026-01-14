@@ -262,7 +262,7 @@ class AllocationGenerationTest extends TestCase
     private function isDatabaseAvailable(): bool
     {
         try {
-            Connection::getPdo();
+            Connection::getInstance();
             return true;
         } catch (\Exception $e) {
             return false;
@@ -272,7 +272,7 @@ class AllocationGenerationTest extends TestCase
     private function cleanupTestData(): void
     {
         try {
-            Connection::execute("DELETE FROM tournaments WHERE name LIKE 'Test Tournament%'");
+            Connection::execute("DELETE FROM tournaments WHERE bcp_event_id LIKE 'test_alloc_%' OR bcp_event_id LIKE 'test_small_%'");
         } catch (\Exception $e) {
             // Ignore cleanup errors
         }
@@ -288,10 +288,10 @@ class AllocationGenerationTest extends TestCase
                  VALUES (?, ?, ?, ?, ?)",
                 [
                     'Test Tournament Allocation',
-                    'test_alloc_' . time(),
+                    'test_alloc_' . uniqid('', true),
                     'https://www.bestcoastpairings.com/event/test123',
                     8,
-                    'TestToken1234567',
+                    bin2hex(random_bytes(8)),
                 ]
             );
 
@@ -325,10 +325,10 @@ class AllocationGenerationTest extends TestCase
                  VALUES (?, ?, ?, ?, ?)",
                 [
                     'Test Tournament Small',
-                    'test_small_' . time(),
+                    'test_small_' . uniqid('', true),
                     'https://www.bestcoastpairings.com/event/small123',
                     $tableCount,
-                    'SmallToken12345',
+                    bin2hex(random_bytes(8)),
                 ]
             );
 

@@ -119,7 +119,7 @@ tournament-tables/
 # All tests
 ./vendor/bin/phpunit
 # For Docker
-docker-compose exec -w /var/www/app php ./vendor/bin/phpunit
+docker-compose exec -w /var/www/app php ./vendor/bin/phpunit --testsuite unit,integration,performance,e2e --process-isolation
 
 # Unit tests only
 ./vendor/bin/phpunit --testsuite unit

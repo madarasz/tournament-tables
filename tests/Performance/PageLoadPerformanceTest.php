@@ -76,14 +76,16 @@ class PageLoadPerformanceTest extends TestCase
             sprintf('Public round view data load took %.3fs', $duration)
         );
 
-        fwrite(
-            STDERR,
-            sprintf(
-                "\nPublic view: Loaded %d allocations in %.3fs\n",
-                count($responseData),
-                $duration
-            )
-        );
+        if (getenv('VERBOSE_PERF')) {
+            fwrite(
+                STDERR,
+                sprintf(
+                    "\nPublic view: Loaded %d allocations in %.3fs\n",
+                    count($responseData),
+                    $duration
+                )
+            );
+        }
     }
 
     /**
@@ -109,7 +111,9 @@ class PageLoadPerformanceTest extends TestCase
             sprintf('Tournament details API took %.3fs', $duration)
         );
 
-        fwrite(STDERR, sprintf("\nTournament details: %.3fs\n", $duration));
+        if (getenv('VERBOSE_PERF')) {
+            fwrite(STDERR, sprintf("\nTournament details: %.3fs\n", $duration));
+        }
     }
 
     /**
@@ -143,14 +147,16 @@ class PageLoadPerformanceTest extends TestCase
             sprintf('Round allocations API took %.3fs', $duration)
         );
 
-        fwrite(
-            STDERR,
-            sprintf(
-                "\nRound allocations: %d allocations in %.3fs\n",
-                count($response),
-                $duration
-            )
-        );
+        if (getenv('VERBOSE_PERF')) {
+            fwrite(
+                STDERR,
+                sprintf(
+                    "\nRound allocations: %d allocations in %.3fs\n",
+                    count($response),
+                    $duration
+                )
+            );
+        }
     }
 
     /**
@@ -191,17 +197,19 @@ class PageLoadPerformanceTest extends TestCase
         );
 
         $totalAllocations = array_sum(array_map('count', $allAllocations));
-        fwrite(
-            STDERR,
-            sprintf(
-                "\nLarge tournament: %d tables, %d rounds, %d players, %d allocations in %.3fs\n",
-                count($tables),
-                count($rounds),
-                count($players),
-                $totalAllocations,
-                $duration
-            )
-        );
+        if (getenv('VERBOSE_PERF')) {
+            fwrite(
+                STDERR,
+                sprintf(
+                    "\nLarge tournament: %d tables, %d rounds, %d players, %d allocations in %.3fs\n",
+                    count($tables),
+                    count($rounds),
+                    count($players),
+                    $totalAllocations,
+                    $duration
+                )
+            );
+        }
     }
 
     /**
@@ -225,7 +233,9 @@ class PageLoadPerformanceTest extends TestCase
             sprintf('Terrain types API took %.3fs', $duration)
         );
 
-        fwrite(STDERR, sprintf("\nTerrain types: %.3fs\n", $duration));
+        if (getenv('VERBOSE_PERF')) {
+            fwrite(STDERR, sprintf("\nTerrain types: %.3fs\n", $duration));
+        }
     }
 
     /**
@@ -253,15 +263,17 @@ class PageLoadPerformanceTest extends TestCase
             sprintf('Average query time was %.3fs', $avgPerQuery)
         );
 
-        fwrite(
-            STDERR,
-            sprintf(
-                "\nDB Performance: %d queries in %.3fs (avg: %.4fs)\n",
-                $iterations,
-                $duration,
-                $avgPerQuery
-            )
-        );
+        if (getenv('VERBOSE_PERF')) {
+            fwrite(
+                STDERR,
+                sprintf(
+                    "\nDB Performance: %d queries in %.3fs (avg: %.4fs)\n",
+                    $iterations,
+                    $duration,
+                    $avgPerQuery
+                )
+            );
+        }
     }
 
     // Helper methods
@@ -295,21 +307,21 @@ class PageLoadPerformanceTest extends TestCase
                  VALUES (?, ?, ?, ?, ?)",
                 [
                     'Page Load Test ' . time(),
-                    'page_load_' . time(),
+                    'pageload' . str_replace('.', '', microtime(true)) . bin2hex(random_bytes(4)),
                     'https://www.bestcoastpairings.com/event/pageload123',
                     20,
-                    'PageLoadToken123',
+                    bin2hex(random_bytes(8)),
                 ]
             );
 
             $tournamentId = Connection::lastInsertId();
 
-            // Create tables
+            // Create tables (without terrain types to avoid foreign key issues)
             for ($i = 1; $i <= 20; $i++) {
                 Connection::execute(
                     "INSERT INTO tables (tournament_id, table_number, terrain_type_id)
                      VALUES (?, ?, ?)",
-                    [$tournamentId, $i, (($i - 1) % 8) + 1]
+                    [$tournamentId, $i, null]
                 );
             }
 

@@ -46,7 +46,7 @@ class AllocationEditTest extends TestCase
         $this->tournament = $this->createTestTournament();
 
         // Initialize service
-        $db = Connection::getInstance()->getPdo();
+        $db = Connection::getInstance();
         $this->editService = new AllocationEditService($db, new CostCalculator());
     }
 
@@ -64,33 +64,37 @@ class AllocationEditTest extends TestCase
     {
         // Create round with allocations
         $round = $this->createRoundWithAllocations();
-        $allocations = Allocation::getByRound($round->id);
+        $allocations = Allocation::findByRound($round->id);
 
         $this->assertCount(4, $allocations);
 
         $originalAllocation = $allocations[0];
-        $originalTableId = $originalAllocation['table_id'];
+        $originalTableId = $originalAllocation->tableId;
 
-        // Get a different table
-        $tables = Table::getByTournament($this->tournament->id);
+        // Get a table that's not currently used in this round
+        $tables = Table::findByTournament($this->tournament->id);
+        $usedTableIds = array_map(function ($a) {
+            return $a->tableId;
+        }, $allocations);
+
         $newTableId = null;
         foreach ($tables as $table) {
-            if ($table['id'] !== $originalTableId) {
-                $newTableId = $table['id'];
+            if (!in_array($table->id, $usedTableIds, true)) {
+                $newTableId = $table->id;
                 break;
             }
         }
 
-        $this->assertNotNull($newTableId, 'Should have a different table available');
+        $this->assertNotNull($newTableId, 'Should have an unused table available');
 
         // Edit the allocation
-        $result = $this->editService->editTableAssignment($originalAllocation['id'], $newTableId);
+        $result = $this->editService->editTableAssignment($originalAllocation->id, $newTableId);
 
         $this->assertTrue($result['success']);
 
         // Verify change persisted
-        $updatedAllocation = Allocation::getById($originalAllocation['id']);
-        $this->assertEquals($newTableId, $updatedAllocation['table_id']);
+        $updatedAllocation = Allocation::find($originalAllocation->id);
+        $this->assertEquals($newTableId, $updatedAllocation->tableId);
     }
 
     /**
@@ -102,13 +106,17 @@ class AllocationEditTest extends TestCase
         $round1 = $this->createRound1WithAllocations();
         $round2 = $this->createRound2WithAllocations();
 
-        $round2Allocations = Allocation::getByRound($round2->id);
+        $round2Allocations = Allocation::findByRound($round2->id);
         $this->assertCount(4, $round2Allocations);
+
+        // Get first player's ID from the players we created
+        $players = Player::findByTournament($this->tournament->id);
+        $player1Id = $players[0]->id;
 
         // Get player 1's allocation in round 2
         $player1Round2Allocation = null;
         foreach ($round2Allocations as $alloc) {
-            if ($alloc['player1_id'] === 1 || $alloc['player2_id'] === 1) {
+            if ($alloc->player1Id === $player1Id || $alloc->player2Id === $player1Id) {
                 $player1Round2Allocation = $alloc;
                 break;
             }
@@ -117,11 +125,11 @@ class AllocationEditTest extends TestCase
         $this->assertNotNull($player1Round2Allocation);
 
         // Get the table player 1 used in round 1
-        $round1Allocations = Allocation::getByRound($round1->id);
+        $round1Allocations = Allocation::findByRound($round1->id);
         $player1Round1Table = null;
         foreach ($round1Allocations as $alloc) {
-            if ($alloc['player1_id'] === 1 || $alloc['player2_id'] === 1) {
-                $player1Round1Table = $alloc['table_id'];
+            if ($alloc->player1Id === $player1Id || $alloc->player2Id === $player1Id) {
+                $player1Round1Table = $alloc->tableId;
                 break;
             }
         }
@@ -130,7 +138,7 @@ class AllocationEditTest extends TestCase
 
         // Edit player 1's round 2 allocation to use the same table as round 1
         $result = $this->editService->editTableAssignment(
-            $player1Round2Allocation['id'],
+            $player1Round2Allocation->id,
             $player1Round1Table
         );
 
@@ -158,27 +166,27 @@ class AllocationEditTest extends TestCase
     {
         // Create round with allocations
         $round = $this->createRoundWithAllocations();
-        $allocations = Allocation::getByRound($round->id);
+        $allocations = Allocation::findByRound($round->id);
 
         $this->assertGreaterThanOrEqual(2, count($allocations));
 
         $allocation1 = $allocations[0];
         $allocation2 = $allocations[1];
 
-        $originalTable1 = $allocation1['table_id'];
-        $originalTable2 = $allocation2['table_id'];
+        $originalTable1 = $allocation1->tableId;
+        $originalTable2 = $allocation2->tableId;
 
         // Swap the tables
-        $result = $this->editService->swapTables($allocation1['id'], $allocation2['id']);
+        $result = $this->editService->swapTables($allocation1->id, $allocation2->id);
 
         $this->assertTrue($result['success']);
 
         // Verify swap persisted
-        $updatedAllocation1 = Allocation::getById($allocation1['id']);
-        $updatedAllocation2 = Allocation::getById($allocation2['id']);
+        $updatedAllocation1 = Allocation::find($allocation1->id);
+        $updatedAllocation2 = Allocation::find($allocation2->id);
 
-        $this->assertEquals($originalTable2, $updatedAllocation1['table_id']);
-        $this->assertEquals($originalTable1, $updatedAllocation2['table_id']);
+        $this->assertEquals($originalTable2, $updatedAllocation1->tableId);
+        $this->assertEquals($originalTable1, $updatedAllocation2->tableId);
     }
 
     /**
@@ -187,7 +195,7 @@ class AllocationEditTest extends TestCase
     public function testEditWithInvalidTableId(): void
     {
         $round = $this->createRoundWithAllocations();
-        $allocations = Allocation::getByRound($round->id);
+        $allocations = Allocation::findByRound($round->id);
 
         $allocation = $allocations[0];
         $invalidTableId = 99999;
@@ -195,7 +203,7 @@ class AllocationEditTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Table not found');
 
-        $this->editService->editTableAssignment($allocation['id'], $invalidTableId);
+        $this->editService->editTableAssignment($allocation->id, $invalidTableId);
     }
 
     // Helper methods
@@ -203,7 +211,7 @@ class AllocationEditTest extends TestCase
     private function isDatabaseAvailable(): bool
     {
         try {
-            Connection::getInstance()->getPdo();
+            Connection::getInstance();
             return true;
         } catch (\Exception $e) {
             return false;
@@ -212,7 +220,7 @@ class AllocationEditTest extends TestCase
 
     private function cleanupTestData(): void
     {
-        $db = Connection::getInstance()->getPdo();
+        $db = Connection::getInstance();
         $db->exec("DELETE FROM allocations WHERE 1=1");
         $db->exec("DELETE FROM players WHERE 1=1");
         $db->exec("DELETE FROM rounds WHERE 1=1");
@@ -224,26 +232,26 @@ class AllocationEditTest extends TestCase
     {
         $tournament = new Tournament();
         $tournament->name = 'Test Tournament';
-        $tournament->bcp_event_id = 'TEST_' . uniqid();
-        $tournament->bcp_url = 'https://www.bestcoastpairings.com/event/TEST';
-        $tournament->table_count = 8;
-        $tournament->admin_token = bin2hex(random_bytes(8));
+        $tournament->bcpEventId = 'TEST_' . uniqid();
+        $tournament->bcpUrl = 'https://www.bestcoastpairings.com/event/TEST';
+        $tournament->tableCount = 8;
+        $tournament->adminToken = bin2hex(random_bytes(8));
         $tournament->save();
 
         // Create tables
         for ($i = 1; $i <= 8; $i++) {
             $table = new Table();
-            $table->tournament_id = $tournament->id;
-            $table->table_number = $i;
-            $table->terrain_type_id = null;
+            $table->tournamentId = $tournament->id;
+            $table->tableNumber = $i;
+            $table->terrainTypeId = null;
             $table->save();
         }
 
         // Create players
         for ($i = 1; $i <= 8; $i++) {
             $player = new Player();
-            $player->tournament_id = $tournament->id;
-            $player->bcp_player_id = 'bcp_p' . $i;
+            $player->tournamentId = $tournament->id;
+            $player->bcpPlayerId = 'bcp_p' . $i;
             $player->name = 'Player ' . $i;
             $player->save();
         }
@@ -254,23 +262,23 @@ class AllocationEditTest extends TestCase
     private function createRoundWithAllocations(): Round
     {
         $round = new Round();
-        $round->tournament_id = $this->tournament->id;
-        $round->round_number = 1;
-        $round->is_published = false;
+        $round->tournamentId = $this->tournament->id;
+        $round->roundNumber = 1;
+        $round->isPublished = false;
         $round->save();
 
         // Create 4 allocations
-        $tables = Table::getByTournament($this->tournament->id);
-        $players = Player::getByTournament($this->tournament->id);
+        $tables = Table::findByTournament($this->tournament->id);
+        $players = Player::findByTournament($this->tournament->id);
 
         for ($i = 0; $i < 4; $i++) {
             $allocation = new Allocation();
-            $allocation->round_id = $round->id;
-            $allocation->table_id = $tables[$i]['id'];
-            $allocation->player1_id = $players[$i * 2]['id'];
-            $allocation->player2_id = $players[$i * 2 + 1]['id'];
-            $allocation->player1_score = 0;
-            $allocation->player2_score = 0;
+            $allocation->roundId = $round->id;
+            $allocation->tableId = $tables[$i]->id;
+            $allocation->player1Id = $players[$i * 2]->id;
+            $allocation->player2Id = $players[$i * 2 + 1]->id;
+            $allocation->player1Score = 0;
+            $allocation->player2Score = 0;
             $allocation->save();
         }
 
@@ -285,23 +293,23 @@ class AllocationEditTest extends TestCase
     private function createRound2WithAllocations(): Round
     {
         $round = new Round();
-        $round->tournament_id = $this->tournament->id;
-        $round->round_number = 2;
-        $round->is_published = false;
+        $round->tournamentId = $this->tournament->id;
+        $round->roundNumber = 2;
+        $round->isPublished = false;
         $round->save();
 
         // Create allocations using different table assignments
-        $tables = Table::getByTournament($this->tournament->id);
-        $players = Player::getByTournament($this->tournament->id);
+        $tables = Table::findByTournament($this->tournament->id);
+        $players = Player::findByTournament($this->tournament->id);
 
         for ($i = 0; $i < 4; $i++) {
             $allocation = new Allocation();
-            $allocation->round_id = $round->id;
-            $allocation->table_id = $tables[$i + 4]['id']; // Use different tables
-            $allocation->player1_id = $players[$i * 2]['id'];
-            $allocation->player2_id = $players[$i * 2 + 1]['id'];
-            $allocation->player1_score = 1;
-            $allocation->player2_score = 1;
+            $allocation->roundId = $round->id;
+            $allocation->tableId = $tables[$i + 4]->id; // Use different tables
+            $allocation->player1Id = $players[$i * 2]->id;
+            $allocation->player2Id = $players[$i * 2 + 1]->id;
+            $allocation->player1Score = 1;
+            $allocation->player2Score = 1;
             $allocation->save();
         }
 

@@ -107,16 +107,18 @@ class AllocationPerformanceTest extends TestCase
             'Should generate allocation for each pairing'
         );
 
-        // Output performance info
-        fwrite(
-            STDERR,
-            sprintf(
-                "\nPerformance: Generated %d allocations for %d players in %.3f seconds\n",
-                count($result->allocations),
-                self::PLAYERS_COUNT,
-                $duration
-            )
-        );
+        // Output performance info (only when VERBOSE_PERF is set)
+        if (getenv('VERBOSE_PERF')) {
+            fwrite(
+                STDERR,
+                sprintf(
+                    "\nPerformance: Generated %d allocations for %d players in %.3f seconds\n",
+                    count($result->allocations),
+                    self::PLAYERS_COUNT,
+                    $duration
+                )
+            );
+        }
     }
 
     /**
@@ -166,10 +168,12 @@ class AllocationPerformanceTest extends TestCase
             );
         }
 
-        // Output scaling info
-        fwrite(STDERR, "\nScaling performance:\n");
-        foreach ($timings as $count => $time) {
-            fwrite(STDERR, sprintf("  %d players: %.3fs\n", $count, $time));
+        // Output scaling info (only when VERBOSE_PERF is set)
+        if (getenv('VERBOSE_PERF')) {
+            fwrite(STDERR, "\nScaling performance:\n");
+            foreach ($timings as $count => $time) {
+                fwrite(STDERR, sprintf("  %d players: %.3fs\n", $count, $time));
+            }
         }
     }
 
@@ -205,15 +209,17 @@ class AllocationPerformanceTest extends TestCase
             "Allocation with complex history took {$duration}s"
         );
 
-        fwrite(
-            STDERR,
-            sprintf(
-                "\nComplex history test: %d allocations with %d rounds of history in %.3fs\n",
-                count($result->allocations),
-                self::ROUNDS_TO_TEST - 1,
-                $duration
-            )
-        );
+        if (getenv('VERBOSE_PERF')) {
+            fwrite(
+                STDERR,
+                sprintf(
+                    "\nComplex history test: %d allocations with %d rounds of history in %.3fs\n",
+                    count($result->allocations),
+                    self::ROUNDS_TO_TEST - 1,
+                    $duration
+                )
+            );
+        }
     }
 
     // Helper methods
@@ -255,19 +261,18 @@ class AllocationPerformanceTest extends TestCase
                     'perf_test_' . time() . rand(1000, 9999),
                     'https://www.bestcoastpairings.com/event/perf' . time(),
                     $tableCount,
-                    'PerfToken' . substr(md5((string) time()), 0, 8),
+                    bin2hex(random_bytes(8)),
                 ]
             );
 
             $tournamentId = Connection::lastInsertId();
 
-            // Create tables with terrain types
+            // Create tables (without terrain types to avoid foreign key issues)
             for ($i = 1; $i <= $tableCount; $i++) {
-                $terrainTypeId = (($i - 1) % 8) + 1; // Cycle through terrain types 1-8
                 Connection::execute(
                     "INSERT INTO tables (tournament_id, table_number, terrain_type_id)
                      VALUES (?, ?, ?)",
-                    [$tournamentId, $i, $terrainTypeId]
+                    [$tournamentId, $i, null]
                 );
             }
 

@@ -232,9 +232,9 @@ class PublicViewTest extends TestCase
      */
     public function testNonExistentRoundReturns404(): void
     {
-        // Access non-existent round
+        // Access non-existent round (use 15 to stay within valid range 1-20)
         ob_start();
-        $this->controller->showRound(['id' => $this->tournament->id, 'n' => 99], null);
+        $this->controller->showRound(['id' => $this->tournament->id, 'n' => 15], null);
         $output = ob_get_clean();
 
         $response = json_decode($output, true);
@@ -265,7 +265,7 @@ class PublicViewTest extends TestCase
     private function isDatabaseAvailable(): bool
     {
         try {
-            Connection::getInstance()->getPdo();
+            Connection::getInstance();
             return true;
         } catch (\Exception $e) {
             return false;
@@ -274,7 +274,7 @@ class PublicViewTest extends TestCase
 
     private function cleanupTestData(): void
     {
-        $db = Connection::getInstance()->getPdo();
+        $db = Connection::getInstance();
         $db->exec("DELETE FROM allocations WHERE 1=1");
         $db->exec("DELETE FROM players WHERE 1=1");
         $db->exec("DELETE FROM rounds WHERE 1=1");

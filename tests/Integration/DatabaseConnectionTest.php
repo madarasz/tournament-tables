@@ -59,42 +59,60 @@ class DatabaseConnectionTest extends TestCase
 
     public function testTerrainTypesTableExists(): void
     {
-        $result = Connection::fetchAll('SHOW TABLES LIKE ?', ['terrain_types']);
+        $result = Connection::fetchAll(
+            "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+            ['terrain_types']
+        );
 
         $this->assertNotEmpty($result, 'terrain_types table should exist. Run bin/migrate.php first.');
     }
 
     public function testTournamentsTableExists(): void
     {
-        $result = Connection::fetchAll('SHOW TABLES LIKE ?', ['tournaments']);
+        $result = Connection::fetchAll(
+            "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+            ['tournaments']
+        );
 
         $this->assertNotEmpty($result, 'tournaments table should exist. Run bin/migrate.php first.');
     }
 
     public function testTablesTableExists(): void
     {
-        $result = Connection::fetchAll('SHOW TABLES LIKE ?', ['tables']);
+        $result = Connection::fetchAll(
+            "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+            ['tables']
+        );
 
         $this->assertNotEmpty($result, 'tables table should exist. Run bin/migrate.php first.');
     }
 
     public function testRoundsTableExists(): void
     {
-        $result = Connection::fetchAll('SHOW TABLES LIKE ?', ['rounds']);
+        $result = Connection::fetchAll(
+            "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+            ['rounds']
+        );
 
         $this->assertNotEmpty($result, 'rounds table should exist. Run bin/migrate.php first.');
     }
 
     public function testPlayersTableExists(): void
     {
-        $result = Connection::fetchAll('SHOW TABLES LIKE ?', ['players']);
+        $result = Connection::fetchAll(
+            "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+            ['players']
+        );
 
         $this->assertNotEmpty($result, 'players table should exist. Run bin/migrate.php first.');
     }
 
     public function testAllocationsTableExists(): void
     {
-        $result = Connection::fetchAll('SHOW TABLES LIKE ?', ['allocations']);
+        $result = Connection::fetchAll(
+            "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?",
+            ['allocations']
+        );
 
         $this->assertNotEmpty($result, 'allocations table should exist. Run bin/migrate.php first.');
     }

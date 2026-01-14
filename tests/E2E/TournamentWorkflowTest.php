@@ -45,7 +45,9 @@ class TournamentWorkflowTest extends TestCase
             $this->markTestSkipped('Database not available');
         }
 
+        // Aggressive cleanup of any E2E test data
         $this->cleanupTestData();
+
         $this->tournamentService = new TournamentService();
         $this->allocationService = new AllocationService(new CostCalculator());
     }
@@ -123,23 +125,26 @@ class TournamentWorkflowTest extends TestCase
             sprintf('Complete workflow took %.2f seconds, exceeding limit of %d seconds', $totalTime, self::MAX_WORKFLOW_TIME_SECONDS)
         );
 
-        fwrite(
-            STDERR,
-            sprintf(
-                "\nE2E Workflow completed in %.3fs:\n" .
-                "  - Tournament created: %s\n" .
-                "  - Tables: %d\n" .
-                "  - Players: %d\n" .
-                "  - Round 1 allocations: %d\n" .
-                "  - Round 2 allocations: %d\n",
-                $totalTime,
-                $tournament->name,
-                count($tables),
-                self::PLAYER_COUNT,
-                count($round1Allocations),
-                count($round2Allocations)
-            )
-        );
+        // Only output verbose info when VERBOSE_E2E environment variable is set
+        if (getenv('VERBOSE_E2E')) {
+            fwrite(
+                STDERR,
+                sprintf(
+                    "\nE2E Workflow completed in %.3fs:\n" .
+                    "  - Tournament created: %s\n" .
+                    "  - Tables: %d\n" .
+                    "  - Players: %d\n" .
+                    "  - Round 1 allocations: %d\n" .
+                    "  - Round 2 allocations: %d\n",
+                    $totalTime,
+                    $tournament->name,
+                    count($tables),
+                    self::PLAYER_COUNT,
+                    count($round1Allocations),
+                    count($round2Allocations)
+                )
+            );
+        }
     }
 
     /**
@@ -155,11 +160,12 @@ class TournamentWorkflowTest extends TestCase
         for ($roundNum = 1; $roundNum <= 4; $roundNum++) {
             $round = Round::findOrCreate($tournament->id, $roundNum);
 
-            // Create pairings for this round
-            $this->createPairingsForRound($tournament, $roundNum);
-
-            if ($roundNum > 1) {
-                // Generate allocations for rounds 2+
+            if ($roundNum === 1) {
+                // Round 1: Create players and initial pairings
+                $round = $this->createRound1WithPairings($tournament);
+            } else {
+                // Rounds 2+: Create pairings and generate allocations
+                $this->createPairingsForRound($tournament, $roundNum);
                 $result = $this->generateAllocations($tournament, $roundNum);
                 $this->saveAllocations($tournament, $round, $result);
             }
@@ -188,21 +194,24 @@ class TournamentWorkflowTest extends TestCase
      */
     public function testWorkflowEdgeCases(): void
     {
-        // Create tournament with minimal tables (forces conflicts)
+        // Create tournament with only 2 tables for 4 players - forces unavoidable conflicts
+        // With 2 tables, cross-pairings in R2 guarantee each pairing has players who
+        // together have used BOTH tables, so any assignment causes a conflict
+        $uniqueId = str_replace('.', '', microtime(true)) . bin2hex(random_bytes(4));
         $result = $this->tournamentService->createTournament(
-            'E2E Edge Case Test ' . time(),
-            'https://www.bestcoastpairings.com/event/edge123',
-            4 // Only 4 tables for 8 players
+            'E2E Edge Case Test ' . $uniqueId,
+            'https://www.bestcoastpairings.com/event/e2eedge' . $uniqueId,
+            2 // Only 2 tables for 4 players
         );
 
         $tournament = $result['tournament'];
 
-        // Create 8 players and 2 rounds
+        // Create 4 players
         $round1 = Round::findOrCreate($tournament->id, 1);
         $tables = Table::findByTournament($tournament->id);
 
         $players = [];
-        for ($i = 1; $i <= 8; $i++) {
+        for ($i = 1; $i <= 4; $i++) {
             $players[$i] = Player::findOrCreate(
                 $tournament->id,
                 "bcp_edge_{$i}",
@@ -210,8 +219,8 @@ class TournamentWorkflowTest extends TestCase
             );
         }
 
-        // Round 1: All 4 tables used
-        for ($i = 0; $i < 4; $i++) {
+        // Round 1: Table 1 has players 1&2, Table 2 has players 3&4
+        for ($i = 0; $i < 2; $i++) {
             $allocation = new Allocation(
                 null,
                 $round1->id,
@@ -225,13 +234,13 @@ class TournamentWorkflowTest extends TestCase
             $allocation->save();
         }
 
-        // Round 2: Same players, different pairings - will have conflicts
+        // Round 2: Cross-pairings guarantee conflicts
+        // (1,3): P1 used T1, P3 used T2 → both tables have a conflict
+        // (2,4): P2 used T1, P4 used T2 → both tables have a conflict
         $round2 = Round::findOrCreate($tournament->id, 2);
         $pairings = [
             new Pairing('bcp_edge_1', 'Edge Player 1', 1, 'bcp_edge_3', 'Edge Player 3', 1, null),
-            new Pairing('bcp_edge_2', 'Edge Player 2', 1, 'bcp_edge_4', 'Edge Player 4', 1, null),
-            new Pairing('bcp_edge_5', 'Edge Player 5', 0, 'bcp_edge_7', 'Edge Player 7', 0, null),
-            new Pairing('bcp_edge_6', 'Edge Player 6', 0, 'bcp_edge_8', 'Edge Player 8', 0, null),
+            new Pairing('bcp_edge_2', 'Edge Player 2', 0, 'bcp_edge_4', 'Edge Player 4', 0, null),
         ];
 
         $tablesArray = array_map(function ($t) {
@@ -247,19 +256,22 @@ class TournamentWorkflowTest extends TestCase
         $result = $this->allocationService->generateAllocations($pairings, $tablesArray, 2, $history);
 
         // Should still generate allocations even with conflicts
-        $this->assertCount(4, $result->allocations, 'Should generate allocations despite conflicts');
+        $this->assertCount(2, $result->allocations, 'Should generate allocations despite conflicts');
 
         // Should report conflicts
         $this->assertNotEmpty($result->conflicts, 'Should detect unavoidable conflicts');
 
-        fwrite(
-            STDERR,
-            sprintf(
-                "\nEdge case test: %d allocations with %d conflicts\n",
-                count($result->allocations),
-                count($result->conflicts)
-            )
-        );
+        // Only output verbose info when VERBOSE_E2E environment variable is set
+        if (getenv('VERBOSE_E2E')) {
+            fwrite(
+                STDERR,
+                sprintf(
+                    "\nEdge case test: %d allocations with %d conflicts\n",
+                    count($result->allocations),
+                    count($result->conflicts)
+                )
+            );
+        }
     }
 
     // Helper methods
@@ -277,7 +289,10 @@ class TournamentWorkflowTest extends TestCase
     private function cleanupTestData(): void
     {
         try {
+            // Delete tournaments and all related data via cascade
             Connection::execute("DELETE FROM tournaments WHERE name LIKE 'E2E Test%' OR name LIKE 'E2E Edge%'");
+            // Also clean up by BCP event ID pattern in case of orphans
+            Connection::execute("DELETE FROM tournaments WHERE bcp_event_id LIKE 'e2e_%'");
         } catch (\Exception $e) {
             // Ignore cleanup errors
         }
@@ -285,9 +300,11 @@ class TournamentWorkflowTest extends TestCase
 
     private function createTournament(): array
     {
+        // Use microtime and uniqid to ensure unique BCP event IDs even with process isolation
+        $uniqueId = str_replace('.', '', microtime(true)) . bin2hex(random_bytes(4));
         return $this->tournamentService->createTournament(
-            'E2E Test Tournament ' . time(),
-            'https://www.bestcoastpairings.com/event/e2e' . time(),
+            'E2E Test Tournament ' . $uniqueId,
+            'https://www.bestcoastpairings.com/event/e2e' . $uniqueId,
             self::TABLE_COUNT
         );
     }
@@ -490,14 +507,16 @@ class TournamentWorkflowTest extends TestCase
         }
 
         // Log the result (table reuse may be unavoidable with many rounds)
-        fwrite(
-            STDERR,
-            sprintf(
-                "\nTable reuse check: %d/%d players had table reuse over %d rounds\n",
-                $playersWithReuse,
-                count($playerTableUsage),
-                count($rounds)
-            )
-        );
+        if (getenv('VERBOSE_E2E')) {
+            fwrite(
+                STDERR,
+                sprintf(
+                    "\nTable reuse check: %d/%d players had table reuse over %d rounds\n",
+                    $playersWithReuse,
+                    count($playerTableUsage),
+                    count($rounds)
+                )
+            );
+        }
     }
 }
