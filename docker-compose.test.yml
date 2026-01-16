@@ -46,21 +46,21 @@ services:
       DB_USERNAME: root
       DB_PASSWORD: root
     entrypoint: []
-    command: >
+    command: |
       bash -c "
         docker-php-ext-install pdo pdo_mysql &&
         mkdir -p config &&
         cat > config/database.php <<EOF
-      <?php
-      declare(strict_types=1);
-      return [
-          'host' => '${DB_HOST}',
-          'database' => '${DB_DATABASE}',
-          'username' => '${DB_USERNAME}',
-          'password' => '${DB_PASSWORD}',
-          'charset' => 'utf8mb4',
-      ];
-      EOF
+        <?php
+        declare(strict_types=1);
+        return [
+            'host' => '${DB_HOST}',
+            'database' => '${DB_DATABASE}',
+            'username' => '${DB_USERNAME}',
+            'password' => '${DB_PASSWORD}',
+            'charset' => 'utf8mb4',
+        ];
+        EOF
         php bin/migrate.php &&
         php bin/seed-terrain-types.php
       "

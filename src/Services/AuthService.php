@@ -39,7 +39,7 @@ class AuthService
 
             return ['valid' => true, 'tournament' => $tournament];
         } catch (\PDOException $e) {
-            return ['valid' => false, 'error' => 'Invalid token'];
+            return ['valid' => false, 'error' => 'Database error'];
         }
     }
 }

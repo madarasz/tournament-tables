@@ -258,7 +258,7 @@ class TournamentDeleteTest extends TestCase
         $this->service->deleteTournament(999999);
     }
 
-    public function testDeleteTournamentRequiresAuthentication(): void
+    public function testDeleteTournamentFindByToken(): void
     {
         // Create a tournament
         $result = $this->service->createTournament(
@@ -294,7 +294,7 @@ class TournamentDeleteTest extends TestCase
         );
     }
 
-    public function testDeleteTournamentIsIdempotent(): void
+    public function testDeleteTournamentThrowsWhenAlreadyDeleted(): void
     {
         // Create a tournament
         $result = $this->service->createTournament(
