@@ -11,7 +11,8 @@ import { generateUniqueTournament } from '../fixtures/test-data';
  *
  * Tests critical tournament creation user flow:
  * - Creating tournament with name, BCP URL, and table count via browser UI
- * - Redirect to dashboard after creation
+ * - Automatic redirect to dashboard after creation
+ * - Success message and admin token displayed on dashboard
  * - Tournament displayed on dashboard
  * - Admin token cookie set for authentication
  *
@@ -47,13 +48,7 @@ test.describe('Tournament Creation (US2)', () => {
     // Submit the form
     await page.locator('button[type="submit"]').click();
 
-    // Wait for success message
-    await expect(page.getByText('Tournament Created!')).toBeVisible();
-
-    // Click "Go to Tournament" button
-    await page.getByRole('button', { name: 'Go to Tournament' }).click();
-
-    // Wait for navigation to dashboard
+    // Wait for automatic redirect to dashboard
     await page.waitForURL(/\/tournament\/\d+/, { timeout: 10000 });
 
     // Extract tournament ID from URL
@@ -62,6 +57,15 @@ test.describe('Tournament Creation (US2)', () => {
     expect(tournamentIdMatch).toBeTruthy();
 
     const tournamentId = parseInt(tournamentIdMatch![1], 10);
+
+    // Verify success message is displayed on dashboard
+    await expect(page.getByText('Tournament Created Successfully!')).toBeVisible();
+
+    // Verify admin token is displayed
+    await expect(page.locator('#admin-token-display')).toBeVisible();
+
+    // Verify copy button is present
+    await expect(page.locator('#copy-token-btn')).toBeVisible();
 
     // Get admin token from cookie to register for cleanup
     const cookies = await page.context().cookies();

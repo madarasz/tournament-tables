@@ -60,10 +60,25 @@ class TournamentController extends BaseController
             // Cookie has HttpOnly, SameSite=Lax, and Secure (when HTTPS) flags
             $this->setCookie('admin_token', $result['adminToken'], 30 * 24 * 60 * 60);
 
-            $this->success([
-                'tournament' => $result['tournament']->toArray(),
-                'adminToken' => $result['adminToken'],
-            ], 201);
+            // Check if this is an API request (JSON) or browser form submission
+            $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+            $isJsonRequest = strpos($contentType, 'application/json') !== false;
+
+            if ($isJsonRequest) {
+                // API request - return JSON response (for test helpers and API clients)
+                $this->success([
+                    'tournament' => $result['tournament']->toArray(),
+                    'adminToken' => $result['adminToken'],
+                ], 201);
+            } else {
+                // Browser form submission - redirect to dashboard with success message
+                $this->ensureSession();
+                $_SESSION['tournament_just_created'] = [
+                    'id' => $result['tournament']->id,
+                    'adminToken' => $result['adminToken'],
+                ];
+                $this->redirect('/tournament/' . $result['tournament']->id);
+            }
         } catch (\InvalidArgumentException $e) {
             $this->validationError(['_general' => [$e->getMessage()]]);
         } catch (\RuntimeException $e) {
@@ -71,6 +86,27 @@ class TournamentController extends BaseController
         } catch (\Exception $e) {
             $this->error('internal_error', 'Failed to create tournament', 500);
         }
+    }
+
+    /**
+     * Ensure session is started.
+     */
+    private function ensureSession(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+    }
+
+    /**
+     * Redirect to a URL.
+     *
+     * @param string $url URL to redirect to
+     */
+    private function redirect(string $url): void
+    {
+        header('Location: ' . $url);
+        exit;
     }
 
     /**

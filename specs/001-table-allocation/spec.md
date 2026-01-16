@@ -165,7 +165,7 @@ As an organizer returning to manage my tournament, I want to authenticate using 
 
 ### Key Entities
 
-- **Tournament**: Represents a Kill Team event; has BCP event ID, table count, admin token, name, and collection of rounds.
+- **Tournament**: Represents an event; has BCP event ID, table count, admin token, name, and collection of rounds.
 - **Table**: Represents a physical table at the event; has number (1-N) and optional terrain type reference.
 - **TerrainType**: Predefined terrain configuration name stored in the database (e.g., "Volkus", "Tomb World", "Octarius").
 - **Round**: A tournament round; has round number, collection of allocations, published status.

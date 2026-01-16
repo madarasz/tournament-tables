@@ -15,7 +15,7 @@ ob_start();
         <p>Set up a new tournament with BCP integration.</p>
     </header>
 
-    <form id="createTournamentForm" hx-post="/api/tournaments" hx-target="#result" hx-swap="innerHTML">
+    <form id="createTournamentForm" method="POST" action="/api/tournaments">
         <label for="name">
             Tournament Name
             <input type="text" id="name" name="name" placeholder="My Tournament January 2026" required>
@@ -33,9 +33,8 @@ ob_start();
             <small>The number of physical tables available at the venue (1-100).</small>
         </label>
 
-        <button type="submit">
-            <span class="htmx-indicator">Creating...</span>
-            <span>Create Tournament</span>
+        <button type="submit" id="submit-btn">
+            Create Tournament
         </button>
     </form>
 
@@ -43,57 +42,11 @@ ob_start();
 </article>
 
 <script>
-// Handle successful tournament creation
-document.body.addEventListener('htmx:afterRequest', function(event) {
-    if (event.detail.pathInfo.requestPath === '/api/tournaments' && event.detail.successful) {
-        const response = JSON.parse(event.detail.xhr.responseText);
-        if (response.adminToken) {
-            document.getElementById('result').innerHTML = `
-                <article class="alert-success">
-                    <header>
-                        <h3>Tournament Created!</h3>
-                    </header>
-                    <p><strong>Important:</strong> Save your admin token. You'll need it to manage this tournament.</p>
-                    <p class="token-display">${escapeHtml(response.adminToken)}</p>
-                    <p>
-                        <a href="/tournament/${encodeURIComponent(response.tournament.id)}" role="button">Go to Tournament</a>
-                    </p>
-                </article>
-            `;
-        }
-    }
-});
-
-// Handle validation errors
-document.body.addEventListener('htmx:afterRequest', function(event) {
-    if (event.detail.pathInfo.requestPath === '/api/tournaments' && !event.detail.successful) {
-        try {
-            const response = JSON.parse(event.detail.xhr.responseText);
-            let errorHtml = '<article class="alert-error"><header><h3>Error</h3></header>';
-
-            if (response.fields) {
-                errorHtml += '<ul>';
-                for (const [field, errors] of Object.entries(response.fields)) {
-                    errors.forEach(error => {
-                        errorHtml += `<li><strong>${escapeHtml(field)}:</strong> ${escapeHtml(error)}</li>`;
-                    });
-                }
-                errorHtml += '</ul>';
-            } else if (response.message) {
-                errorHtml += `<p>${response.message}</p>`;
-            }
-
-            errorHtml += '</article>';
-            document.getElementById('result').innerHTML = errorHtml;
-        } catch (e) {
-            document.getElementById('result').innerHTML = `
-                <article class="alert-error">
-                    <header><h3>Error</h3></header>
-                    <p>An unexpected error occurred.</p>
-                </article>
-            `;
-        }
-    }
+// Show loading state when form is submitted
+document.getElementById('createTournamentForm').addEventListener('submit', function(e) {
+    var button = document.getElementById('submit-btn');
+    button.disabled = true;
+    button.textContent = 'Creating...';
 });
 </script>
 

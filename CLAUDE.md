@@ -1,12 +1,12 @@
 # Tournament Tables - Development Guidelines
 
 **Last Updated**: 2026-01-16
-**Project**: Kill Team Tournament Table Allocation System
+**Project**: Tournament Table Allocation System
 **Main Branch**: `master` | **Current Branch**: `e2e-tests`
 
 ## Project Overview
 
-A web application for Kill Team tournament organizers that generates intelligent table allocations, ensuring players experience different tables and terrain types each round. Integrates with Best Coast Pairings (BCP) for pairing data.
+A web application for tournament organizers that generates intelligent table allocations, ensuring players experience different tables and terrain types each round. Integrates with Best Coast Pairings (BCP) for pairing data.
 
 **Key Features**:
 - Smart table allocation algorithm (priority-weighted greedy)
