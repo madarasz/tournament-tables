@@ -7,6 +7,8 @@ namespace TournamentTables\Controllers;
 use TournamentTables\Models\Tournament;
 use TournamentTables\Models\Round;
 use TournamentTables\Models\Allocation;
+use TournamentTables\Models\Table;
+use TournamentTables\Models\TerrainType;
 
 /**
  * View controller for HTML page rendering.
@@ -46,10 +48,14 @@ class ViewController extends BaseController
         }
 
         $rounds = Round::findByTournament($tournamentId);
+        $tables = Table::findByTournament($tournamentId);
+        $terrainTypes = TerrainType::all();
 
         echo $this->renderWithLayout('tournament/dashboard', [
             'tournament' => $tournament,
             'rounds' => $rounds,
+            'tables' => $tables,
+            'terrainTypes' => $terrainTypes,
         ]);
     }
 

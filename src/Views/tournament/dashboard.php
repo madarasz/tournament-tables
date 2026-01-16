@@ -9,6 +9,8 @@
  * Expected variables:
  * - $tournament: Tournament model
  * - $rounds: Array of Round models
+ * - $tables: Array of Table models
+ * - $terrainTypes: Array of TerrainType models
  */
 
 $title = $tournament->name;
@@ -121,10 +123,54 @@ $hasRounds = !empty($rounds);
 <section>
     <h2>Table Configuration</h2>
     <article>
-        <p>
-            This tournament has <strong><?= $tableCount ?></strong> tables configured.
-            <a href="/api/tournaments/<?= $tournament->id ?>/tables" target="_blank">View table details (JSON)</a>
-        </p>
+        <p>Assign terrain types to tables. Players will preferentially be assigned to terrain types they haven't experienced.</p>
+
+        <form id="terrain-form">
+            <table role="grid">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Table</th>
+                        <th>Terrain Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($tables as $table): ?>
+                    <tr>
+                        <td><strong>Table <?= $table->tableNumber ?></strong></td>
+                        <td>
+                            <select
+                                name="table_<?= $table->tableNumber ?>"
+                                id="table-<?= $table->tableNumber ?>"
+                                data-table-number="<?= $table->tableNumber ?>"
+                            >
+                                <option value="">-- No terrain assigned --</option>
+                                <?php foreach ($terrainTypes as $terrainType): ?>
+                                <option
+                                    value="<?= $terrainType->id ?>"
+                                    <?= ($table->terrainTypeId === $terrainType->id) ? 'selected' : '' ?>
+                                >
+                                    <?= htmlspecialchars($terrainType->name) ?>
+                                    <?php if ($terrainType->description): ?>
+                                        - <?= htmlspecialchars($terrainType->description) ?>
+                                    <?php endif; ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+
+            <div style="margin-top: 1rem;">
+                <button type="submit" id="save-terrain-button">
+                    <span id="save-terrain-indicator" style="display: none;">Saving...</span>
+                    <span id="save-terrain-text">Save Terrain Configuration</span>
+                </button>
+            </div>
+        </form>
+
+        <div id="terrain-result" style="margin-top: 1rem;"></div>
     </article>
 </section>
 
@@ -170,6 +216,75 @@ document.getElementById('import-form').addEventListener('submit', function(e) {
         } else {
             result.innerHTML = '<div class="alert alert-error">' +
                 'Error: ' + escapeHtml(response.data.message || 'Failed to import round') +
+                '</div>';
+        }
+    })
+    .catch(function(error) {
+        button.disabled = false;
+        indicator.style.display = 'none';
+        text.style.display = 'inline';
+        result.innerHTML = '<div class="alert alert-error">Network error: ' + escapeHtml(error.message) + '</div>';
+    });
+});
+
+// Terrain type configuration form handler
+document.getElementById('terrain-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    var button = document.getElementById('save-terrain-button');
+    var indicator = document.getElementById('save-terrain-indicator');
+    var text = document.getElementById('save-terrain-text');
+    var result = document.getElementById('terrain-result');
+
+    // Collect all table configurations
+    var tables = [];
+    var selects = document.querySelectorAll('select[data-table-number]');
+
+    selects.forEach(function(select) {
+        var tableNumber = parseInt(select.getAttribute('data-table-number'));
+        var terrainTypeId = select.value ? parseInt(select.value) : null;
+
+        tables.push({
+            tableNumber: tableNumber,
+            terrainTypeId: terrainTypeId
+        });
+    });
+
+    // Show loading state
+    button.disabled = true;
+    indicator.style.display = 'inline';
+    text.style.display = 'none';
+    result.innerHTML = '';
+
+    fetch('/api/tournaments/<?= $tournament->id ?>/tables', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tables: tables })
+    })
+    .then(function(response) {
+        return response.json().then(function(data) {
+            return { status: response.status, data: data };
+        });
+    })
+    .then(function(response) {
+        button.disabled = false;
+        indicator.style.display = 'none';
+        text.style.display = 'inline';
+
+        if (response.status >= 200 && response.status < 300) {
+            result.innerHTML = '<div class="alert alert-success">' +
+                'Terrain configuration saved successfully!' +
+                '</div>';
+
+            // Clear success message after 3 seconds
+            setTimeout(function() {
+                result.innerHTML = '';
+            }, 3000);
+        } else {
+            result.innerHTML = '<div class="alert alert-error">' +
+                'Error: ' + escapeHtml(response.data.message || 'Failed to save terrain configuration') +
                 '</div>';
         }
     })

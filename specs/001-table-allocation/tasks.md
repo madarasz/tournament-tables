@@ -302,7 +302,7 @@ Based on plan.md project structure:
 ### E2E Tests for User Story 2 (Tournament Creation)
 
 - [X] T108 [P] [US2] Write `tests/e2e/tournament-creation.spec.ts` - create tournament with name, BCP URL, table count
-- [ ] T109 [P] [US2] Write `tests/e2e/tournament-terrain.spec.ts` - assign terrain types to tables
+- [X] T109 [P] [US2] Write `tests/e2e/tournament-terrain.spec.ts` - assign terrain types to tables
 
 ### E2E Tests for User Story 5 (Authentication)
 
