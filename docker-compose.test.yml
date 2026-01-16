@@ -1,0 +1,60 @@
+# Docker Compose overrides for E2E testing with Playwright
+# Usage (layered on top of base docker-compose.yml):
+#   docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d
+#   docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test
+#   docker-compose -f docker-compose.yml -f docker-compose.test.yml down
+
+services:
+  # Override php service for testing environment
+  php:
+    environment:
+      APP_ENV: testing
+
+  # Override mysql to use separate test data volume
+  mysql:
+    volumes:
+      - mysql_test_data:/var/lib/mysql
+
+  # Playwright service for E2E browser tests
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.57.0-noble
+    working_dir: /app/tests/E2E
+    volumes:
+      - .:/app
+      - playwright_cache:/root/.cache
+    depends_on:
+      php:
+        condition: service_healthy
+    environment:
+      BASE_URL: http://php:80
+      CI: "true"
+    entrypoint: []
+    command: ["tail", "-f", "/dev/null"]  # Keep container running for interactive use
+
+  # Utility service for running migrations before tests
+  migrate:
+    image: php:7.4.33-cli
+    volumes:
+      - .:/var/www/app
+    working_dir: /var/www/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_DATABASE: tournament_tables
+      DB_USERNAME: root
+      DB_PASSWORD: root
+    entrypoint: []
+    command: >
+      bash -c "
+        docker-php-ext-install pdo pdo_mysql &&
+        php bin/migrate.php &&
+        php bin/seed-terrain-types.php
+      "
+    profiles:
+      - setup
+
+volumes:
+  mysql_test_data:
+  playwright_cache:

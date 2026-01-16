@@ -196,6 +196,29 @@ class TournamentService
     }
 
     /**
+     * Delete a tournament and all related data.
+     *
+     * CASCADE deletes will automatically remove:
+     * - Tables
+     * - Rounds
+     * - Players
+     * - Allocations
+     *
+     * @param int $tournamentId Tournament ID to delete
+     * @return bool True if deleted successfully
+     * @throws InvalidArgumentException If tournament not found
+     */
+    public function deleteTournament(int $tournamentId): bool
+    {
+        $tournament = Tournament::find($tournamentId);
+        if ($tournament === null) {
+            throw new InvalidArgumentException('Tournament not found');
+        }
+
+        return $tournament->delete();
+    }
+
+    /**
      * Update table terrain types.
      *
      * @param int $tournamentId Tournament ID

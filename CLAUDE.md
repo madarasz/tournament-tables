@@ -26,4 +26,11 @@ PHP 7.4.33 (strict compatibility required per constitution): Follow standard con
 - 001-table-allocation: Added PHP 7.4.33 (strict compatibility required per constitution)
 
 <!-- MANUAL ADDITIONS START -->
+## Testing Guidelines
+
+When generating E2E tests, follow the guidelines in [docs/e2e-testing-guidelines.md](docs/e2e-testing-guidelines.md):
+- Focus on critical user flows only (test pyramid principle)
+- Do not test technical requirements, constraints, or error scenarios
+- Consolidate related validations into compound tests
+- E2E tests must be browser-based, not API-based
 <!-- MANUAL ADDITIONS END -->

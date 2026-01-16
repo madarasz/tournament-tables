@@ -7,9 +7,10 @@ on:
     branches: [main, master]
 
 jobs:
-  tests:
-    name: Tests (PHP ${{ matrix.php }})
+  phpunit:
+    name: PHPUnit Tests (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     services:
       mysql:
@@ -74,5 +75,113 @@ jobs:
       - name: Seed terrain types
         run: php bin/seed-terrain-types.php
 
-      - name: Run tests
+      - name: Run PHPUnit tests
         run: vendor/bin/phpunit --testsuite unit,integration,performance,e2e --process-isolation
+
+  playwright-e2e:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: tournament_tables
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          extensions: pdo, pdo_mysql, json
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Create database config
+        run: |
+          cat > config/database.php << 'EOF'
+          <?php
+          declare(strict_types=1);
+          return [
+              'host' => '127.0.0.1',
+              'database' => 'tournament_tables',
+              'username' => 'root',
+              'password' => 'root',
+              'charset' => 'utf8mb4',
+          ];
+          EOF
+
+      - name: Run migrations
+        run: php bin/migrate.php
+
+      - name: Seed terrain types
+        run: php bin/seed-terrain-types.php
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tests/e2e/package-lock.json
+
+      - name: Install Playwright dependencies
+        working-directory: tests/e2e
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Start PHP server
+        run: |
+          php -S 127.0.0.1:8080 -t public &
+          sleep 5
+          curl -f http://127.0.0.1:8080/api/terrain-types || exit 1
+        env:
+          APP_ENV: testing
+
+      - name: Run Playwright E2E tests
+        working-directory: tests/e2e
+        run: npx playwright test --reporter=github,html
+        env:
+          BASE_URL: http://127.0.0.1:8080
+          CI: true
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-${{ github.run_id }}
+          path: tests/e2e/playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-test-results-${{ github.run_id }}
+          path: tests/e2e/test-results/
+          retention-days: 7
