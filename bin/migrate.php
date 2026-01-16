@@ -108,8 +108,8 @@ CREATE TABLE IF NOT EXISTS allocations (
     INDEX idx_player2_id (player2_id),
     FOREIGN KEY (round_id) REFERENCES rounds(id) ON DELETE CASCADE,
     FOREIGN KEY (table_id) REFERENCES tables(id),
-    FOREIGN KEY (player1_id) REFERENCES players(id),
-    FOREIGN KEY (player2_id) REFERENCES players(id)
+    FOREIGN KEY (player1_id) REFERENCES players(id) ON DELETE CASCADE,
+    FOREIGN KEY (player2_id) REFERENCES players(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 SQL;
 

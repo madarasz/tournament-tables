@@ -3,14 +3,22 @@ services:
     image: php:7.4.33-apache
     ports:
       - "8080:80"
+    working_dir: /var/www/app
     volumes:
       - .:/var/www/app
       - ./config/apache.conf:/etc/apache2/sites-available/000-default.conf
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     command: >
       bash -c "a2enmod rewrite && docker-php-ext-install pdo pdo_mysql && apache2-foreground"
-  
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/api/terrain-types"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
   mysql:
     image: mysql:8.0
     environment:
@@ -20,6 +28,12 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   mysql_data:

@@ -272,6 +272,71 @@ Based on plan.md project structure:
 
 ---
 
+## Phase 9: E2E Browser Tests with Playwright
+
+**Purpose**: End-to-end browser testing to validate complete user workflows across the application
+
+**Reference**: Playwright for PHP 7.4 application testing with Docker support for local and CI environments
+
+### Infrastructure Setup
+
+- [X] T096 [P] Create `docker-compose.test.yml` with Playwright container alongside existing PHP + MySQL services
+- [X] T097 [P] Create `playwright.config.ts` with base URL pointing to PHP container (http://php:80 for Docker, localhost:8080 for local)
+- [X] T098 Create `package.json` in `tests/e2e/` with Playwright dependencies (@playwright/test)
+- [X] T099 Create `.github/workflows/e2e-tests.yml` workflow extending tests.yml pattern with Playwright execution
+- [X] T100 Update `docker-compose.yml` to add healthcheck for PHP service readiness
+
+### Test Data Management (API-only, not exposed in UI)
+
+- [X] T101 Implement DELETE /api/tournaments/{id} endpoint in `src/Controllers/TournamentController.php` - cascades delete to tables, rounds, players, allocations (admin auth required)
+- [X] T102 Write `tests/Integration/TournamentDeleteTest.php` to verify cascade deletion and auth protection
+- [X] T103 [P] Create `tests/e2e/helpers/cleanup.ts` with helper to delete test tournaments via API after each test
+
+### Test Fixtures and Helpers
+
+- [X] T104 [P] Create `tests/e2e/fixtures/test-data.ts` with tournament, player, and allocation seed data
+- [X] T105 [P] Create `tests/e2e/fixtures/bcp-mock.ts` with mock BCP API responses for pairing data
+- [X] T106 [P] Create `tests/e2e/helpers/api.ts` with helper functions to seed database via API calls
+- [X] T107 [P] Create `tests/e2e/helpers/auth.ts` with helper functions to authenticate as admin via token
+
+### E2E Tests for User Story 2 (Tournament Creation)
+
+- [X] T108 [P] [US2] Write `tests/e2e/tournament-creation.spec.ts` - create tournament with name, BCP URL, table count
+- [ ] T109 [P] [US2] Write `tests/e2e/tournament-terrain.spec.ts` - assign terrain types to tables
+
+### E2E Tests for User Story 5 (Authentication)
+
+- [X] T110 [P] [US5] Write `tests/e2e/authentication.spec.ts` - login with admin token, cookie persistence, invalid token rejection
+
+### E2E Tests for User Story 1 (Allocation Generation)
+
+- [ ] T111 [P] [US1] Write `tests/e2e/allocation-generation.spec.ts` - import pairings, generate allocations, verify conflict display
+- [ ] T112 [P] [US1] Write `tests/e2e/round-management.spec.ts` - round navigation, refresh from BCP, regenerate allocations
+
+### E2E Tests for User Story 3 (Edit and Publish)
+
+- [ ] T113 [P] [US3] Write `tests/e2e/allocation-editing.spec.ts` - change table assignment, swap tables, conflict highlighting
+- [ ] T114 [P] [US3] Write `tests/e2e/allocation-publish.spec.ts` - publish allocation, warning on edit after publish
+
+### E2E Tests for User Story 4 (Public View)
+
+- [ ] T115 [P] [US4] Write `tests/e2e/public-view.spec.ts` - view published allocations without auth, round selector, hidden unpublished rounds
+
+### Cross-Browser and Visual Tests
+
+- [ ] T116 [P] Write `tests/e2e/cross-browser.spec.ts` - verify critical flows work in Chrome, Firefox, Safari (webkit)
+- [ ] T117 [P] Write `tests/e2e/responsive.spec.ts` - verify UI renders correctly on mobile viewport sizes
+
+### CI/CD Integration
+
+- [ ] T118 Update `.github/workflows/tests.yml` to include Playwright e2e test execution after PHP tests pass
+- [ ] T119 Configure Playwright to save screenshots and traces on failure for CI debugging
+- [ ] T120 Add npm script in `tests/e2e/package.json` for running tests locally: `npm run test:e2e`
+
+**Checkpoint**: E2E tests validate complete user workflows - can run locally via docker-compose and in GitHub Actions CI
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -292,6 +357,8 @@ Phase 2: Foundational (BLOCKS all user stories)
     │   Phase 7: US4 - Public View
     ↓
 Phase 8: Polish
+    ↓
+Phase 9: E2E Browser Tests (Playwright)
 ```
 
 ### User Story Dependencies
@@ -303,6 +370,7 @@ Phase 8: Polish
 | US1 (Allocation) | US5 | Core feature - needs auth to protect endpoints |
 | US3 (Edit/Publish) | US1 | Needs allocations to exist |
 | US4 (Public View) | US3 | Needs published allocations |
+| E2E Tests (Phase 9) | Phase 8 | Needs all features implemented before browser testing |
 
 ### Parallel Opportunities Within Phases
 
@@ -316,6 +384,11 @@ Phase 8: Polish
 - T039-T043 (all tests) can run in parallel
 - T049-T051 (history service methods) can run in parallel after T049
 
+**Phase 9 (E2E Tests)**:
+- T096-T097 (infrastructure setup) can run in parallel
+- T104-T107 (test fixtures and helpers) can run in parallel after T098
+- T108-T117 (all spec files) can run in parallel after infrastructure and test data management setup
+
 ---
 
 ## Parallel Example: User Story 1 Tests
@@ -327,6 +400,30 @@ Task: "Write tests/Unit/Services/AllocationServiceTest.php"
 Task: "Write tests/Unit/Services/TournamentHistoryTest.php"
 Task: "Write tests/Integration/AllocationGenerationTest.php"
 Task: "Write tests/Integration/BCPScraperTest.php"
+```
+
+---
+
+## Parallel Example: Phase 9 E2E Tests
+
+```bash
+# Launch test fixtures and helpers in parallel (after package.json created):
+Task: "Create tests/e2e/fixtures/test-data.ts"
+Task: "Create tests/e2e/fixtures/bcp-mock.ts"
+Task: "Create tests/e2e/helpers/api.ts"
+Task: "Create tests/e2e/helpers/auth.ts"
+
+# Launch all E2E spec files in parallel (after infrastructure + test data management ready):
+Task: "Write tests/e2e/tournament-creation.spec.ts"
+Task: "Write tests/e2e/tournament-terrain.spec.ts"
+Task: "Write tests/e2e/authentication.spec.ts"
+Task: "Write tests/e2e/allocation-generation.spec.ts"
+Task: "Write tests/e2e/round-management.spec.ts"
+Task: "Write tests/e2e/allocation-editing.spec.ts"
+Task: "Write tests/e2e/allocation-publish.spec.ts"
+Task: "Write tests/e2e/public-view.spec.ts"
+Task: "Write tests/e2e/cross-browser.spec.ts"
+Task: "Write tests/e2e/responsive.spec.ts"
 ```
 
 ---
@@ -354,6 +451,7 @@ Task: "Write tests/Integration/BCPScraperTest.php"
 5. Add US3 (Edit/Publish) → Test → Can edit and publish
 6. Add US4 (Public) → Test → Players can view assignments
 7. Polish → Performance and security verified
+8. E2E Tests → Full browser automation coverage, CI/CD integrated
 
 ---
 

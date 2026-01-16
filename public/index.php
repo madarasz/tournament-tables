@@ -37,6 +37,7 @@ $routes = [
     // API Routes
     'POST /api/tournaments' => ['TournamentController', 'create'],
     'GET /api/tournaments/{id}' => ['TournamentController', 'show', 'admin'],
+    'DELETE /api/tournaments/{id}' => ['TournamentController', 'delete', 'admin'],
     'PUT /api/tournaments/{id}/tables' => ['TournamentController', 'updateTables', 'admin'],
     'GET /api/terrain-types' => ['TerrainTypeController', 'index'],
     'POST /api/auth' => ['AuthController', 'authenticate'],

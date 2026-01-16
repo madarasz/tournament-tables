@@ -106,6 +106,33 @@ class TournamentController extends BaseController
     }
 
     /**
+     * DELETE /api/tournaments/{id} - Delete a tournament.
+     *
+     * Cascade deletes all related data (tables, rounds, players, allocations).
+     * Admin authentication required.
+     */
+    public function delete(array $params, ?array $body): void
+    {
+        $tournamentId = (int) ($params['id'] ?? 0);
+
+        // Verify authenticated tournament matches requested tournament
+        $authTournament = AdminAuthMiddleware::getTournament();
+        if ($authTournament === null || $authTournament->id !== $tournamentId) {
+            $this->unauthorized('Token does not match this tournament');
+            return;
+        }
+
+        try {
+            $this->service->deleteTournament($tournamentId);
+            $this->success(['message' => 'Tournament deleted successfully']);
+        } catch (\InvalidArgumentException $e) {
+            $this->notFound('Tournament');
+        } catch (\Exception $e) {
+            $this->error('internal_error', 'Failed to delete tournament', 500);
+        }
+    }
+
+    /**
      * PUT /api/tournaments/{id}/tables - Update table terrain types.
      *
      * Reference: FR-005

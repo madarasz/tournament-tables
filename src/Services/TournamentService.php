@@ -6,6 +6,7 @@ namespace TournamentTables\Services;
 
 use TournamentTables\Models\Tournament;
 use TournamentTables\Models\Table;
+use TournamentTables\Models\Round;
 use TournamentTables\Database\Connection;
 use InvalidArgumentException;
 use RuntimeException;
@@ -193,6 +194,58 @@ class TournamentService
             return 'https://www.bestcoastpairings.com/event/' . $matches[1];
         }
         return $url;
+    }
+
+    /**
+     * Delete a tournament and all related data.
+     *
+     * Deletion order to avoid FK violations:
+     * 1. Delete allocations (references rounds and tables)
+     * 2. Delete tournament (CASCADE removes rounds, tables, players)
+     *
+     * @param int $tournamentId Tournament ID to delete
+     * @return bool True if deleted successfully
+     * @throws InvalidArgumentException If tournament not found
+     */
+    public function deleteTournament(int $tournamentId): bool
+    {
+        $tournament = Tournament::find($tournamentId);
+        if ($tournament === null) {
+            throw new InvalidArgumentException('Tournament not found');
+        }
+
+        Connection::beginTransaction();
+
+        try {
+            // Fetch all rounds for this tournament
+            $rounds = Round::findByTournament($tournamentId);
+
+            // Delete allocations for each round
+            // This must happen first because allocations.table_id FK lacks CASCADE
+            if (!empty($rounds)) {
+                $roundIds = array_map(function ($round) {
+                    return $round->id;
+                }, $rounds);
+
+                // Delete all allocations for these rounds
+                $placeholders = implode(',', array_fill(0, count($roundIds), '?'));
+                Connection::execute(
+                    "DELETE FROM allocations WHERE round_id IN ({$placeholders})",
+                    $roundIds
+                );
+            }
+
+            // Now delete the tournament
+            // CASCADE will handle rounds, tables, and players
+            $result = $tournament->delete();
+
+            Connection::commit();
+
+            return $result;
+        } catch (\Exception $e) {
+            Connection::rollBack();
+            throw $e;
+        }
     }
 
     /**
