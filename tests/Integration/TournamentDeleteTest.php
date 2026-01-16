@@ -224,7 +224,7 @@ class TournamentDeleteTest extends TestCase
             $player2->id,
             0,
             0,
-            json_encode(['reason' => 'test'])
+            ['reason' => 'test']
         );
         $allocation->save();
 

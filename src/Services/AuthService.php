@@ -31,11 +31,15 @@ class AuthService
             return ['valid' => false, 'error' => 'Invalid token format'];
         }
 
-        $tournament = Tournament::findByToken($token);
-        if ($tournament === null) {
+        try {
+            $tournament = Tournament::findByToken($token);
+            if ($tournament === null) {
+                return ['valid' => false, 'error' => 'Invalid token'];
+            }
+
+            return ['valid' => true, 'tournament' => $tournament];
+        } catch (\PDOException $e) {
             return ['valid' => false, 'error' => 'Invalid token'];
         }
-
-        return ['valid' => true, 'tournament' => $tournament];
     }
 }

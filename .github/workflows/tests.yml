@@ -147,10 +147,10 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: tests/e2e/package-lock.json
+          cache-dependency-path: tests/E2E/package-lock.json
 
       - name: Install Playwright dependencies
-        working-directory: tests/e2e
+        working-directory: tests/E2E
         run: |
           npm ci
           npx playwright install --with-deps chromium
@@ -164,7 +164,7 @@ jobs:
           APP_ENV: testing
 
       - name: Run Playwright E2E tests
-        working-directory: tests/e2e
+        working-directory: tests/E2E
         run: npx playwright test --reporter=github,html
         env:
           BASE_URL: http://127.0.0.1:8080
@@ -175,7 +175,7 @@ jobs:
         if: always()
         with:
           name: playwright-report-${{ github.run_id }}
-          path: tests/e2e/playwright-report/
+          path: tests/E2E/playwright-report/
           retention-days: 30
 
       - name: Upload test results
@@ -183,5 +183,5 @@ jobs:
         if: failure()
         with:
           name: playwright-test-results-${{ github.run_id }}
-          path: tests/e2e/test-results/
+          path: tests/E2E/test-results/
           retention-days: 7
