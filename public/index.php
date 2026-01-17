@@ -17,6 +17,7 @@ use TournamentTables\Controllers\AllocationController;
 use TournamentTables\Controllers\PublicController;
 use TournamentTables\Controllers\ViewController;
 use TournamentTables\Controllers\HomeController;
+use TournamentTables\Controllers\MockBcpController;
 use TournamentTables\Middleware\AdminAuthMiddleware;
 
 // Error handling
@@ -60,6 +61,10 @@ $routes = [
     'GET /public/{id}/round/{n}' => ['ViewController', 'publicRound'],
     'GET /login' => ['ViewController', 'login'],
 ];
+
+if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_BASE_URL')) {
+    $routes['GET /mock-bcp/event/{id}'] = ['MockBcpController', 'event'];
+}
 
 // Match route
 $matchedRoute = null;
@@ -125,6 +130,10 @@ $controllers = [
     'ViewController' => ViewController::class,
     'HomeController' => HomeController::class,
 ];
+
+if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_BASE_URL')) {
+    $controllers['MockBcpController'] = MockBcpController::class;
+}
 
 // Dispatch to controller
 $controllerName = $matchedRoute[0];

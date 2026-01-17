@@ -32,6 +32,8 @@ class TournamentController extends BaseController
     /**
      * POST /api/tournaments - Create a new tournament.
      *
+     * Tournament name is automatically fetched from the BCP event page.
+     *
      * Reference: FR-001, FR-002, FR-003
      */
     public function create(array $params, ?array $body): void
@@ -39,11 +41,8 @@ class TournamentController extends BaseController
         // Validate required fields
         $errors = [];
 
-        if (empty($body['name'])) {
-            $errors['name'] = ['Tournament name is required'];
-        }
-
-        if (empty($body['bcpUrl'])) {
+        $bcpUrl = trim($body['bcpUrl'] ?? '');
+        if ($bcpUrl === '') {
             $errors['bcpUrl'] = ['BCP URL is required'];
         }
 
@@ -53,12 +52,31 @@ class TournamentController extends BaseController
         }
 
         try {
+            // Fetch tournament name from BCP page
+            $scraper = new BCPScraperService();
+            try {
+                $scraper->extractEventId($bcpUrl);
+                $tournamentName = $scraper->fetchTournamentName($bcpUrl);
+            } catch (\InvalidArgumentException $e) {
+                $this->validationError([
+                    'bcpUrl' => [
+                        'BCP URL must match https://www.bestcoastpairings.com/event/{eventId}',
+                    ],
+                ]);
+                return;
+            } catch (\RuntimeException $e) {
+                $this->validationError([
+                    'bcpUrl' => ['Unable to fetch tournament name from BCP. Please check the URL and try again.']
+                ]);
+                return;
+            }
+
             // Create tournament
             // tableCount is optional - if not provided, tables will be created from Round 1
             $tableCount = isset($body['tableCount']) ? (int) $body['tableCount'] : 0;
             $result = $this->service->createTournament(
-                $body['name'],
-                $body['bcpUrl'],
+                $tournamentName,
+                $bcpUrl,
                 $tableCount
             );
 

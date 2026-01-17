@@ -10,12 +10,16 @@ import { generateUniqueTournament } from '../fixtures/test-data';
  * E2E Tests for User Story 2: Create and Configure Tournament
  *
  * Tests critical tournament creation user flow:
- * - Creating tournament with name and BCP URL via browser UI
+ * - Creating tournament with BCP URL via browser UI (name auto-imported from BCP)
  * - Automatic import of Round 1 and table creation
  * - Automatic redirect to dashboard after creation
  * - Success message and admin token displayed on dashboard
  * - Tournament displayed on dashboard
  * - Admin token cookie set for authentication
+ *
+ * Note: In the test environment, BCP requests are redirected to a mock endpoint
+ * via the BCP_MOCK_BASE_URL environment variable. The mock returns HTML with
+ * the tournament name "Test Tournament {eventId}".
  *
  * Reference: specs/001-table-allocation/tasks.md T108
  * Spec: specs/001-table-allocation/spec.md - User Story 2
@@ -39,8 +43,7 @@ test.describe('Tournament Creation (US2)', () => {
 
     const tournamentData = generateUniqueTournament('Create');
 
-    // Fill in the tournament form (no table count - auto-imported from BCP)
-    await page.locator('input[name="name"]').fill(tournamentData.name);
+    // Fill in the tournament form (name is auto-imported from BCP mock)
     await page.locator('input[name="bcpUrl"]').fill(tournamentData.bcpUrl);
 
     // Submit the form
@@ -78,18 +81,18 @@ test.describe('Tournament Creation (US2)', () => {
 
     registerTournament(cleanupContext, tournamentId, actualAdminToken);
 
-    // Verify tournament name is displayed on dashboard
-    await expect(page.locator('body')).toContainText(tournamentData.name);
+    // Verify tournament name (auto-imported from BCP) is displayed on dashboard
+    await expect(page.locator('body')).toContainText(tournamentData.expectedName);
 
     // Navigate to home page
     await page.goto('/');
 
     // Verify tournament is listed on home page
     await expect(page.locator('h1')).toContainText('My Tournaments');
-    await expect(page.locator('body')).toContainText(tournamentData.name);
+    await expect(page.locator('body')).toContainText(tournamentData.expectedName);
 
     // Verify tournament appears in the table with correct metadata
-    const tournamentRow = page.locator('tr').filter({ hasText: tournamentData.name });
+    const tournamentRow = page.locator('tr').filter({ hasText: tournamentData.expectedName });
     await expect(tournamentRow).toBeVisible();
 
     // Verify table count is displayed (auto-imported from BCP)

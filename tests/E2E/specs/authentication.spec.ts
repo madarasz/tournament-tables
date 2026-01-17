@@ -78,8 +78,8 @@ test.describe('Admin Authentication (US5)', () => {
     await expect(page.locator('h1')).toContainText('My Tournaments');
 
     // Find the tournament in the list (table row containing tournament name)
-    // Tournament name format: "E2E Test Tournament {timestamp}"
-    const tournamentRow = page.locator('tr').filter({ hasText: /E2E Test/ });
+    // Tournament name is auto-imported from BCP mock: "Test Tournament {eventId}"
+    const tournamentRow = page.locator('tr').filter({ hasText: /Test Tournament/ });
     await expect(tournamentRow).toBeVisible();
 
     // Verify View Dashboard button is present

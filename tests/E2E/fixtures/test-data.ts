@@ -6,57 +6,50 @@
 
 /**
  * Valid tournament creation data.
+ * Note: name is auto-imported from BCP, so we define the expected name from the mock.
  */
 export const validTournament = {
-  name: 'Kill Team GT January 2026',
   bcpUrl: 'https://www.bestcoastpairings.com/event/testEvent123',
   tableCount: 12,
+  expectedName: 'Test Tournament testEvent123', // Name returned by BCP mock
 };
 
 /**
  * Tournament with minimum tables.
  */
 export const minimalTournament = {
-  name: 'Small Event',
   bcpUrl: 'https://www.bestcoastpairings.com/event/smallEvent',
   tableCount: 1,
+  expectedName: 'Test Tournament smallEvent',
 };
 
 /**
  * Tournament with maximum tables.
  */
 export const largeTournament = {
-  name: 'Major Championship',
   bcpUrl: 'https://www.bestcoastpairings.com/event/majorChamp',
   tableCount: 100,
+  expectedName: 'Test Tournament majorChamp',
 };
 
 /**
  * Invalid tournament data for validation tests.
+ * Note: name field removed as it's now auto-imported from BCP.
  */
 export const invalidTournaments = {
-  emptyName: {
-    name: '',
-    bcpUrl: 'https://www.bestcoastpairings.com/event/valid',
-    tableCount: 10,
-  },
   invalidUrl: {
-    name: 'Invalid URL Tournament',
     bcpUrl: 'https://example.com/event/invalid',
     tableCount: 10,
   },
   zeroTables: {
-    name: 'Zero Tables',
     bcpUrl: 'https://www.bestcoastpairings.com/event/zero',
     tableCount: 0,
   },
   tooManyTables: {
-    name: 'Too Many Tables',
     bcpUrl: 'https://www.bestcoastpairings.com/event/toomany',
     tableCount: 101,
   },
   missingBcpUrl: {
-    name: 'Missing URL',
     bcpUrl: '',
     tableCount: 10,
   },
@@ -128,18 +121,22 @@ export const authTestData = {
 
 /**
  * Helper to generate unique tournament data.
+ * Note: Tournament name is auto-imported from BCP based on event ID.
  */
 export function generateUniqueTournament(prefix = 'E2E'): {
-  name: string;
   bcpUrl: string;
   tableCount: number;
+  expectedName: string;
+  eventId: string;
 } {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(7);
+  const eventId = `${prefix}${timestamp}${random}`;
   return {
-    name: `${prefix} Test ${timestamp}`,
-    bcpUrl: `https://www.bestcoastpairings.com/event/${prefix}${timestamp}${random}`,
+    bcpUrl: `https://www.bestcoastpairings.com/event/${eventId}`,
     tableCount: 10,
+    expectedName: `Test Tournament ${eventId}`, // Name returned by BCP mock
+    eventId,
   };
 }
 

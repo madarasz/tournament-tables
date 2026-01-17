@@ -12,19 +12,14 @@ ob_start();
 <article>
     <header>
         <h1>Create New Tournament</h1>
-        <p>Set up a new tournament with BCP integration.</p>
+        <p>Enter your BCP event URL and we'll automatically import the tournament name and setup.</p>
     </header>
 
     <form id="createTournamentForm" method="POST" action="/api/tournaments">
-        <label for="name">
-            Tournament Name
-            <input type="text" id="name" name="name" placeholder="My Tournament January 2026" required>
-        </label>
-
         <label for="bcpUrl">
             BCP Event URL
             <input type="url" id="bcpUrl" name="bcpUrl" placeholder="https://www.bestcoastpairings.com/event/..." required>
-            <small>The full URL from Best Coast Pairings for your event. Tables will be created automatically from Round 1 pairings.</small>
+            <small>The full URL from Best Coast Pairings for your event. The tournament name will be imported automatically from BCP. Tables will be created from Round 1 pairings.</small>
         </label>
 
         <button type="submit" id="submit-btn">
