@@ -20,7 +20,6 @@ class AuthenticationTest extends TestCase
 {
     private AuthService $authService;
     private TournamentService $tournamentService;
-    private array $createdTournamentIds = [];
 
     protected function setUp(): void
     {
@@ -34,6 +33,9 @@ class AuthenticationTest extends TestCase
         if (!$this->isDatabaseAvailable()) {
             $this->markTestSkipped('Database not available');
         }
+
+        // Clean up any leftover test data from previous runs
+        $this->cleanupTestData();
 
         $this->authService = new AuthService();
         $this->tournamentService = new TournamentService();
@@ -49,14 +51,8 @@ class AuthenticationTest extends TestCase
 
     protected function tearDown(): void
     {
-        // Clean up created tournaments
-        foreach ($this->createdTournamentIds as $id) {
-            try {
-                Connection::execute('DELETE FROM tournaments WHERE id = ?', [$id]);
-            } catch (\Exception $e) {
-                // Ignore cleanup errors
-            }
-        }
+        // Clean up all test data (pattern-based cleanup is more robust)
+        $this->cleanupTestData();
 
         // Reset global state
         global $authenticatedTournament;
@@ -67,6 +63,30 @@ class AuthenticationTest extends TestCase
         unset($_COOKIE['admin_token']);
 
         Connection::reset();
+    }
+
+    /**
+     * Clean up test tournaments by name pattern.
+     * This is more robust than tracking IDs since it catches leftover data
+     * from failed tests or tests that threw unexpected exceptions.
+     */
+    private function cleanupTestData(): void
+    {
+        try {
+            // Delete test tournaments by name pattern
+            // Covers all test names used in this test suite
+            Connection::execute(
+                "DELETE FROM tournaments WHERE name LIKE '%Test%'
+                 OR bcp_event_id LIKE 'authtest%'
+                 OR bcp_event_id LIKE 'datatest%'
+                 OR bcp_event_id LIKE 'middleware%'
+                 OR bcp_event_id LIKE 'priority%'
+                 OR bcp_event_id LIKE 'store%'
+                 OR bcp_event_id LIKE 'cookieflow%'"
+            );
+        } catch (\Exception $e) {
+            // Ignore cleanup errors
+        }
     }
 
     private function isDatabaseAvailable(): bool
@@ -90,7 +110,6 @@ class AuthenticationTest extends TestCase
             5
         );
 
-        $this->createdTournamentIds[] = $tournamentResult['tournament']->id;
         $validToken = $tournamentResult['adminToken'];
 
         // Validate the token
@@ -111,7 +130,6 @@ class AuthenticationTest extends TestCase
             5
         );
 
-        $this->createdTournamentIds[] = $tournamentResult['tournament']->id;
 
         // Try to validate a non-existent token
         $result = $this->authService->validateToken('InvalidToken12345');
@@ -129,7 +147,6 @@ class AuthenticationTest extends TestCase
             8
         );
 
-        $this->createdTournamentIds[] = $tournamentResult['tournament']->id;
         $validToken = $tournamentResult['adminToken'];
 
         // Validate and check tournament data
@@ -166,7 +183,18 @@ class AuthenticationTest extends TestCase
 
     public function testMiddlewareBlocksRequestWithInvalidCookieToken(): void
     {
-        $_COOKIE['admin_token'] = 'InvalidToken12345';
+        // Set JSON cookie format with invalid token
+        $tournamentId = 999; // Non-existent tournament
+        $_COOKIE['admin_token'] = json_encode([
+            'tournaments' => [
+                $tournamentId => [
+                    'token' => 'InvalidToken12345',
+                    'name' => 'Test Tournament',
+                    'lastAccessed' => time()
+                ]
+            ]
+        ]);
+        $_SERVER['REQUEST_URI'] = "/api/tournaments/{$tournamentId}";
 
         $result = AdminAuthMiddleware::check();
 
@@ -183,7 +211,6 @@ class AuthenticationTest extends TestCase
             5
         );
 
-        $this->createdTournamentIds[] = $tournamentResult['tournament']->id;
         $validToken = $tournamentResult['adminToken'];
 
         $_SERVER['HTTP_X_ADMIN_TOKEN'] = $validToken;
@@ -202,10 +229,20 @@ class AuthenticationTest extends TestCase
             5
         );
 
-        $this->createdTournamentIds[] = $tournamentResult['tournament']->id;
         $validToken = $tournamentResult['adminToken'];
+        $tournamentId = $tournamentResult['tournament']->id;
 
-        $_COOKIE['admin_token'] = $validToken;
+        // Set JSON cookie format
+        $_COOKIE['admin_token'] = json_encode([
+            'tournaments' => [
+                $tournamentId => [
+                    'token' => $validToken,
+                    'name' => 'Middleware Cookie Test',
+                    'lastAccessed' => time()
+                ]
+            ]
+        ]);
+        $_SERVER['REQUEST_URI'] = "/api/tournaments/{$tournamentId}";
 
         $result = AdminAuthMiddleware::check();
 
@@ -220,14 +257,12 @@ class AuthenticationTest extends TestCase
             'https://www.bestcoastpairings.com/event/priority1',
             5
         );
-        $this->createdTournamentIds[] = $tournament1['tournament']->id;
 
         $tournament2 = $this->tournamentService->createTournament(
             'Header Priority Test 2',
             'https://www.bestcoastpairings.com/event/priority2',
             5
         );
-        $this->createdTournamentIds[] = $tournament2['tournament']->id;
 
         // Set header to tournament 1, cookie to tournament 2
         $_SERVER['HTTP_X_ADMIN_TOKEN'] = $tournament1['adminToken'];
@@ -249,7 +284,6 @@ class AuthenticationTest extends TestCase
             5
         );
 
-        $this->createdTournamentIds[] = $tournamentResult['tournament']->id;
         $_SERVER['HTTP_X_ADMIN_TOKEN'] = $tournamentResult['adminToken'];
 
         AdminAuthMiddleware::check();
@@ -291,11 +325,20 @@ class AuthenticationTest extends TestCase
             5
         );
 
-        $this->createdTournamentIds[] = $tournamentResult['tournament']->id;
         $validToken = $tournamentResult['adminToken'];
+        $tournamentId = $tournamentResult['tournament']->id;
 
-        // Simulate setting the cookie (what AuthController does)
-        $_COOKIE['admin_token'] = $validToken;
+        // Simulate setting the cookie in JSON format (what AuthController does)
+        $_COOKIE['admin_token'] = json_encode([
+            'tournaments' => [
+                $tournamentId => [
+                    'token' => $validToken,
+                    'name' => 'Cookie Flow Test',
+                    'lastAccessed' => time()
+                ]
+            ]
+        ]);
+        $_SERVER['REQUEST_URI'] = "/api/tournaments/{$tournamentId}";
 
         // Verify middleware can authenticate using the cookie
         $result = AdminAuthMiddleware::check();

@@ -143,6 +143,119 @@ abstract class BaseController
     }
 
     /**
+     * Get the multi-token cookie as an array of tournaments.
+     *
+     * @return array Tournament map: [tournamentId => ['token' => string, 'name' => string, 'lastAccessed' => int]]
+     */
+    protected function getMultiTokenCookie(): array
+    {
+        $cookieValue = $_COOKIE['admin_token'] ?? null;
+        if ($cookieValue === null) {
+            return [];
+        }
+
+        $decoded = json_decode($cookieValue, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log('Failed to decode admin_token cookie: ' . json_last_error_msg());
+            return [];
+        }
+
+        if (!is_array($decoded) || !isset($decoded['tournaments']) || !is_array($decoded['tournaments'])) {
+            return [];
+        }
+
+        return $decoded['tournaments'];
+    }
+
+    /**
+     * Set the multi-token cookie with an array of tournaments.
+     *
+     * @param array $tournaments Tournament map
+     */
+    protected function setMultiTokenCookie(array $tournaments): void
+    {
+        $cookieValue = json_encode(['tournaments' => $tournaments]);
+
+        if (strlen($cookieValue) > 4096) {
+            error_log('Cookie size exceeds 4KB limit. Evicting additional tournaments.');
+            // Evict until under limit
+            while (strlen($cookieValue) > 4096 && count($tournaments) > 1) {
+                $this->evictLRUTournament($tournaments);
+                $cookieValue = json_encode(['tournaments' => $tournaments]);
+            }
+        }
+
+        $this->setCookie('admin_token', $cookieValue, 30 * 24 * 60 * 60);
+    }
+
+    /**
+     * Add or update a tournament token in the multi-token cookie.
+     *
+     * @param int $tournamentId Tournament ID
+     * @param string $token Admin token
+     * @param string $name Tournament name
+     */
+    protected function addTournamentToken(int $tournamentId, string $token, string $name): void
+    {
+        $tournaments = $this->getMultiTokenCookie();
+
+        // LRU eviction if limit reached and tournament is new
+        if (count($tournaments) >= 20 && !isset($tournaments[$tournamentId])) {
+            $this->evictLRUTournament($tournaments);
+        }
+
+        $tournaments[$tournamentId] = [
+            'token' => $token,
+            'name' => $name,
+            'lastAccessed' => time()
+        ];
+
+        $this->setMultiTokenCookie($tournaments);
+    }
+
+    /**
+     * Update the last accessed timestamp for a tournament.
+     *
+     * @param int $tournamentId Tournament ID
+     */
+    protected function updateLastAccessed(int $tournamentId): void
+    {
+        $tournaments = $this->getMultiTokenCookie();
+
+        if (isset($tournaments[$tournamentId])) {
+            $tournaments[$tournamentId]['lastAccessed'] = time();
+            $this->setMultiTokenCookie($tournaments);
+        }
+    }
+
+    /**
+     * Evict the least-recently-used tournament from the tournament map.
+     *
+     * @param array $tournaments Tournament map (passed by reference)
+     */
+    private function evictLRUTournament(array &$tournaments): void
+    {
+        if (empty($tournaments)) {
+            return;
+        }
+
+        $oldestId = null;
+        $oldestTime = PHP_INT_MAX;
+
+        foreach ($tournaments as $id => $data) {
+            $lastAccessed = isset($data['lastAccessed']) ? (int) $data['lastAccessed'] : 0;
+            if ($lastAccessed < $oldestTime) {
+                $oldestTime = $lastAccessed;
+                $oldestId = $id;
+            }
+        }
+
+        if ($oldestId !== null) {
+            unset($tournaments[$oldestId]);
+        }
+    }
+
+    /**
      * Get a request header.
      *
      * @param string $name Header name

@@ -83,11 +83,12 @@ export class ApiClient {
 
   /**
    * Creates a new tournament.
+   * Table count is optional - if not provided, tables will be created from Round 1 pairings.
    */
   async createTournament(data: {
     name: string;
     bcpUrl: string;
-    tableCount: number;
+    tableCount?: number;
   }): Promise<{ tournament: Tournament; adminToken: string }> {
     const response = await this.request.post(`${this.baseURL}/api/tournaments`, {
       data,

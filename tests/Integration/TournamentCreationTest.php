@@ -18,7 +18,6 @@ use TournamentTables\Database\Connection;
 class TournamentCreationTest extends TestCase
 {
     private TournamentService $service;
-    private array $createdTournamentIds = [];
 
     protected function setUp(): void
     {
@@ -32,6 +31,9 @@ class TournamentCreationTest extends TestCase
         if (!$this->isDatabaseAvailable()) {
             $this->markTestSkipped('Database not available');
         }
+
+        // Clean up any leftover test data from previous runs
+        $this->cleanupTestData();
 
         $this->service = new TournamentService();
     }
@@ -48,16 +50,29 @@ class TournamentCreationTest extends TestCase
 
     protected function tearDown(): void
     {
-        // Clean up created tournaments
-        foreach ($this->createdTournamentIds as $id) {
-            try {
-                Connection::execute('DELETE FROM tournaments WHERE id = ?', [$id]);
-            } catch (\Exception $e) {
-                // Ignore cleanup errors
-            }
-        }
+        // Clean up all test data (pattern-based cleanup is more robust)
+        $this->cleanupTestData();
 
         Connection::reset();
+    }
+
+    /**
+     * Clean up test tournaments by name pattern.
+     * This is more robust than tracking IDs since it catches leftover data
+     * from failed tests or tests that threw unexpected exceptions.
+     */
+    private function cleanupTestData(): void
+    {
+        try {
+            // Delete test tournaments by name pattern
+            Connection::execute(
+                "DELETE FROM tournaments WHERE name LIKE '%Test%'
+                 OR bcp_event_id IN ('test123', 'persist123', 'tables123', 'token123',
+                                      'abc123xyz', 'fullurl123', 'count123', 'trans123', 'duplicate123')"
+            );
+        } catch (\Exception $e) {
+            // Ignore cleanup errors
+        }
     }
 
     public function testCreateTournamentReturnsValidResult(): void
@@ -70,7 +85,6 @@ class TournamentCreationTest extends TestCase
 
         $this->assertArrayHasKey('tournament', $result);
         $this->assertArrayHasKey('adminToken', $result);
-        $this->createdTournamentIds[] = $result['tournament']->id;
     }
 
     public function testCreateTournamentPersistsTournament(): void
@@ -80,8 +94,6 @@ class TournamentCreationTest extends TestCase
             'https://www.bestcoastpairings.com/event/persist123',
             8
         );
-
-        $this->createdTournamentIds[] = $result['tournament']->id;
 
         // Verify tournament exists in database
         $found = Tournament::find($result['tournament']->id);
@@ -99,8 +111,6 @@ class TournamentCreationTest extends TestCase
             'https://www.bestcoastpairings.com/event/tables123',
             12
         );
-
-        $this->createdTournamentIds[] = $result['tournament']->id;
 
         // Verify tables were created
         $tables = Table::findByTournament($result['tournament']->id);
@@ -124,8 +134,6 @@ class TournamentCreationTest extends TestCase
             5
         );
 
-        $this->createdTournamentIds[] = $result['tournament']->id;
-
         // Verify token is 16 characters
         $this->assertEquals(16, strlen($result['adminToken']));
 
@@ -143,8 +151,6 @@ class TournamentCreationTest extends TestCase
             5
         );
 
-        $this->createdTournamentIds[] = $result['tournament']->id;
-
         $this->assertEquals('abc123xyz', $result['tournament']->bcpEventId);
     }
 
@@ -156,8 +162,6 @@ class TournamentCreationTest extends TestCase
             $url,
             5
         );
-
-        $this->createdTournamentIds[] = $result['tournament']->id;
 
         $this->assertEquals($url, $result['tournament']->bcpUrl);
     }
@@ -180,7 +184,7 @@ class TournamentCreationTest extends TestCase
         $this->service->createTournament(
             'Invalid Count Test',
             'https://www.bestcoastpairings.com/event/count123',
-            0
+            -1  // Negative values are invalid; 0 is now valid (auto-import)
         );
     }
 
@@ -204,8 +208,6 @@ class TournamentCreationTest extends TestCase
             5
         );
 
-        $this->createdTournamentIds[] = $result['tournament']->id;
-
         // Try to create second tournament with same BCP event ID
         $this->expectException(\RuntimeException::class);
 
@@ -228,8 +230,6 @@ class TournamentCreationTest extends TestCase
                 'https://www.bestcoastpairings.com/event/trans123',
                 5
             );
-
-            $this->createdTournamentIds[] = $result['tournament']->id;
 
             // Both should exist
             $tournament = Tournament::find($result['tournament']->id);

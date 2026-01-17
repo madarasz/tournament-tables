@@ -55,11 +55,13 @@ class ViewController extends BaseController
         $this->ensureSession();
         $justCreated = false;
         $adminToken = null;
+        $autoImport = null;
         if (isset($_SESSION['tournament_just_created'])) {
             $createdInfo = $_SESSION['tournament_just_created'];
             if ($createdInfo['id'] === $tournamentId) {
                 $justCreated = true;
                 $adminToken = $createdInfo['adminToken'];
+                $autoImport = $createdInfo['autoImport'] ?? null;
                 // Clear the session variable after use
                 unset($_SESSION['tournament_just_created']);
             }
@@ -72,6 +74,7 @@ class ViewController extends BaseController
             'terrainTypes' => $terrainTypes,
             'justCreated' => $justCreated,
             'adminToken' => $adminToken,
+            'autoImport' => $autoImport,
         ]);
     }
 

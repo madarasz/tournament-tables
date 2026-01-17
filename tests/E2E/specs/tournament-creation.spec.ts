@@ -10,7 +10,8 @@ import { generateUniqueTournament } from '../fixtures/test-data';
  * E2E Tests for User Story 2: Create and Configure Tournament
  *
  * Tests critical tournament creation user flow:
- * - Creating tournament with name, BCP URL, and table count via browser UI
+ * - Creating tournament with name and BCP URL via browser UI
+ * - Automatic import of Round 1 and table creation
  * - Automatic redirect to dashboard after creation
  * - Success message and admin token displayed on dashboard
  * - Tournament displayed on dashboard
@@ -38,12 +39,9 @@ test.describe('Tournament Creation (US2)', () => {
 
     const tournamentData = generateUniqueTournament('Create');
 
-    // Fill in the tournament form
+    // Fill in the tournament form (no table count - auto-imported from BCP)
     await page.locator('input[name="name"]').fill(tournamentData.name);
     await page.locator('input[name="bcpUrl"]').fill(tournamentData.bcpUrl);
-    await page
-      .locator('input[name="tableCount"]')
-      .fill(String(tournamentData.tableCount));
 
     // Submit the form
     await page.locator('button[type="submit"]').click();
@@ -72,9 +70,34 @@ test.describe('Tournament Creation (US2)', () => {
     const adminCookie = cookies.find((c) => c.name === 'admin_token');
     expect(adminCookie).toBeTruthy();
 
-    registerTournament(cleanupContext, tournamentId, adminCookie!.value);
+    // Parse JSON cookie to extract the actual admin token
+    // Cookie values are URL-encoded by browsers, so decode first
+    const decodedCookie = decodeURIComponent(adminCookie!.value);
+    const cookieData = JSON.parse(decodedCookie);
+    const actualAdminToken = cookieData.tournaments[tournamentId].token;
+
+    registerTournament(cleanupContext, tournamentId, actualAdminToken);
 
     // Verify tournament name is displayed on dashboard
     await expect(page.locator('body')).toContainText(tournamentData.name);
+
+    // Navigate to home page
+    await page.goto('/');
+
+    // Verify tournament is listed on home page
+    await expect(page.locator('h1')).toContainText('My Tournaments');
+    await expect(page.locator('body')).toContainText(tournamentData.name);
+
+    // Verify tournament appears in the table with correct metadata
+    const tournamentRow = page.locator('tr').filter({ hasText: tournamentData.name });
+    await expect(tournamentRow).toBeVisible();
+
+    // Verify table count is displayed (auto-imported from BCP)
+    await expect(tournamentRow).toContainText(/\d+/);
+
+    // Verify "View Dashboard" button works
+    await tournamentRow.locator('a[role="button"]', { hasText: 'View Dashboard' }).click();
+    await page.waitForURL(/\/tournament\/\d+/);
+    expect(page.url()).toContain(`/tournament/${tournamentId}`);
   });
 });

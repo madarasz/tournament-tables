@@ -39,10 +39,10 @@ class AuthController extends BaseController
             return;
         }
 
-        // Set admin token cookie (30-day retention)
-        $this->setCookie('admin_token', $body['token'], 30 * 24 * 60 * 60);
-
         $tournament = $result['tournament'];
+
+        // Add tournament token to multi-token cookie
+        $this->addTournamentToken($tournament->id, $body['token'], $tournament->name);
 
         $this->success([
             'tournamentId' => $tournament->id,
