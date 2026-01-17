@@ -17,6 +17,7 @@ use TournamentTables\Controllers\AllocationController;
 use TournamentTables\Controllers\PublicController;
 use TournamentTables\Controllers\ViewController;
 use TournamentTables\Controllers\HomeController;
+use TournamentTables\Controllers\MockBcpController;
 use TournamentTables\Middleware\AdminAuthMiddleware;
 
 // Error handling
@@ -35,6 +36,9 @@ $uri = rtrim($uri, '/') ?: '/';
 
 // Route definitions
 $routes = [
+    // Mock BCP endpoint for E2E testing
+    'GET /mock-bcp/event/{id}' => ['MockBcpController', 'event'],
+
     // API Routes
     'POST /api/tournaments' => ['TournamentController', 'create'],
     'GET /api/tournaments/{id}' => ['TournamentController', 'show', 'admin'],
@@ -124,6 +128,7 @@ $controllers = [
     'PublicController' => PublicController::class,
     'ViewController' => ViewController::class,
     'HomeController' => HomeController::class,
+    'MockBcpController' => MockBcpController::class,
 ];
 
 // Dispatch to controller

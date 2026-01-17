@@ -11,6 +11,7 @@ A web application for tournament organizers that generates intelligent table all
 **Key Features**:
 - Smart table allocation algorithm (priority-weighted greedy)
 - BCP API integration for pairing imports
+- Automatic tournament name import from BCP event pages
 - Terrain type tracking and variety optimization
 - Conflict detection and manual editing
 - Public viewing (unauthenticated)
@@ -75,6 +76,7 @@ kt-tables/
 │   ├── Unit/                     # Logic/algorithm tests (9 files)
 │   ├── Integration/              # API/DB tests (9 files)
 │   ├── Performance/              # Benchmarks (2 files)
+│   ├── Contract/                 # BCP API contract tests (1 file)
 │   └── E2E/                      # Browser tests (Playwright)
 │       ├── specs/                      # Test specifications (TypeScript)
 │       ├── helpers/                    # Test utilities (api, auth, cleanup)
@@ -164,7 +166,7 @@ TerrainType (1) ──── (N) Table
 ### Tournament Management
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
-| POST | `/api/tournaments` | None | Create tournament (returns admin token) |
+| POST | `/api/tournaments` | None | Create tournament (name auto-imported from BCP, returns admin token) |
 | GET | `/api/tournaments/{id}` | Admin | Get tournament details |
 | DELETE | `/api/tournaments/{id}` | Admin | Delete tournament |
 | PUT | `/api/tournaments/{id}/tables` | Admin | Update table terrain types |
@@ -241,6 +243,7 @@ docker-compose exec -w /var/www/app php ./vendor/bin/phpunit --testsuite unit,in
 docker-compose exec php ./vendor/bin/phpunit --testsuite unit
 docker-compose exec php ./vendor/bin/phpunit --testsuite integration
 docker-compose exec php ./vendor/bin/phpunit --testsuite performance
+docker-compose exec php ./vendor/bin/phpunit --testsuite contract
 
 # Run specific test file
 docker-compose exec php ./vendor/bin/phpunit tests/Unit/Services/AllocationServiceTest.php
@@ -420,13 +423,24 @@ docker-compose -f docker-compose.yml -f docker-compose.test.yml <command>
 
 ### REST API Integration
 **Service**: `src/Services/BCPScraperService.php`
-**Endpoint**: `https://newprod-api.bestcoastpairings.com/v1/events/{eventId}/pairings`
+**API Endpoint**: `https://newprod-api.bestcoastpairings.com/v1/events/{eventId}/pairings`
 
 **Features**:
 - Extracts event ID from BCP URL patterns
 - Exponential backoff retry logic (3 retries, 1s base delay, 2x multiplier)
 - Validates response structure
 - Maps BCP player IDs to local database
+
+### Tournament Name Auto-Import
+The `fetchTournamentName()` method scrapes the BCP event page to automatically extract the tournament name from the first `<h3>` element on the page. This eliminates the need for manual name entry during tournament creation.
+
+**Key Methods**:
+- `fetchTournamentName(string $bcpUrl): string` - Main entry point for fetching tournament name
+- `parseHtmlForTournamentName(string $html): string` - Parses HTML to extract name from first h3 element
+
+**Security**:
+- Name is sanitized with `htmlspecialchars()` to prevent XSS
+- Name is truncated to 255 chars if too long (database constraint)
 
 **BCP URL Format**:
 - Pattern: `https://www.bestcoastpairings.com/event/{eventId}`
@@ -522,4 +536,24 @@ When generating E2E tests, follow the guidelines in [docs/e2e-testing-guidelines
 - Do not test technical requirements, constraints, or error scenarios
 - Consolidate related validations into compound tests
 - E2E tests must be browser-based, not API-based
+
+### Contract Tests
+Contract tests verify that external API integrations (BCP) remain compatible with our scraper service.
+
+**Location**: `tests/Contract/`
+
+**Purpose**:
+- Detect BCP API or page structure changes that would break our integration
+- Verify tournament name parsing, table numbers, and pairing data extraction
+- Run sparingly to minimize external API calls
+
+**Design**:
+- Fetch data from BCP once using `setUpBeforeClass()`, cache for all tests
+- Tests against hardcoded event: `https://www.bestcoastpairings.com/event/NKsseGHSYuIw`
+- Auto-skip if BCP is unreachable (network issues)
+
+**Run contract tests**:
+```bash
+docker-compose exec php ./vendor/bin/phpunit --testsuite contract
+```
 <!-- MANUAL ADDITIONS END -->

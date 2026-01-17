@@ -33,12 +33,12 @@ test.describe('Terrain Type Configuration (US2)', () => {
     baseURL,
   }) => {
     // Create a tournament with 5 tables for testing
+    // Note: Tournament name is auto-imported from BCP mock as "Test Tournament {eventId}"
     const { tournamentId, adminToken } = await createAndRegisterTournament(
       request,
       cleanupContext,
       baseURL!,
       {
-        name: 'Terrain Config Test Tournament',
         tableCount: 5,
       }
     );
@@ -49,16 +49,14 @@ test.describe('Terrain Type Configuration (US2)', () => {
       adminToken,
       baseURL!,
       tournamentId,
-      'Terrain Config Test Tournament'
+      'Test Tournament' // Cookie display name
     );
 
     // Navigate to tournament dashboard
     await page.goto(`/tournament/${tournamentId}`);
 
-    // Verify we're on the dashboard
-    await expect(page.locator('h1')).toContainText(
-      'Terrain Config Test Tournament'
-    );
+    // Verify we're on the dashboard (tournament name from BCP mock starts with "Test Tournament")
+    await expect(page.locator('h1')).toContainText('Test Tournament');
 
     // Verify Table Configuration section is present
     await expect(
@@ -138,9 +136,7 @@ test.describe('Terrain Type Configuration (US2)', () => {
     await page.reload();
 
     // Wait for page to load
-    await expect(page.locator('h1')).toContainText(
-      'Terrain Config Test Tournament'
-    );
+    await expect(page.locator('h1')).toContainText('Test Tournament');
 
     // Verify terrain type selections persisted after reload
     await expect(page.locator('select[data-table-number="1"]')).toHaveValue(
@@ -178,9 +174,7 @@ test.describe('Terrain Type Configuration (US2)', () => {
 
     // Reload again to verify update persisted
     await page.reload();
-    await expect(page.locator('h1')).toContainText(
-      'Terrain Config Test Tournament'
-    );
+    await expect(page.locator('h1')).toContainText('Test Tournament');
 
     // Verify updated terrain type persisted
     await expect(page.locator('select[data-table-number="1"]')).toHaveValue(

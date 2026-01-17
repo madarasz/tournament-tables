@@ -155,22 +155,20 @@ export async function goToRoundManagement(
 
 /**
  * Creates a tournament and returns authentication context.
+ * Note: Tournament name is auto-imported from BCP, so only bcpUrl is required.
+ * BCP mock should be set up before calling this function.
  */
 export async function createTournamentAndAuthenticate(
   page: Page,
   tournamentData: {
-    name: string;
     bcpUrl: string;
-    tableCount: number;
   }
 ): Promise<{ tournamentId: number; adminToken: string }> {
   // Navigate to create tournament page
   await page.goto('/tournament/create');
 
-  // Fill in the form
-  await page.locator('input[name="name"]').fill(tournamentData.name);
+  // Fill in the form (name is auto-imported from BCP)
   await page.locator('input[name="bcpUrl"]').fill(tournamentData.bcpUrl);
-  await page.locator('input[name="tableCount"]').fill(String(tournamentData.tableCount));
 
   // Submit the form
   await page.locator('button[type="submit"]').click();
