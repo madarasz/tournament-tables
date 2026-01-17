@@ -21,11 +21,11 @@ class TournamentService
     private const BCP_URL_PATTERN = '#^https://www\.bestcoastpairings\.com/event/([A-Za-z0-9]+)/?(\?.*)?$#';
 
     /**
-     * Create a new tournament with tables.
+     * Create a new tournament.
      *
      * @param string $name Tournament name
      * @param string $bcpUrl BCP event URL
-     * @param int $tableCount Number of tables
+     * @param int $tableCount Number of tables (0-100, where 0 means auto-import from Round 1)
      * @return array{tournament: Tournament, adminToken: string}
      * @throws InvalidArgumentException If validation fails
      * @throws RuntimeException If tournament already exists
@@ -94,9 +94,9 @@ class TournamentService
             $errors['bcpUrl'] = [$urlValidation['error']];
         }
 
-        $countValidation = $this->validateTableCount($tableCount);
-        if (!$countValidation['valid']) {
-            $errors['tableCount'] = [$countValidation['error']];
+        $tableCountValidation = $this->validateTableCount($tableCount);
+        if (!$tableCountValidation['valid']) {
+            $errors['tableCount'] = [$tableCountValidation['error']];
         }
 
         if (!empty($errors)) {
@@ -148,13 +148,13 @@ class TournamentService
     /**
      * Validate table count.
      *
-     * @param int $count Table count to validate
+     * @param int $count Table count to validate (0-100, where 0 means auto-import from Round 1)
      * @return array{valid: bool, error?: string}
      */
     public function validateTableCount(int $count): array
     {
-        if ($count < 1) {
-            return ['valid' => false, 'error' => 'Table count must be at least 1'];
+        if ($count < 0) {
+            return ['valid' => false, 'error' => 'Table count cannot be negative'];
         }
 
         if ($count > 100) {

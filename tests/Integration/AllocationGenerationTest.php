@@ -297,12 +297,12 @@ class AllocationGenerationTest extends TestCase
 
             $tournamentId = Connection::lastInsertId();
 
-            // Create 8 tables with terrain types
+            // Create 8 tables without terrain types
             for ($i = 1; $i <= 8; $i++) {
                 Connection::execute(
                     "INSERT INTO tables (tournament_id, table_number, terrain_type_id)
                      VALUES (?, ?, ?)",
-                    [$tournamentId, $i, ($i % 4) + 1] // Cycle through terrain types 1-4
+                    [$tournamentId, $i, null]
                 );
             }
 

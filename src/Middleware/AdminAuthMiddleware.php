@@ -71,12 +71,47 @@ class AdminAuthMiddleware
 
     /**
      * Get token from admin_token cookie.
+     * Supports multi-token JSON format.
      */
     private static function getCookieToken(): ?string
     {
-        return isset($_COOKIE['admin_token']) && !empty($_COOKIE['admin_token'])
-            ? $_COOKIE['admin_token']
-            : null;
+        $cookieValue = $_COOKIE['admin_token'] ?? null;
+        if ($cookieValue === null || empty($cookieValue)) {
+            return null;
+        }
+
+        // Try JSON format (multi-token)
+        $decoded = json_decode($cookieValue, true);
+        if (is_array($decoded) && isset($decoded['tournaments'])) {
+            $tournaments = $decoded['tournaments'];
+
+            // Extract tournament ID from request URI
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+            $tournamentId = self::getTournamentIdFromUri($uri);
+
+            if ($tournamentId !== null && isset($tournaments[$tournamentId])) {
+                return $tournaments[$tournamentId]['token'];
+            }
+
+            return null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract tournament ID from request URI.
+     *
+     * @param string $uri Request URI
+     * @return int|null Tournament ID or null if not found
+     */
+    private static function getTournamentIdFromUri(string $uri): ?int
+    {
+        // Match patterns like /tournament/123 or /api/tournaments/123/...
+        if (preg_match('#/tournaments?/(\d+)#', $uri, $matches)) {
+            return (int)$matches[1];
+        }
+        return null;
     }
 
     /**

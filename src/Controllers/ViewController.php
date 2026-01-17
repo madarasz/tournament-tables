@@ -51,12 +51,41 @@ class ViewController extends BaseController
         $tables = Table::findByTournament($tournamentId);
         $terrainTypes = TerrainType::all();
 
+        // Check if this tournament was just created
+        $this->ensureSession();
+        $justCreated = false;
+        $adminToken = null;
+        $autoImport = null;
+        if (isset($_SESSION['tournament_just_created'])) {
+            $createdInfo = $_SESSION['tournament_just_created'];
+            if ($createdInfo['id'] === $tournamentId) {
+                $justCreated = true;
+                $adminToken = $createdInfo['adminToken'];
+                $autoImport = $createdInfo['autoImport'] ?? null;
+                // Clear the session variable after use
+                unset($_SESSION['tournament_just_created']);
+            }
+        }
+
         echo $this->renderWithLayout('tournament/dashboard', [
             'tournament' => $tournament,
             'rounds' => $rounds,
             'tables' => $tables,
             'terrainTypes' => $terrainTypes,
+            'justCreated' => $justCreated,
+            'adminToken' => $adminToken,
+            'autoImport' => $autoImport,
         ]);
+    }
+
+    /**
+     * Ensure session is started.
+     */
+    private function ensureSession(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
     }
 
     /**

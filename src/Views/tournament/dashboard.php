@@ -11,12 +11,51 @@
  * - $rounds: Array of Round models
  * - $tables: Array of Table models
  * - $terrainTypes: Array of TerrainType models
+ * - $justCreated: bool (optional) - Whether tournament was just created
+ * - $adminToken: string (optional) - Admin token if just created
+ * - $autoImport: array (optional) - Auto-import result {success: bool, tableCount?: int, pairingsImported?: int, error?: string}
  */
 
 $title = $tournament->name;
 $tableCount = $tournament->tableCount;
 $hasRounds = !empty($rounds);
+$justCreated = $justCreated ?? false;
+$adminToken = $adminToken ?? null;
+$autoImport = $autoImport ?? null;
 ?>
+
+<?php if ($justCreated && $adminToken): ?>
+<article class="alert-success" id="creation-success">
+    <header>
+        <h3>Tournament Created Successfully!</h3>
+    </header>
+
+    <?php if ($autoImport && $autoImport['success']): ?>
+        <p style="color: #4caf50; font-weight: bold;">
+            Round 1 imported automatically! Created <?= $autoImport['tableCount'] ?> tables from <?= $autoImport['pairingsImported'] ?> pairings.
+        </p>
+    <?php elseif ($autoImport && !$autoImport['success']): ?>
+        <p style="color: #ff9800; font-weight: bold;">
+            Note: Could not auto-import Round 1: <?= htmlspecialchars($autoImport['error']) ?>
+        </p>
+        <p>You can manually import Round 1 using the form below.</p>
+    <?php endif; ?>
+
+    <p><strong>Important:</strong> Save your admin token. You'll need it to manage this tournament from other devices or browsers.</p>
+    <div style="display: flex; align-items: center; gap: 1rem; margin: 1rem 0;">
+        <div class="token-display" id="admin-token-display" style="flex: 1;">
+            <?= htmlspecialchars($adminToken) ?>
+        </div>
+        <button type="button" id="copy-token-btn" onclick="copyAdminToken()" style="white-space: nowrap;">
+            Copy Token
+        </button>
+    </div>
+    <p style="font-size: 0.9rem; color: #666;">
+        This token has been saved in your browser cookies for 30 days.
+        You can dismiss this message - the token will remain accessible from your cookies.
+    </p>
+</article>
+<?php endif; ?>
 
 <header>
     <h1><?= htmlspecialchars($tournament->name) ?></h1>
@@ -175,6 +214,49 @@ $hasRounds = !empty($rounds);
 </section>
 
 <script>
+// Copy admin token to clipboard
+function copyAdminToken() {
+    var tokenDisplay = document.getElementById('admin-token-display');
+    var button = document.getElementById('copy-token-btn');
+    var originalText = button.textContent;
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(tokenDisplay.textContent.trim()).then(function() {
+        // Show success feedback
+        button.textContent = 'Copied!';
+        button.style.background = '#4caf50';
+
+        // Reset button after 2 seconds
+        setTimeout(function() {
+            button.textContent = originalText;
+            button.style.background = '';
+        }, 2000);
+    }).catch(function(err) {
+        // Fallback for older browsers
+        var textArea = document.createElement('textarea');
+        textArea.value = tokenDisplay.textContent.trim();
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            button.textContent = 'Copied!';
+            button.style.background = '#4caf50';
+            setTimeout(function() {
+                button.textContent = originalText;
+                button.style.background = '';
+            }, 2000);
+        } catch (err) {
+            button.textContent = 'Failed to copy';
+            setTimeout(function() {
+                button.textContent = originalText;
+            }, 2000);
+        }
+        document.body.removeChild(textArea);
+    });
+}
+
 document.getElementById('import-form').addEventListener('submit', function(e) {
     e.preventDefault();
 

@@ -48,7 +48,7 @@
 
 ### Tournament
 
-Represents a Kill Team event managed through BCP.
+Represents an event managed through BCP.
 
 | Field | Type | Constraints | Description |
 |-------|------|-------------|-------------|

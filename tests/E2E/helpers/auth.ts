@@ -8,18 +8,40 @@ import { Page, BrowserContext } from '@playwright/test';
 
 /**
  * Sets the admin token cookie for authentication.
+ * The cookie format matches the multi-token structure used by the application:
+ * { "tournaments": { [tournamentId]: { "token": "...", "name": "...", "lastAccessed": ... } } }
  */
 export async function setAdminTokenCookie(
   context: BrowserContext,
   adminToken: string,
-  baseURL: string
+  baseURL: string,
+  tournamentId?: number,
+  tournamentName?: string
 ): Promise<void> {
   const url = new URL(baseURL);
+
+  // Create the multi-token cookie structure
+  let cookieValue: string;
+  if (tournamentId !== undefined) {
+    const cookieData = {
+      tournaments: {
+        [tournamentId]: {
+          token: adminToken,
+          name: tournamentName || `Tournament ${tournamentId}`,
+          lastAccessed: Math.floor(Date.now() / 1000),
+        },
+      },
+    };
+    cookieValue = JSON.stringify(cookieData);
+  } else {
+    // Fallback for backward compatibility (though this shouldn't be used)
+    cookieValue = adminToken;
+  }
 
   await context.addCookies([
     {
       name: 'admin_token',
-      value: adminToken,
+      value: cookieValue,
       domain: url.hostname,
       path: '/',
       httpOnly: true,

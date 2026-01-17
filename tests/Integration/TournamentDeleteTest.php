@@ -22,7 +22,6 @@ use TournamentTables\Database\Connection;
 class TournamentDeleteTest extends TestCase
 {
     private TournamentService $service;
-    private array $createdTournamentIds = [];
 
     protected function setUp(): void
     {
@@ -36,6 +35,9 @@ class TournamentDeleteTest extends TestCase
         if (!$this->isDatabaseAvailable()) {
             $this->markTestSkipped('Database not available');
         }
+
+        // Clean up any leftover test data from previous runs
+        $this->cleanupTestData();
 
         $this->service = new TournamentService();
     }
@@ -52,16 +54,33 @@ class TournamentDeleteTest extends TestCase
 
     protected function tearDown(): void
     {
-        // Clean up any tournaments that weren't deleted during tests
-        foreach ($this->createdTournamentIds as $id) {
-            try {
-                Connection::execute('DELETE FROM tournaments WHERE id = ?', [$id]);
-            } catch (\Exception $e) {
-                // Ignore cleanup errors
-            }
-        }
+        // Clean up all test data (pattern-based cleanup is more robust)
+        $this->cleanupTestData();
 
         Connection::reset();
+    }
+
+    /**
+     * Clean up test tournaments by name pattern.
+     * This is more robust than tracking IDs since it catches leftover data
+     * from failed tests or tests that threw unexpected exceptions.
+     */
+    private function cleanupTestData(): void
+    {
+        try {
+            // Delete test tournaments by name pattern
+            Connection::execute(
+                "DELETE FROM tournaments WHERE name LIKE '%Delete%Test%'
+                 OR name LIKE '%Cascade%Test%'
+                 OR name LIKE '%Idempotent%Test%'
+                 OR bcp_event_id LIKE 'delete%'
+                 OR bcp_event_id LIKE 'cascade%'
+                 OR bcp_event_id LIKE 'idempotent%'
+                 OR bcp_event_id LIKE 'authdelete%'"
+            );
+        } catch (\Exception $e) {
+            // Ignore cleanup errors
+        }
     }
 
     public function testDeleteTournamentRemovesTournament(): void
@@ -74,7 +93,6 @@ class TournamentDeleteTest extends TestCase
         );
 
         $tournamentId = $result['tournament']->id;
-        $this->createdTournamentIds[] = $tournamentId;
 
         // Delete the tournament
         $deleted = $this->service->deleteTournament($tournamentId);
@@ -84,12 +102,6 @@ class TournamentDeleteTest extends TestCase
         // Verify tournament no longer exists
         $found = Tournament::find($tournamentId);
         $this->assertNull($found);
-
-        // Remove from cleanup list since already deleted
-        $this->createdTournamentIds = array_filter(
-            $this->createdTournamentIds,
-            fn($id) => $id !== $tournamentId
-        );
     }
 
     public function testDeleteTournamentCascadesToTables(): void
@@ -102,7 +114,6 @@ class TournamentDeleteTest extends TestCase
         );
 
         $tournamentId = $result['tournament']->id;
-        $this->createdTournamentIds[] = $tournamentId;
 
         // Verify tables exist before deletion
         $tablesBefore = Table::findByTournament($tournamentId);
@@ -114,12 +125,6 @@ class TournamentDeleteTest extends TestCase
         // Verify tables were deleted
         $tablesAfter = Table::findByTournament($tournamentId);
         $this->assertCount(0, $tablesAfter);
-
-        // Remove from cleanup list
-        $this->createdTournamentIds = array_filter(
-            $this->createdTournamentIds,
-            fn($id) => $id !== $tournamentId
-        );
     }
 
     public function testDeleteTournamentCascadesToRounds(): void
@@ -132,7 +137,6 @@ class TournamentDeleteTest extends TestCase
         );
 
         $tournamentId = $result['tournament']->id;
-        $this->createdTournamentIds[] = $tournamentId;
 
         // Create a round
         $round = new Round(null, $tournamentId, 1, false);
@@ -148,12 +152,6 @@ class TournamentDeleteTest extends TestCase
         // Verify rounds were deleted
         $roundsAfter = Round::findByTournament($tournamentId);
         $this->assertCount(0, $roundsAfter);
-
-        // Remove from cleanup list
-        $this->createdTournamentIds = array_filter(
-            $this->createdTournamentIds,
-            fn($id) => $id !== $tournamentId
-        );
     }
 
     public function testDeleteTournamentCascadesToPlayers(): void
@@ -166,7 +164,6 @@ class TournamentDeleteTest extends TestCase
         );
 
         $tournamentId = $result['tournament']->id;
-        $this->createdTournamentIds[] = $tournamentId;
 
         // Create a player
         $player = new Player(null, $tournamentId, 'player1', 'Test Player');
@@ -182,12 +179,6 @@ class TournamentDeleteTest extends TestCase
         // Verify players were deleted
         $playersAfter = Player::findByTournament($tournamentId);
         $this->assertCount(0, $playersAfter);
-
-        // Remove from cleanup list
-        $this->createdTournamentIds = array_filter(
-            $this->createdTournamentIds,
-            fn($id) => $id !== $tournamentId
-        );
     }
 
     public function testDeleteTournamentCascadesToAllocations(): void
@@ -200,7 +191,6 @@ class TournamentDeleteTest extends TestCase
         );
 
         $tournamentId = $result['tournament']->id;
-        $this->createdTournamentIds[] = $tournamentId;
 
         // Create supporting data
         $round = new Round(null, $tournamentId, 1, false);
@@ -243,12 +233,6 @@ class TournamentDeleteTest extends TestCase
             [$round->id]
         );
         $this->assertCount(0, $remaining);
-
-        // Remove from cleanup list
-        $this->createdTournamentIds = array_filter(
-            $this->createdTournamentIds,
-            fn($id) => $id !== $tournamentId
-        );
     }
 
     public function testDeleteNonExistentTournamentThrowsException(): void
@@ -269,7 +253,6 @@ class TournamentDeleteTest extends TestCase
 
         $tournamentId = $result['tournament']->id;
         $adminToken = $result['adminToken'];
-        $this->createdTournamentIds[] = $tournamentId;
 
         // Simulate API call without proper authentication
         // Note: This tests the endpoint logic, not just the service
@@ -286,12 +269,6 @@ class TournamentDeleteTest extends TestCase
         // Verify deleted
         $afterDelete = Tournament::find($tournamentId);
         $this->assertNull($afterDelete);
-
-        // Remove from cleanup list
-        $this->createdTournamentIds = array_filter(
-            $this->createdTournamentIds,
-            fn($id) => $id !== $tournamentId
-        );
     }
 
     public function testDeleteTournamentThrowsWhenAlreadyDeleted(): void
@@ -304,7 +281,6 @@ class TournamentDeleteTest extends TestCase
         );
 
         $tournamentId = $result['tournament']->id;
-        $this->createdTournamentIds[] = $tournamentId;
 
         // First delete should succeed
         $this->service->deleteTournament($tournamentId);
