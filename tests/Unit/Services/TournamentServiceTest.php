@@ -114,12 +114,12 @@ class TournamentServiceTest extends TestCase
         }
     }
 
-    public function testValidateTableCountRejectsZero(): void
+    public function testValidateTableCountAcceptsZero(): void
     {
+        // 0 is now valid - it means auto-import tables from Round 1
         $result = $this->service->validateTableCount(0);
 
-        $this->assertFalse($result['valid']);
-        $this->assertStringContainsString('at least 1', $result['error']);
+        $this->assertTrue($result['valid']);
     }
 
     public function testValidateTableCountRejectsNegative(): void

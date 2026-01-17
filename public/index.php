@@ -16,6 +16,7 @@ use TournamentTables\Controllers\RoundController;
 use TournamentTables\Controllers\AllocationController;
 use TournamentTables\Controllers\PublicController;
 use TournamentTables\Controllers\ViewController;
+use TournamentTables\Controllers\HomeController;
 use TournamentTables\Middleware\AdminAuthMiddleware;
 
 // Error handling
@@ -51,7 +52,7 @@ $routes = [
     'GET /api/public/tournaments/{id}/rounds/{n}' => ['PublicController', 'showRound'],
 
     // View Routes (HTML)
-    'GET /' => ['ViewController', 'home'],
+    'GET /' => ['HomeController', 'index'],
     'GET /tournament/create' => ['ViewController', 'createTournament'],
     'GET /tournament/{id}' => ['ViewController', 'showTournament', 'admin'],
     'GET /tournament/{id}/round/{n}' => ['ViewController', 'showRound', 'admin'],
@@ -122,6 +123,7 @@ $controllers = [
     'AllocationController' => AllocationController::class,
     'PublicController' => PublicController::class,
     'ViewController' => ViewController::class,
+    'HomeController' => HomeController::class,
 ];
 
 // Dispatch to controller

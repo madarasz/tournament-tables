@@ -23,11 +23,9 @@ class TournamentService
     /**
      * Create a new tournament.
      *
-     * Tables will be created later when Round 1 is imported.
-     *
      * @param string $name Tournament name
      * @param string $bcpUrl BCP event URL
-     * @param int $tableCount Number of tables (must be between 1 and 100)
+     * @param int $tableCount Number of tables (0-100, where 0 means auto-import from Round 1)
      * @return array{tournament: Tournament, adminToken: string}
      * @throws InvalidArgumentException If validation fails
      * @throws RuntimeException If tournament already exists
@@ -64,11 +62,8 @@ class TournamentService
             );
             $tournament->save();
 
-            // Create tables if tableCount is provided and > 0
-            // Otherwise, tables will be created when Round 1 is imported
-            if ($tableCount > 0) {
-                Table::createForTournament($tournament->id, $tableCount);
-            }
+            // Create tables
+            Table::createForTournament($tournament->id, $tableCount);
 
             Connection::commit();
 
@@ -85,7 +80,7 @@ class TournamentService
     /**
      * Validate all inputs or throw exception.
      */
-    private function validateOrThrow(string $name, string $bcpUrl, int $tableCount = 0): void
+    private function validateOrThrow(string $name, string $bcpUrl, int $tableCount): void
     {
         $errors = [];
 
@@ -153,13 +148,13 @@ class TournamentService
     /**
      * Validate table count.
      *
-     * @param int $count Table count to validate
+     * @param int $count Table count to validate (0-100, where 0 means auto-import from Round 1)
      * @return array{valid: bool, error?: string}
      */
     public function validateTableCount(int $count): array
     {
-        if ($count < 1) {
-            return ['valid' => false, 'error' => 'Table count must be at least 1'];
+        if ($count < 0) {
+            return ['valid' => false, 'error' => 'Table count cannot be negative'];
         }
 
         if ($count > 100) {

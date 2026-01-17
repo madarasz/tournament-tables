@@ -22,11 +22,20 @@ A web app for tournament organizers to generate table allocations that ensure pl
 docker-compose up -d
 
 # Run database migrations and seed data
-docker-compose exec php php bin/migrate.php
-docker-compose exec php php bin/seed-terrain-types.php
+composer migrate
+composer seed
 ```
 
 Visit `http://localhost:8080`
+
+### Database Management
+
+PHPMyAdmin is available for database management:
+- **URL**: `http://localhost:8081`
+- **Server**: `mysql`
+- **Username**: `root`
+- **Password**: `root`
+- **Database**: `tournament_tables`
 
 ## Local Setup (without Docker)
 
@@ -72,16 +81,25 @@ php -S localhost:8080 -t public
 
 ## Running Tests
 
+### Composer Scripts (Recommended)
+
+```bash
+composer test:unit   # Run all PHPUnit test suites
+composer test:e2e    # Start test environment and run Playwright E2E tests
+composer migrate     # Run database migrations
+composer seed        # Seed terrain types
+```
+
 ### Unit & Integration Tests (Docker)
 
 ```bash
 # Start development environment
 docker-compose up -d
 
-# Run all PHP tests (unit, integration, performance)
-docker-compose exec php ./vendor/bin/phpunit
+# Run all PHP tests (recommended)
+composer test:unit
 
-# Run specific test suites
+# Or manually run specific test suites
 docker-compose exec php ./vendor/bin/phpunit --testsuite unit
 docker-compose exec php ./vendor/bin/phpunit --testsuite integration
 docker-compose exec php ./vendor/bin/phpunit --testsuite performance
@@ -92,6 +110,10 @@ docker-compose exec php ./vendor/bin/phpunit --testsuite performance
 E2E tests use a layered Docker Compose configuration that adds Playwright and uses isolated test data.
 
 ```bash
+# Run E2E tests (recommended - starts environment automatically)
+composer test:e2e
+
+# Or manually:
 # Start test environment (layered config)
 docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d
 

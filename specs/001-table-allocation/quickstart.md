@@ -50,7 +50,7 @@ mysql -u root -p -e "CREATE DATABASE tournament_tables CHARACTER SET utf8mb4 COL
 # Run migrations
 php bin/migrate.php
 # For Docker:
-docker-compose exec -w /var/www/app php php bin/migrate.php
+composer migrate
 ```
 
 ### 4. Seed Terrain Types
@@ -58,7 +58,7 @@ docker-compose exec -w /var/www/app php php bin/migrate.php
 ```bash
 php bin/seed-terrain-types.php
 # For Docker:
-docker-compose exec -w /var/www/app php php bin/seed-terrain-types.php
+composer seed
 ```
 
 ### 5. Configure Chrome Path (if needed)
@@ -116,22 +116,19 @@ tournament-tables/
 ### Running Tests
 
 ```bash
-# All tests
+# All tests (Docker - recommended)
+composer test:unit
+
+# E2E tests with Playwright (Docker)
+composer test:e2e
+
+# Local (without Docker)
 ./vendor/bin/phpunit
-# For Docker
-docker-compose exec -w /var/www/app php ./vendor/bin/phpunit --testsuite unit,integration,performance,e2e --process-isolation
 
-# Unit tests only
+# Specific test suites
 ./vendor/bin/phpunit --testsuite unit
-
-# Integration tests only
 ./vendor/bin/phpunit --testsuite integration
-
-# Performance tests
 ./vendor/bin/phpunit --testsuite performance
-
-# End-to-end tests
-./vendor/bin/phpunit --testsuite e2e
 
 # Specific test file
 ./vendor/bin/phpunit tests/Unit/Services/AllocationServiceTest.php

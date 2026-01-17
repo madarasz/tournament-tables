@@ -65,10 +65,6 @@ class TournamentController extends BaseController
             // Attempt to auto-import Round 1 and create tables
             $autoImportResult = $this->attemptAutoImportRound1($result['tournament']);
 
-            // Set admin token cookie (30-day retention) per FR-003
-            // Cookie has HttpOnly, SameSite=Lax, and Secure (when HTTPS) flags
-            $this->setCookie('admin_token', $result['adminToken'], 30 * 24 * 60 * 60);
-
             // Check if this is an API request (JSON) or browser form submission
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
             $isJsonRequest = strpos($contentType, 'application/json') !== false;
@@ -97,12 +93,22 @@ class TournamentController extends BaseController
                 $this->success($response, 201);
             } else {
                 // Browser form submission - redirect to dashboard with success message
+                // Start session first (before setting cookies) to avoid header conflicts
                 $this->ensureSession();
                 $_SESSION['tournament_just_created'] = [
                     'id' => $result['tournament']->id,
                     'adminToken' => $result['adminToken'],
                     'autoImport' => $autoImportResult,
                 ];
+
+                // Add tournament token to multi-token cookie (30-day retention) per FR-003
+                // Cookie has HttpOnly, SameSite=Lax, and Secure (when HTTPS) flags
+                $this->addTournamentToken(
+                    $result['tournament']->id,
+                    $result['adminToken'],
+                    $result['tournament']->name
+                );
+
                 $this->redirect('/tournament/' . $result['tournament']->id);
             }
         } catch (\InvalidArgumentException $e) {

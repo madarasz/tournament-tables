@@ -70,9 +70,34 @@ test.describe('Tournament Creation (US2)', () => {
     const adminCookie = cookies.find((c) => c.name === 'admin_token');
     expect(adminCookie).toBeTruthy();
 
-    registerTournament(cleanupContext, tournamentId, adminCookie!.value);
+    // Parse JSON cookie to extract the actual admin token
+    // Cookie values are URL-encoded by browsers, so decode first
+    const decodedCookie = decodeURIComponent(adminCookie!.value);
+    const cookieData = JSON.parse(decodedCookie);
+    const actualAdminToken = cookieData.tournaments[tournamentId].token;
+
+    registerTournament(cleanupContext, tournamentId, actualAdminToken);
 
     // Verify tournament name is displayed on dashboard
     await expect(page.locator('body')).toContainText(tournamentData.name);
+
+    // Navigate to home page
+    await page.goto('/');
+
+    // Verify tournament is listed on home page
+    await expect(page.locator('h1')).toContainText('My Tournaments');
+    await expect(page.locator('body')).toContainText(tournamentData.name);
+
+    // Verify tournament appears in the table with correct metadata
+    const tournamentRow = page.locator('tr').filter({ hasText: tournamentData.name });
+    await expect(tournamentRow).toBeVisible();
+
+    // Verify table count is displayed (auto-imported from BCP)
+    await expect(tournamentRow).toContainText(/\d+/);
+
+    // Verify "View Dashboard" button works
+    await tournamentRow.locator('a[role="button"]', { hasText: 'View Dashboard' }).click();
+    await page.waitForURL(/\/tournament\/\d+/);
+    expect(page.url()).toContain(`/tournament/${tournamentId}`);
   });
 });

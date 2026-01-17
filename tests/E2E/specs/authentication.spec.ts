@@ -61,8 +61,28 @@ test.describe('Admin Authentication (US5)', () => {
     // Verify we're on the correct tournament
     expect(page.url()).toContain(`/tournament/${tournamentId}`);
 
-    // Verify cookie is set
-    const cookie = await getAdminTokenFromCookies(page.context(), baseURL!);
-    expect(cookie).toBe(adminToken);
+    // Verify cookie is set (JSON format with tournament tokens)
+    const cookieValue = await getAdminTokenFromCookies(page.context(), baseURL!);
+    expect(cookieValue).toBeTruthy();
+
+    // Parse JSON cookie and verify tournament token is present
+    // Cookie values are URL-encoded by browsers, so decode first
+    const decodedCookie = decodeURIComponent(cookieValue!);
+    const cookieData = JSON.parse(decodedCookie);
+    expect(cookieData.tournaments).toBeDefined();
+    expect(cookieData.tournaments[tournamentId]).toBeDefined();
+    expect(cookieData.tournaments[tournamentId].token).toBe(adminToken);
+
+    // Verify tournament appears on home page
+    await page.goto('/');
+    await expect(page.locator('h1')).toContainText('My Tournaments');
+
+    // Find the tournament in the list (table row containing tournament name)
+    // Tournament name format: "E2E Test Tournament {timestamp}"
+    const tournamentRow = page.locator('tr').filter({ hasText: /E2E Test/ });
+    await expect(tournamentRow).toBeVisible();
+
+    // Verify View Dashboard button is present
+    await expect(tournamentRow.getByRole('button', { name: 'View Dashboard' })).toBeVisible();
   });
 });

@@ -204,10 +204,10 @@ TerrainType (1) ──── (N) Table
 docker-compose up -d
 
 # Run database migrations
-docker-compose exec php php bin/migrate.php
+composer migrate
 
 # Seed terrain types
-docker-compose exec php php bin/seed-terrain-types.php
+composer seed
 
 # Stop environment
 docker-compose down
@@ -216,11 +216,25 @@ docker-compose down
 docker-compose logs -f php
 ```
 
+### Composer Scripts (Recommended)
+
+Common commands are available as Composer scripts for convenience:
+
+```bash
+composer test:unit   # Run all PHPUnit test suites (unit, integration, performance, e2e)
+composer test:e2e    # Start test environment and run Playwright E2E tests
+composer migrate     # Run database migrations
+composer seed        # Seed terrain types
+```
+
 ### Testing Commands
 
 #### PHPUnit Tests (Docker)
 ```bash
-# Run all test suites
+# Run all test suites (recommended)
+composer test:unit
+
+# Or manually:
 docker-compose exec -w /var/www/app php ./vendor/bin/phpunit --testsuite unit,integration,performance,e2e --process-isolation
 
 # Run specific test suite
@@ -234,6 +248,10 @@ docker-compose exec php ./vendor/bin/phpunit tests/Unit/Services/AllocationServi
 
 #### Playwright E2E Tests (Docker)
 ```bash
+# Run E2E tests (recommended - starts environment automatically)
+composer test:e2e
+
+# Or manually:
 # Start test environment (layered config)
 docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d
 

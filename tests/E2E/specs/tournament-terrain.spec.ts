@@ -44,7 +44,13 @@ test.describe('Terrain Type Configuration (US2)', () => {
     );
 
     // Set admin token cookie for authentication
-    await setAdminTokenCookie(page.context(), adminToken, baseURL!);
+    await setAdminTokenCookie(
+      page.context(),
+      adminToken,
+      baseURL!,
+      tournamentId,
+      'Terrain Config Test Tournament'
+    );
 
     // Navigate to tournament dashboard
     await page.goto(`/tournament/${tournamentId}`);
