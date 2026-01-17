@@ -162,6 +162,7 @@ jobs:
           curl -f http://127.0.0.1:8080/api/terrain-types || exit 1
         env:
           APP_ENV: testing
+          BCP_MOCK_BASE_URL: http://127.0.0.1:8080/mock-bcp
 
       - name: Run Playwright E2E tests
         working-directory: tests/E2E

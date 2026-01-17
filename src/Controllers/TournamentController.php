@@ -41,7 +41,8 @@ class TournamentController extends BaseController
         // Validate required fields
         $errors = [];
 
-        if (empty($body['bcpUrl'])) {
+        $bcpUrl = trim($body['bcpUrl'] ?? '');
+        if ($bcpUrl === '') {
             $errors['bcpUrl'] = ['BCP URL is required'];
         }
 
@@ -54,7 +55,15 @@ class TournamentController extends BaseController
             // Fetch tournament name from BCP page
             $scraper = new BCPScraperService();
             try {
-                $tournamentName = $scraper->fetchTournamentName($body['bcpUrl']);
+                $scraper->extractEventId($bcpUrl);
+                $tournamentName = $scraper->fetchTournamentName($bcpUrl);
+            } catch (\InvalidArgumentException $e) {
+                $this->validationError([
+                    'bcpUrl' => [
+                        'BCP URL must match https://www.bestcoastpairings.com/event/{eventId}',
+                    ],
+                ]);
+                return;
             } catch (\RuntimeException $e) {
                 $this->validationError([
                     'bcpUrl' => ['Unable to fetch tournament name from BCP. Please check the URL and try again.']
@@ -67,7 +76,7 @@ class TournamentController extends BaseController
             $tableCount = isset($body['tableCount']) ? (int) $body['tableCount'] : 0;
             $result = $this->service->createTournament(
                 $tournamentName,
-                $body['bcpUrl'],
+                $bcpUrl,
                 $tableCount
             );
 

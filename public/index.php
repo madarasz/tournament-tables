@@ -36,9 +36,6 @@ $uri = rtrim($uri, '/') ?: '/';
 
 // Route definitions
 $routes = [
-    // Mock BCP endpoint for E2E testing
-    'GET /mock-bcp/event/{id}' => ['MockBcpController', 'event'],
-
     // API Routes
     'POST /api/tournaments' => ['TournamentController', 'create'],
     'GET /api/tournaments/{id}' => ['TournamentController', 'show', 'admin'],
@@ -64,6 +61,10 @@ $routes = [
     'GET /public/{id}/round/{n}' => ['ViewController', 'publicRound'],
     'GET /login' => ['ViewController', 'login'],
 ];
+
+if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_BASE_URL')) {
+    $routes['GET /mock-bcp/event/{id}'] = ['MockBcpController', 'event'];
+}
 
 // Match route
 $matchedRoute = null;
@@ -128,8 +129,11 @@ $controllers = [
     'PublicController' => PublicController::class,
     'ViewController' => ViewController::class,
     'HomeController' => HomeController::class,
-    'MockBcpController' => MockBcpController::class,
 ];
+
+if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_BASE_URL')) {
+    $controllers['MockBcpController'] = MockBcpController::class;
+}
 
 // Dispatch to controller
 $controllerName = $matchedRoute[0];

@@ -57,12 +57,9 @@ class BCPScraperService
      */
     private function resolveFetchUrl(string $bcpUrl): string
     {
-        if ($this->mockBaseUrl === null) {
-            return $bcpUrl;
-        }
-
-        // Replace BCP base URL with mock base URL
-        return str_replace(self::BCP_WEB_BASE_URL, $this->mockBaseUrl, $bcpUrl);
+        $eventId = $this->extractEventId($bcpUrl);
+        $base = $this->mockBaseUrl ?? self::BCP_WEB_BASE_URL;
+        return rtrim($base, '/') . '/event/' . $eventId;
     }
 
     /**
@@ -95,7 +92,7 @@ class BCPScraperService
      */
     public function extractEventId(string $url): string
     {
-        $pattern = '#bestcoastpairings\.com/event/([A-Za-z0-9]+)#';
+        $pattern = '#^https://www\.bestcoastpairings\.com/event/([A-Za-z0-9]+)(?:[/?]|$)#';
 
         if (preg_match($pattern, $url, $matches)) {
             return $matches[1];
@@ -281,13 +278,15 @@ class BCPScraperService
             throw new \RuntimeException("Tournament name not found on BCP page. Please check URL.");
         }
 
+        $name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+
         // Truncate if too long (database VARCHAR 255 limit)
         if (strlen($name) > 255) {
             $name = substr($name, 0, 252) . '...';
         }
 
         // Sanitize to prevent XSS
-        return htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        return $name;
     }
 
     /**
