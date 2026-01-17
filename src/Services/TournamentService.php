@@ -21,19 +21,21 @@ class TournamentService
     private const BCP_URL_PATTERN = '#^https://www\.bestcoastpairings\.com/event/([A-Za-z0-9]+)/?(\?.*)?$#';
 
     /**
-     * Create a new tournament with tables.
+     * Create a new tournament.
+     *
+     * Tables will be created later when Round 1 is imported.
      *
      * @param string $name Tournament name
      * @param string $bcpUrl BCP event URL
-     * @param int $tableCount Number of tables
+     * @param int $tableCount Number of tables (0 = auto-detect from Round 1)
      * @return array{tournament: Tournament, adminToken: string}
      * @throws InvalidArgumentException If validation fails
      * @throws RuntimeException If tournament already exists
      */
-    public function createTournament(string $name, string $bcpUrl, int $tableCount): array
+    public function createTournament(string $name, string $bcpUrl, int $tableCount = 0): array
     {
         // Validate inputs
-        $this->validateOrThrow($name, $bcpUrl, $tableCount);
+        $this->validateOrThrow($name, $bcpUrl);
 
         // Extract BCP event ID
         $bcpUrlValidation = $this->validateBcpUrl($bcpUrl);
@@ -62,8 +64,11 @@ class TournamentService
             );
             $tournament->save();
 
-            // Create tables
-            Table::createForTournament($tournament->id, $tableCount);
+            // Create tables if tableCount is provided and > 0
+            // Otherwise, tables will be created when Round 1 is imported
+            if ($tableCount > 0) {
+                Table::createForTournament($tournament->id, $tableCount);
+            }
 
             Connection::commit();
 
@@ -80,7 +85,7 @@ class TournamentService
     /**
      * Validate all inputs or throw exception.
      */
-    private function validateOrThrow(string $name, string $bcpUrl, int $tableCount): void
+    private function validateOrThrow(string $name, string $bcpUrl): void
     {
         $errors = [];
 
@@ -92,11 +97,6 @@ class TournamentService
         $urlValidation = $this->validateBcpUrl($bcpUrl);
         if (!$urlValidation['valid']) {
             $errors['bcpUrl'] = [$urlValidation['error']];
-        }
-
-        $countValidation = $this->validateTableCount($tableCount);
-        if (!$countValidation['valid']) {
-            $errors['tableCount'] = [$countValidation['error']];
         }
 
         if (!empty($errors)) {

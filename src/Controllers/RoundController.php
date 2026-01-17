@@ -81,8 +81,15 @@ class RoundController extends BaseController
                 $playersImported = 0;
                 $pairingsImported = 0;
 
-                // Get all tables for this tournament (needed for assigning to rounds > 1)
+                // Get all tables for this tournament
                 $tables = Table::findByTournament($tournamentId);
+
+                // If no tables exist (first import), create them from pairing count
+                if (empty($tables)) {
+                    $tableCount = count($pairings);
+                    $tables = Table::createForTournament($tournamentId, $tableCount);
+                }
+
                 $tableIndex = 0;
 
                 foreach ($pairings as $pairing) {

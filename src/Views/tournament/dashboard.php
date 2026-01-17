@@ -13,6 +13,7 @@
  * - $terrainTypes: Array of TerrainType models
  * - $justCreated: bool (optional) - Whether tournament was just created
  * - $adminToken: string (optional) - Admin token if just created
+ * - $autoImport: array (optional) - Auto-import result {success: bool, tableCount?: int, pairingsImported?: int, error?: string}
  */
 
 $title = $tournament->name;
@@ -20,6 +21,7 @@ $tableCount = $tournament->tableCount;
 $hasRounds = !empty($rounds);
 $justCreated = $justCreated ?? false;
 $adminToken = $adminToken ?? null;
+$autoImport = $autoImport ?? null;
 ?>
 
 <?php if ($justCreated && $adminToken): ?>
@@ -27,6 +29,18 @@ $adminToken = $adminToken ?? null;
     <header>
         <h3>Tournament Created Successfully!</h3>
     </header>
+
+    <?php if ($autoImport && $autoImport['success']): ?>
+        <p style="color: #4caf50; font-weight: bold;">
+            Round 1 imported automatically! Created <?= $autoImport['tableCount'] ?> tables from <?= $autoImport['pairingsImported'] ?> pairings.
+        </p>
+    <?php elseif ($autoImport && !$autoImport['success']): ?>
+        <p style="color: #ff9800; font-weight: bold;">
+            Note: Could not auto-import Round 1: <?= htmlspecialchars($autoImport['error']) ?>
+        </p>
+        <p>You can manually import Round 1 using the form below.</p>
+    <?php endif; ?>
+
     <p><strong>Important:</strong> Save your admin token. You'll need it to manage this tournament from other devices or browsers.</p>
     <div style="display: flex; align-items: center; gap: 1rem; margin: 1rem 0;">
         <div class="token-display" id="admin-token-display" style="flex: 1;">

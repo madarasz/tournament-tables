@@ -10,7 +10,8 @@ import { generateUniqueTournament } from '../fixtures/test-data';
  * E2E Tests for User Story 2: Create and Configure Tournament
  *
  * Tests critical tournament creation user flow:
- * - Creating tournament with name, BCP URL, and table count via browser UI
+ * - Creating tournament with name and BCP URL via browser UI
+ * - Automatic import of Round 1 and table creation
  * - Automatic redirect to dashboard after creation
  * - Success message and admin token displayed on dashboard
  * - Tournament displayed on dashboard
@@ -38,12 +39,9 @@ test.describe('Tournament Creation (US2)', () => {
 
     const tournamentData = generateUniqueTournament('Create');
 
-    // Fill in the tournament form
+    // Fill in the tournament form (no table count - auto-imported from BCP)
     await page.locator('input[name="name"]').fill(tournamentData.name);
     await page.locator('input[name="bcpUrl"]').fill(tournamentData.bcpUrl);
-    await page
-      .locator('input[name="tableCount"]')
-      .fill(String(tournamentData.tableCount));
 
     // Submit the form
     await page.locator('button[type="submit"]').click();

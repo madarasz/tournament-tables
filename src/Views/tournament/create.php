@@ -24,13 +24,7 @@ ob_start();
         <label for="bcpUrl">
             BCP Event URL
             <input type="url" id="bcpUrl" name="bcpUrl" placeholder="https://www.bestcoastpairings.com/event/..." required>
-            <small>The full URL from Best Coast Pairings for your event.</small>
-        </label>
-
-        <label for="tableCount">
-            Number of Tables
-            <input type="number" id="tableCount" name="tableCount" min="1" max="100" value="8" required>
-            <small>The number of physical tables available at the venue (1-100).</small>
+            <small>The full URL from Best Coast Pairings for your event. Tables will be created automatically from Round 1 pairings.</small>
         </label>
 
         <button type="submit" id="submit-btn">
