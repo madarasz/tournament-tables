@@ -143,15 +143,23 @@ class TournamentController extends BaseController
                 ];
             }
 
-            // Derive table count from number of pairings
+            // Derive table count from max BCP table number
             $tableCount = count($pairings);
+            foreach ($pairings as $pairing) {
+                if ($pairing->bcpTableNumber !== null && $pairing->bcpTableNumber > $tableCount) {
+                    $tableCount = $pairing->bcpTableNumber;
+                }
+            }
 
             // Import pairings in a transaction
             Connection::beginTransaction();
 
             try {
-                // Create tables (Table 1, Table 2, ..., Table n)
-                Table::createForTournament($tournament->id, $tableCount);
+                // Create tables only if none exist
+                $existingTables = Table::findByTournament($tournament->id);
+                if (empty($existingTables)) {
+                    Table::createForTournament($tournament->id, $tableCount);
+                }
 
                 // Create round
                 $round = Round::findOrCreate($tournament->id, 1);
@@ -235,7 +243,7 @@ class TournamentController extends BaseController
             // Other errors
             return [
                 'success' => false,
-                'error' => 'Failed to import Round 1: ',
+                'error' => 'Failed to import Round 1',
             ];
         }
     }

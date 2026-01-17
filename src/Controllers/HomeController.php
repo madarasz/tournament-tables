@@ -64,7 +64,7 @@ class HomeController extends BaseController
 
         $this->render('home', [
             'tournaments' => $tournamentData,
-            'isEmpty' => false
+            'isEmpty' => empty($tournamentData)
         ]);
     }
 

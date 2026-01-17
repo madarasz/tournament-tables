@@ -160,7 +160,7 @@ abstract class BaseController
             return [];
         }
 
-        if (!is_array($decoded) || !isset($decoded['tournaments'])) {
+        if (!is_array($decoded) || !isset($decoded['tournaments']) || !is_array($decoded['tournaments'])) {
             return [];
         }
 
@@ -243,8 +243,9 @@ abstract class BaseController
         $oldestTime = PHP_INT_MAX;
 
         foreach ($tournaments as $id => $data) {
-            if ($data['lastAccessed'] < $oldestTime) {
-                $oldestTime = $data['lastAccessed'];
+            $lastAccessed = isset($data['lastAccessed']) ? (int) $data['lastAccessed'] : 0;
+            if ($lastAccessed < $oldestTime) {
+                $oldestTime = $lastAccessed;
                 $oldestId = $id;
             }
         }
