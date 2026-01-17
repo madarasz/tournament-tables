@@ -157,12 +157,14 @@ jobs:
 
       - name: Start PHP server
         run: |
+          export APP_ENV=testing
+          export BCP_MOCK_BASE_URL=http://127.0.0.1:8080/mock-bcp
+          export PHP_CLI_SERVER_WORKERS=2
           php -S 127.0.0.1:8080 -t public &
           sleep 5
           curl -f http://127.0.0.1:8080/api/terrain-types || exit 1
-        env:
-          APP_ENV: testing
-          BCP_MOCK_BASE_URL: http://127.0.0.1:8080/mock-bcp
+          echo "Testing mock BCP endpoint..."
+          curl -f http://127.0.0.1:8080/mock-bcp/event/test123 || exit 1
 
       - name: Run Playwright E2E tests
         working-directory: tests/E2E
