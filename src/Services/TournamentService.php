@@ -27,15 +27,15 @@ class TournamentService
      *
      * @param string $name Tournament name
      * @param string $bcpUrl BCP event URL
-     * @param int $tableCount Number of tables (0 = auto-detect from Round 1)
+     * @param int $tableCount Number of tables (must be between 1 and 100)
      * @return array{tournament: Tournament, adminToken: string}
      * @throws InvalidArgumentException If validation fails
      * @throws RuntimeException If tournament already exists
      */
-    public function createTournament(string $name, string $bcpUrl, int $tableCount = 0): array
+    public function createTournament(string $name, string $bcpUrl, int $tableCount): array
     {
         // Validate inputs
-        $this->validateOrThrow($name, $bcpUrl);
+        $this->validateOrThrow($name, $bcpUrl, $tableCount);
 
         // Extract BCP event ID
         $bcpUrlValidation = $this->validateBcpUrl($bcpUrl);
@@ -85,7 +85,7 @@ class TournamentService
     /**
      * Validate all inputs or throw exception.
      */
-    private function validateOrThrow(string $name, string $bcpUrl): void
+    private function validateOrThrow(string $name, string $bcpUrl, int $tableCount = 0): void
     {
         $errors = [];
 
@@ -97,6 +97,11 @@ class TournamentService
         $urlValidation = $this->validateBcpUrl($bcpUrl);
         if (!$urlValidation['valid']) {
             $errors['bcpUrl'] = [$urlValidation['error']];
+        }
+
+        $tableCountValidation = $this->validateTableCount($tableCount);
+        if (!$tableCountValidation['valid']) {
+            $errors['tableCount'] = [$tableCountValidation['error']];
         }
 
         if (!empty($errors)) {

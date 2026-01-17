@@ -210,7 +210,7 @@ Redirect to dashboard → Show token display + success message
 
 ### #2: Remove Table Count Input, Auto-Import First Round
 
-**Status**: ✅ Proposed
+**Status**: ✅ Implemented
 **Date Proposed**: 2026-01-16
 **Priority**: High (affects every tournament creation)
 

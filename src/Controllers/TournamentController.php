@@ -229,7 +229,7 @@ class TournamentController extends BaseController
             // Other errors
             return [
                 'success' => false,
-                'error' => 'Failed to import Round 1: ' . $e->getMessage(),
+                'error' => 'Failed to import Round 1: ',
             ];
         }
     }
