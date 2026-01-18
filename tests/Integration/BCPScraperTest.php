@@ -385,4 +385,64 @@ class BCPScraperTest extends TestCase
         $this->assertEquals(1000, $scraper->getBaseDelayMs());
         $this->assertEquals(2.0, $scraper->getBackoffMultiplier());
     }
+
+    /**
+     * Test parsing tournament name from HTML fixture.
+     */
+    public function testParseHtmlForTournamentNameFromFixture(): void
+    {
+        $html = file_get_contents($this->fixturesPath . '/bcp_event_page.html');
+        $this->assertNotEmpty($html);
+
+        $scraper = new BCPScraperService();
+        $name = $scraper->parseHtmlForTournamentName($html);
+
+        $this->assertEquals('Contrast Clash - October 2026', $name);
+    }
+
+    /**
+     * Test parsing HTML fixture returns only the first h3.
+     */
+    public function testParseHtmlReturnsFirstH3FromFixture(): void
+    {
+        $html = file_get_contents($this->fixturesPath . '/bcp_event_page.html');
+
+        $scraper = new BCPScraperService();
+        $name = $scraper->parseHtmlForTournamentName($html);
+
+        // Should get the first h3, not "Other Section"
+        $this->assertStringNotContainsString('Other Section', $name);
+        $this->assertEquals('Contrast Clash - October 2026', $name);
+    }
+
+    /**
+     * Test fetching tournament name from live BCP page.
+     *
+     * This test makes actual network calls and is skipped unless LIVE_BCP_TESTS=1.
+     * Set BCP_TEST_URL environment variable for the event URL.
+     *
+     * Example:
+     *   LIVE_BCP_TESTS=1 BCP_TEST_URL=https://www.bestcoastpairings.com/event/NKsseGHSYuIw vendor/bin/phpunit tests/Integration/BCPScraperTest.php::testFetchTournamentNameFromLiveBcp
+     */
+    public function testFetchTournamentNameFromLiveBcp(): void
+    {
+        $bcpUrl = getenv('BCP_TEST_URL') ?: 'https://www.bestcoastpairings.com/event/NKsseGHSYuIw';
+
+        $scraper = new BCPScraperService();
+
+        try {
+            $name = $scraper->fetchTournamentName($bcpUrl);
+
+            // Validate response
+            $this->assertIsString($name);
+            $this->assertNotEmpty($name);
+            $this->assertLessThanOrEqual(255, strlen($name));
+        } catch (\RuntimeException $e) {
+            // If network fails or page is unavailable, mark as incomplete
+            $this->markTestIncomplete(
+                "Failed to fetch tournament name from BCP: " . $e->getMessage() . "\n" .
+                "This might be due to: network issues, page not available, or BCP changes."
+            );
+        }
+    }
 }

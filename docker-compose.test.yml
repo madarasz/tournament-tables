@@ -9,6 +9,14 @@ services:
   php:
     environment:
       APP_ENV: testing
+      # Mock BCP URLs point to the mock endpoints within this container
+      BCP_MOCK_BASE_URL: http://localhost/mock-bcp
+      BCP_MOCK_API_URL: http://localhost/mock-bcp-api
+    # Override command to set environment variables for Apache
+    command: >
+      bash -c "a2enmod rewrite && docker-php-ext-install pdo pdo_mysql &&
+      echo 'PassEnv APP_ENV BCP_MOCK_BASE_URL BCP_MOCK_API_URL' >> /etc/apache2/apache2.conf &&
+      apache2-foreground"
 
   # Override mysql to use separate test data volume
   mysql:
