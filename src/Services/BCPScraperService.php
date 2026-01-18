@@ -25,13 +25,17 @@ class BCPScraperService
     /** @var float */
     private $backoffMultiplier = 2.0;
 
-    /** @var string|null Mock base URL for testing */
+    /** @var string|null Mock base URL for HTML scraping (testing) */
     private $mockBaseUrl;
+
+    /** @var string|null Mock base URL for API calls (testing) */
+    private $mockApiBaseUrl;
 
     public function __construct()
     {
-        // Check for mock BCP URL in test environment
+        // Check for mock BCP URLs in test environment
         $this->mockBaseUrl = getenv('BCP_MOCK_BASE_URL') ?: null;
+        $this->mockApiBaseUrl = getenv('BCP_MOCK_API_URL') ?: null;
     }
 
     /**
@@ -79,9 +83,15 @@ class BCPScraperService
 
     /**
      * Build the API URL for fetching pairings.
+     *
+     * In test mode (BCP_MOCK_API_URL set), redirects to mock endpoint.
      */
     public function buildPairingsUrl(string $eventId, int $round): string
     {
+        if ($this->mockApiBaseUrl !== null) {
+            // Use mock API endpoint for testing
+            return rtrim($this->mockApiBaseUrl, '/') . "/{$eventId}/pairings?round={$round}";
+        }
         return self::BCP_API_BASE_URL . "/{$eventId}/pairings?eventId={$eventId}&round={$round}&pairingType=Pairing";
     }
 

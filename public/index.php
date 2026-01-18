@@ -62,8 +62,9 @@ $routes = [
     'GET /login' => ['ViewController', 'login'],
 ];
 
-if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_BASE_URL')) {
+if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_BASE_URL') || getenv('BCP_MOCK_API_URL')) {
     $routes['GET /mock-bcp/event/{id}'] = ['MockBcpController', 'event'];
+    $routes['GET /mock-bcp-api/{id}/pairings'] = ['MockBcpController', 'pairings'];
 }
 
 // Match route

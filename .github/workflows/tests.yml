@@ -158,7 +158,12 @@ jobs:
       - name: Start PHP server
         run: |
           # Start PHP server with environment variables inline (ensures they're passed to the process)
-          APP_ENV=testing BCP_MOCK_BASE_URL=http://127.0.0.1:8080/mock-bcp PHP_CLI_SERVER_WORKERS=2 \
+          # BCP_MOCK_BASE_URL: mock for HTML scraping (tournament name)
+          # BCP_MOCK_API_URL: mock for REST API (pairings)
+          APP_ENV=testing \
+          BCP_MOCK_BASE_URL=http://127.0.0.1:8080/mock-bcp \
+          BCP_MOCK_API_URL=http://127.0.0.1:8080/mock-bcp-api \
+          PHP_CLI_SERVER_WORKERS=2 \
             php -S 127.0.0.1:8080 -t public public/index.php &
 
           # Wait for server to be ready
@@ -175,10 +180,15 @@ jobs:
           # Verify server is working
           curl -f http://127.0.0.1:8080/api/terrain-types || exit 1
 
-          # Verify mock BCP endpoint is registered (confirms APP_ENV=testing is working)
-          echo "Testing mock BCP endpoint..."
+          # Verify mock BCP HTML endpoint is registered
+          echo "Testing mock BCP HTML endpoint..."
           curl -f http://127.0.0.1:8080/mock-bcp/event/test123 || exit 1
-          echo "Mock BCP endpoint is working"
+          echo "Mock BCP HTML endpoint is working"
+
+          # Verify mock BCP API endpoint is registered
+          echo "Testing mock BCP API endpoint..."
+          curl -f "http://127.0.0.1:8080/mock-bcp-api/test123/pairings?round=1" || exit 1
+          echo "Mock BCP API endpoint is working"
 
       - name: Run Playwright E2E tests
         working-directory: tests/E2E
