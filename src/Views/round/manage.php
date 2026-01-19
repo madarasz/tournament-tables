@@ -47,18 +47,14 @@ $hasTableCollisions = !empty($tableCollisions);
     <title><?= htmlspecialchars($pageTitle) ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="/js/utils.js"></script>
     <script>
-        // Helper to get cookie value - must be defined before HTMX buttons
-        function getCookie(name) {
-            var value = '; ' + document.cookie;
-            var parts = value.split('; ' + name + '=');
-            if (parts.length === 2) return parts.pop().split(';').shift();
-            return '';
-        }
+        // Current tournament ID for token retrieval
+        var currentTournamentId = <?= $tournament->id ?>;
 
         // Add admin token to all HTMX requests
         document.addEventListener('htmx:configRequest', function(event) {
-            var token = getCookie('admin_token');
+            var token = getAdminToken(currentTournamentId);
             if (token) {
                 event.detail.headers['X-Admin-Token'] = token;
             }
@@ -240,21 +236,6 @@ $hasTableCollisions = !empty($tableCollisions);
 
                 <span class="publish-status"></span>
             </div>
-
-            <!-- Swap controls (T074) -->
-            <?php if (!empty($allocations)): ?>
-            <div class="action-buttons" style="margin-top: 1em;">
-                <button
-                    onclick="swapSelectedTables()"
-                    class="secondary"
-                    id="swap-button"
-                    disabled
-                >
-                    Swap Selected Tables
-                </button>
-                <small id="swap-status" style="line-height: 2.5;">Select two allocations to swap</small>
-            </div>
-            <?php endif; ?>
         </section>
 
         <?php if ($hasConflicts): ?>
@@ -366,6 +347,21 @@ $hasTableCollisions = !empty($tableCollisions);
             <?php endif; ?>
         </section>
 
+        <!-- Swap controls (T074) -->
+        <?php if (!empty($allocations)): ?>
+        <div class="action-buttons" style="margin-top: 1em;">
+            <button
+                onclick="swapSelectedTables()"
+                class="secondary"
+                id="swap-button"
+                disabled
+            >
+                Swap Selected Tables
+            </button>
+            <small id="swap-status" style="line-height: 2.5;">Select two allocations to swap</small>
+        </div>
+        <?php endif; ?>
+
         <footer>
             <small>
                 Tournament Tables - Tournament Table Allocation
@@ -427,7 +423,7 @@ $hasTableCollisions = !empty($tableCollisions);
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Admin-Token': getCookie('admin_token')
+                        'X-Admin-Token': getAdminToken(currentTournamentId)
                     },
                     body: JSON.stringify({
                         allocationId1: allocationId1,
@@ -454,7 +450,7 @@ $hasTableCollisions = !empty($tableCollisions);
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Admin-Token': getCookie('admin_token')
+                    'X-Admin-Token': getAdminToken(currentTournamentId)
                 },
                 body: JSON.stringify({
                     tableId: parseInt(newTableId)

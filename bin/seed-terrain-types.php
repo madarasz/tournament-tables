@@ -44,8 +44,7 @@ try {
         ['Into the Dark', 'Generic space hulk terrain', 3],
         ['Octarius', 'War-torn Ork-infested ruins', 4],
         ['Bheta-Decima', 'Imperial hive city ruins', 5],
-        ['Volkus+Tyranid', 'Volkus with Tyranid infestation', 6],
-        ['undefined', 'undefined terrain type', 10],
+        ['Volkus+Tyranid', 'Volkus with Tyranid infestation', 6]
     ];
 
     // Use INSERT IGNORE to avoid duplicates on re-run

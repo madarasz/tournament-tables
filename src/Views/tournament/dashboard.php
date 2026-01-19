@@ -101,7 +101,7 @@ $autoImport = $autoImport ?? null;
         <tbody>
             <?php foreach ($rounds as $round): ?>
             <tr>
-                <td><strong>Round <?= $round->roundNumber ?></strong></td>
+                <td><strong><?= $round->roundNumber ?></strong></td>
                 <td><?= $round->getAllocationCount() ?> pairings</td>
                 <td>
                     <?php if ($round->isPublished): ?>

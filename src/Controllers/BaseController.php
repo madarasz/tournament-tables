@@ -91,13 +91,14 @@ abstract class BaseController
      * @param string $name Cookie name
      * @param string $value Cookie value
      * @param int $maxAge Max age in seconds (default 30 days)
+     * @param bool $httpOnly Whether to set HttpOnly flag (default true)
      */
-    protected function setCookie(string $name, string $value, int $maxAge = 2592000): void
+    protected function setCookie(string $name, string $value, int $maxAge = 2592000, bool $httpOnly = true): void
     {
         $options = [
             'expires' => time() + $maxAge,
             'path' => '/',
-            'httponly' => true,
+            'httponly' => $httpOnly,
             'samesite' => 'Lax',
         ];
 
@@ -185,7 +186,9 @@ abstract class BaseController
             }
         }
 
-        $this->setCookie('admin_token', $cookieValue, 30 * 24 * 60 * 60);
+        // HttpOnly disabled so JavaScript can read the token for X-Admin-Token header
+        // This is acceptable because each token only grants access to one specific tournament
+        $this->setCookie('admin_token', $cookieValue, 30 * 24 * 60 * 60, false);
     }
 
     /**

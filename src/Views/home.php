@@ -59,22 +59,20 @@ ob_start();
                 <th>Tournament Name</th>
                 <th>Tables</th>
                 <th>Rounds</th>
-                <th>Last Viewed</th>
-                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             <?php foreach ($tournaments as $tournament): ?>
                 <tr>
-                    <td><strong><?= htmlspecialchars($tournament['name']) ?></strong></td>
+                    <td>
+                        <strong>
+                            <a href="/tournament/<?= $tournament['id'] ?>" role="button" class="secondary">
+                                <?= htmlspecialchars($tournament['name']) ?>
+                            </a>
+                        </strong>
+                    </td>
                     <td><?= $tournament['tableCount'] ?></td>
                     <td><?= $tournament['roundCount'] ?></td>
-                    <td><?= formatRelativeTime($tournament['lastAccessed']) ?></td>
-                    <td>
-                        <a href="/tournament/<?= $tournament['id'] ?>" role="button" class="secondary">
-                            View Dashboard
-                        </a>
-                    </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
