@@ -23,6 +23,9 @@ class TerrainType
     /** @var string|null */
     public $description;
 
+    /** @var string|null */
+    public $emoji;
+
     /** @var int */
     public $sortOrder;
 
@@ -30,11 +33,13 @@ class TerrainType
         ?int $id = null,
         string $name = '',
         ?string $description = null,
+        ?string $emoji = null,
         int $sortOrder = 0
     ) {
         $this->id = $id;
         $this->name = $name;
         $this->description = $description;
+        $this->emoji = $emoji;
         $this->sortOrder = $sortOrder;
     }
 
@@ -47,6 +52,7 @@ class TerrainType
             (int) $row['id'],
             $row['name'],
             $row['description'],
+            $row['emoji'] ?? null,
             (int) $row['sort_order']
         );
     }
@@ -100,6 +106,7 @@ class TerrainType
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
+            'emoji' => $this->emoji,
             'sortOrder' => $this->sortOrder,
         ];
     }

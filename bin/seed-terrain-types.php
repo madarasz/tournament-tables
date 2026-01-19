@@ -39,17 +39,17 @@ try {
 
     // Terrain types from data-model.md#initial-data
     $terrainTypes = [
-        ['Volkus', 'Forge world industrial terrain', 1],
-        ['Tomb World', 'Necron tomb complex', 2],
-        ['Into the Dark', 'Generic space hulk terrain', 3],
-        ['Octarius', 'War-torn Ork-infested ruins', 4],
-        ['Bheta-Decima', 'Imperial hive city ruins', 5],
-        ['Volkus+Tyranid', 'Volkus with Tyranid infestation', 6]
+        ['Volkus', 'Forge world industrial terrain', '🏢', 1],
+        ['Tomb World', 'Necron tomb complex', '🪦', 2],
+        ['Into the Dark', 'Generic space hulk terrain', '🚀', 3],
+        ['Octarius', 'War-torn Ork-infested ruins', '🛖', 4],
+        ['Bheta-Decima', 'Imperial hive city ruins', '🏗️', 5],
+        ['Volkus+Tyranid', 'Volkus with Tyranid infestation', '👾', 6]
     ];
 
     // Use INSERT IGNORE to avoid duplicates on re-run
     $stmt = $pdo->prepare(
-        'INSERT IGNORE INTO terrain_types (name, description, sort_order) VALUES (?, ?, ?)'
+        'INSERT IGNORE INTO terrain_types (name, description, emoji, sort_order) VALUES (?, ?, ?, ?)'
     );
 
     $inserted = 0;

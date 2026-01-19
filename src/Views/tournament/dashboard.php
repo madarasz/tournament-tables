@@ -173,9 +173,12 @@ $autoImport = $autoImport ?? null;
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($tables as $table): ?>
+                    <?php foreach ($tables as $table):
+                        $currentTerrain = $table->getTerrainType();
+                        $currentEmoji = $currentTerrain ? $currentTerrain->emoji : null;
+                    ?>
                     <tr>
-                        <td><strong>Table <?= $table->tableNumber ?></strong></td>
+                        <td><strong>Table <?= $table->tableNumber ?><?= $currentEmoji ? ' ' . $currentEmoji : '' ?></strong></td>
                         <td>
                             <select
                                 name="table_<?= $table->tableNumber ?>"
@@ -188,7 +191,7 @@ $autoImport = $autoImport ?? null;
                                     value="<?= $terrainType->id ?>"
                                     <?= ($table->terrainTypeId === $terrainType->id) ? 'selected' : '' ?>
                                 >
-                                    <?= htmlspecialchars($terrainType->name) ?>
+                                    <?= $terrainType->emoji ? $terrainType->emoji . ' ' : '' ?><?= htmlspecialchars($terrainType->name) ?>
                                     <?php if ($terrainType->description): ?>
                                         - <?= htmlspecialchars($terrainType->description) ?>
                                     <?php endif; ?>

@@ -389,8 +389,9 @@ Attempt auto-import Round 1 →
 
 ### #3: Compact & Responsive Allocation Table
 
-**Status**: ⏳ Proposed
+**Status**: ✅ Implemented
 **Date Proposed**: 2026-01-19
+**Date Implemented**: 2026-01-19
 **Priority**: High (affects every round management interaction)
 
 #### Problem
@@ -755,6 +756,7 @@ What pattern can be extracted? Where else could this apply?
 
 ## Changelog
 
+- **2026-01-19**: Implemented improvement #3 (Compact & Responsive Allocation Table): reduced columns from 9 to 6, added mobile breakpoints, sticky swap controls, modal for mobile table editing
 - **2026-01-19**: Added improvement #3 (Compact & Responsive Allocation Table) with mobile-first design research and interaction patterns
 - **2026-01-19**: Added research section #4 (Responsive Tables & Mobile Data Display) with sources from NNG, CSS-Tricks, Smashing Magazine, Luke Wroblewski
 - **2026-01-16**: Completed pending research queries with web searches; added evidence and source links to improvement sections

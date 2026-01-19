@@ -20,6 +20,22 @@ $pageTitle = "{$tournament->name} - Round {$round->roundNumber}";
 $hasConflicts = !empty($conflicts);
 $isPublished = $round->isPublished;
 
+/**
+ * Abbreviate player name for mobile display.
+ * "Tamas Horvath" -> "T. Horvath"
+ * "John" -> "John" (single name, no change)
+ */
+function abbreviateName($fullName) {
+    $parts = explode(' ', trim($fullName));
+    if (count($parts) < 2) {
+        return $fullName;
+    }
+    // First initial + last name(s)
+    $firstInitial = mb_substr($parts[0], 0, 1) . '.';
+    array_shift($parts);
+    return $firstInitial . ' ' . implode(' ', $parts);
+}
+
 // Detect table collisions (multiple allocations with same table)
 $tableUsage = [];
 $tableCollisions = [];
@@ -61,6 +77,7 @@ $hasTableCollisions = !empty($tableCollisions);
         });
     </script>
     <style>
+        /* Conflict highlighting */
         .conflict-table-collision,
         .conflict-table-collision:nth-child(odd),
         .conflict-table-collision:nth-child(even) {
@@ -79,6 +96,8 @@ $hasTableCollisions = !empty($tableCollisions);
             background-color: #ffe0b2 !important;
             border-left: 4px solid #ff9800;
         }
+
+        /* Badges */
         .published-badge {
             display: inline-block;
             padding: 0.25em 0.5em;
@@ -97,24 +116,108 @@ $hasTableCollisions = !empty($tableCollisions);
             font-size: 0.875em;
             margin-left: 0.5em;
         }
+
+        /* Base table styles (mobile-first) */
         .allocation-table {
             width: 100%;
+            font-size: 14px;
         }
         .allocation-table th,
         .allocation-table td {
-            padding: 0.75em;
+            padding: 8px 4px;
             text-align: left;
+            vertical-align: middle;
         }
-        .score {
-            font-weight: bold;
+        .allocation-table th {
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        /* Score styling - muted, inline with player name */
+        .player-score {
             color: #1976d2;
+            font-weight: 600;
+            margin-left: 4px;
         }
-        .terrain-type {
+
+        /* Terrain in table column */
+        .terrain-suffix {
             font-style: italic;
             color: #666;
+            font-size: 0.85em;
         }
+
+        /* VS separator column */
+        .vs-cell {
+            text-align: center;
+            color: #888;
+            font-size: 12px;
+            padding: 8px 2px !important;
+        }
+
+        /* Player name styling */
+        .player-name {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .player-cell {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Checkbox - touch-friendly on mobile */
+        .select-cell {
+            width: 44px;
+            text-align: center;
+        }
+        .swap-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        /* Table number column */
+        .table-cell {
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        /* Change table - dropdown on desktop, button on mobile */
+        .change-cell {
+            width: 120px;
+        }
+        .change-table-dropdown {
+            width: 100%;
+            font-size: 0.875em;
+            padding: 6px 8px;
+        }
+        .change-table-btn {
+            display: none;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            background: var(--secondary);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 44px;
+        }
+        .change-table-btn:hover {
+            background: var(--secondary-hover);
+        }
+
+        /* Header abbreviations */
+        .header-full { display: inline; }
+        .header-short { display: none; }
+
+        /* Action buttons */
         .action-buttons {
             display: flex;
+            flex-wrap: wrap;
             gap: 0.5em;
             margin-bottom: 1em;
         }
@@ -122,6 +225,8 @@ $hasTableCollisions = !empty($tableCollisions);
             opacity: 0.5;
             pointer-events: none;
         }
+
+        /* Conflict list */
         .conflict-list {
             margin-top: 1em;
             padding: 1em;
@@ -139,9 +244,12 @@ $hasTableCollisions = !empty($tableCollisions);
             font-weight: bold;
             color: #e65100;
         }
+
         #allocation-results {
             min-height: 200px;
         }
+
+        /* HTMX indicators */
         .htmx-indicator {
             display: none;
         }
@@ -150,6 +258,188 @@ $hasTableCollisions = !empty($tableCollisions);
         }
         .htmx-request.htmx-indicator {
             display: inline-block;
+        }
+
+        /* Swap button container - sticky on mobile */
+        .swap-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            margin-top: 1em;
+            padding: 1em;
+            background: var(--background-color, #fff);
+            border-top: 1px solid var(--muted-border-color, #ddd);
+        }
+        .swap-status {
+            font-size: 0.875em;
+            color: #666;
+        }
+
+        /* Modal for mobile table editing */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: var(--background-color, #fff);
+            border-radius: 12px 12px 0 0;
+            padding: 1.5em;
+            width: 100%;
+            max-width: 500px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1em;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+        .modal-description {
+            color: #666;
+            margin-bottom: 1em;
+            font-size: 0.9em;
+        }
+        .table-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .table-option-btn {
+            width: 100%;
+            padding: 14px 16px;
+            text-align: left;
+            background: var(--secondary-focus, #f0f0f0);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+        .table-option-btn:hover,
+        .table-option-btn:focus {
+            border-color: var(--primary);
+        }
+        .table-option-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary-focus, #e3f2fd);
+        }
+        .table-option-terrain {
+            font-style: italic;
+            color: #666;
+            margin-left: 8px;
+        }
+
+        /* Mobile styles (< 768px) */
+        @media (max-width: 767px) {
+            .allocation-table {
+                font-size: 13px;
+            }
+            .allocation-table th,
+            .allocation-table td {
+                padding: 10px 4px;
+            }
+
+            /* Larger touch targets */
+            .swap-checkbox {
+                width: 24px;
+                height: 24px;
+            }
+            .select-cell {
+                width: 40px;
+            }
+
+            /* Abbreviate headers */
+            .header-full { display: none; }
+            .header-short { display: inline; }
+
+            /* Show mobile edit button, hide dropdown */
+            .change-table-dropdown { display: none; }
+            .change-table-btn { display: inline-block; }
+            .change-cell { width: 48px; }
+
+            /* Player names - show abbreviated version */
+            .player-name-full { display: none; }
+            .player-name-short { display: inline; }
+            .player-name {
+                max-width: 100px;
+            }
+
+            /* Sticky swap controls at bottom */
+            .swap-controls {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                margin: 0;
+                z-index: 100;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            }
+
+            /* Add padding at bottom for sticky controls */
+            #allocation-results {
+                padding-bottom: 80px;
+            }
+
+            /* Modal slides up from bottom */
+            .modal-content {
+                animation: slideUp 0.2s ease-out;
+            }
+            @keyframes slideUp {
+                from { transform: translateY(100%); }
+                to { transform: translateY(0); }
+            }
+        }
+
+        /* Desktop styles (>= 768px) */
+        @media (min-width: 768px) {
+            .allocation-table {
+                font-size: 15px;
+            }
+            .allocation-table th,
+            .allocation-table td {
+                padding: 12px 8px;
+            }
+            .player-name {
+                max-width: 200px;
+            }
+            .player-name-full { display: inline; }
+            .player-name-short { display: none; }
+            .change-cell {
+                width: 140px;
+            }
+
+            /* Modal centered on desktop */
+            .modal-overlay {
+                align-items: center;
+            }
+            .modal-content {
+                border-radius: 12px;
+                max-height: 80vh;
+            }
         }
     </style>
 </head>
@@ -160,7 +450,7 @@ $hasTableCollisions = !empty($tableCollisions);
                 <li><strong>Tournament Tables</strong></li>
             </ul>
             <ul>
-                <li><a href="/tournament/<?= $tournament->id ?>">Tournament Dashboard</a></li>
+                <li><a href="/tournament/<?= $tournament->id ?>"><?= htmlspecialchars($tournament->name) ?></a></li>
             </ul>
         </nav>
 
@@ -260,15 +550,24 @@ $hasTableCollisions = !empty($tableCollisions);
             <table class="allocation-table" role="grid">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">Select</th>
-                        <th>Table</th>
-                        <th>Terrain</th>
-                        <th>Player 1</th>
-                        <th>Score</th>
-                        <th>Player 2</th>
-                        <th>Score</th>
-                        <th>Status</th>
-                        <th style="width: 150px;">Change Table</th>
+                        <th class="select-cell">
+                            <span class="header-full">Select</span>
+                            <span class="header-short" aria-label="Select"></span>
+                        </th>
+                        <th class="table-cell">
+                            <span class="header-full">Table</span>
+                            <span class="header-short">T#</span>
+                        </th>
+                        <th>
+                            <span>Player 1</span>
+                        </th>
+                        <th>
+                            <span>Player 2</span>
+                        </th>
+                        <th class="change-cell">
+                            <span class="header-full">Change</span>
+                            <span class="header-short" aria-label="Change"></span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -294,51 +593,86 @@ $hasTableCollisions = !empty($tableCollisions);
                         $player1 = $allocation->getPlayer1();
                         $player2 = $allocation->getPlayer2();
                         $terrainType = $table ? $table->getTerrainType() : null;
+                        $terrainEmoji = $terrainType ? $terrainType->emoji : null;
                     ?>
-                    <tr class="<?= $rowClass ?>">
+                    <?php
+                        // Prepare player name abbreviations (FirstName L.)
+                        $player1Name = $player1 ? htmlspecialchars($player1->name) : 'Unknown';
+                        $player2Name = $player2 ? htmlspecialchars($player2->name) : 'Unknown';
+                        $player1Short = abbreviateName($player1Name);
+                        $player2Short = abbreviateName($player2Name);
+                        $terrainName = $terrainType ? htmlspecialchars($terrainType->name) : null;
+                    ?>
+                    <tr class="<?= $rowClass ?>" data-allocation-id="<?= $allocation->id ?>">
                         <!-- Checkbox for swap selection (T074) -->
-                        <td>
+                        <td class="select-cell">
                             <input
                                 type="checkbox"
                                 class="swap-checkbox"
                                 data-allocation-id="<?= $allocation->id ?>"
                                 onchange="updateSwapButton()"
+                                aria-label="Select for swap"
                             />
                         </td>
 
-                        <td><strong><?= $table ? $table->tableNumber : 'N/A' ?></strong></td>
-                        <td class="terrain-type"><?= $terrainType ? htmlspecialchars($terrainType->name) : '-' ?></td>
-                        <td><?= $player1 ? htmlspecialchars($player1->name) : 'Unknown' ?></td>
-                        <td class="score"><?= $allocation->player1Score ?></td>
-                        <td><?= $player2 ? htmlspecialchars($player2->name) : 'Unknown' ?></td>
-                        <td class="score"><?= $allocation->player2Score ?></td>
-                        <td>
-                            <?php if ($hasTableCollision): ?>
-                                <span title="Multiple pairings assigned to same table" style="color: #d32f2f; font-weight: bold;">&#9888; TABLE COLLISION</span>
-                            <?php elseif ($hasTableReuse): ?>
-                                <span title="Table reuse conflict">&#9888; Table Reuse</span>
-                            <?php elseif ($hasTerrainReuse): ?>
-                                <span title="Terrain reuse">&#9888; Terrain Reuse</span>
+                        <!-- Table number with terrain -->
+                        <td class="table-cell" title="<?= $terrainName ? "Table {$table->tableNumber} ({$terrainName})" : "Table " . ($table ? $table->tableNumber : 'N/A') ?>">
+                            <?php if ($table): ?>
+                                <span class="header-full">Table <?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?></span>
+                                <span class="header-short">T<?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?></span>
+                                <?php if ($terrainName): ?>
+                                    <span class="terrain-suffix header-full">(<?= $terrainName ?>)</span>
+                                <?php endif; ?>
                             <?php else: ?>
-                                &#10003; OK
+                                N/A
                             <?php endif; ?>
                         </td>
 
-                        <!-- Inline table edit dropdown (T073) -->
-                        <td>
+                        <!-- Player 1 with score -->
+                        <td title="<?= $player1Name ?> (<?= $allocation->player1Score ?>)">
+                            <span class="player-name">
+                                <span class="player-name-full"><?= $player1Name ?></span>
+                                <span class="player-name-short"><?= $player1Short ?></span>
+                            </span>
+                            <span class="player-score">(<?= $allocation->player1Score ?>)</span>
+                        </td>
+                        <!-- Player 2 with score -->
+                        <td title="<?= $player2Name ?> (<?= $allocation->player2Score ?>)">
+                            <span class="player-name">
+                                <span class="player-name-full"><?= $player2Name ?></span>
+                                <span class="player-name-short"><?= $player2Short ?></span>
+                            </span>
+                            <span class="player-score">(<?= $allocation->player2Score ?>)</span>
+                        </td>
+
+                        <!-- Change table - dropdown on desktop, button on mobile -->
+                        <td class="change-cell">
+                            <!-- Desktop dropdown -->
                             <select
+                                class="change-table-dropdown"
                                 onchange="changeTableAssignment(<?= $allocation->id ?>, this.value)"
-                                style="width: 100%; font-size: 0.875em;"
+                                aria-label="Change table assignment"
                             >
-                                <?php foreach ($allTables as $t): ?>
+                                <?php foreach ($allTables as $t):
+                                    $tTerrain = $t->getTerrainType();
+                                    $tEmoji = $tTerrain ? $tTerrain->emoji : null;
+                                ?>
                                     <option
                                         value="<?= $t->id ?>"
                                         <?= ($table && $t->id === $table->id) ? 'selected' : '' ?>
                                     >
-                                        Table <?= $t->tableNumber ?>
+                                        T<?= $t->tableNumber ?><?= $tEmoji ? ' ' . $tEmoji : '' ?><?= $tTerrain ? ' (' . htmlspecialchars($tTerrain->name) . ')' : '' ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <!-- Mobile edit button -->
+                            <button
+                                type="button"
+                                class="change-table-btn"
+                                onclick="openTableModal(<?= $allocation->id ?>, <?= $table ? $table->id : 'null' ?>, '<?= addslashes($player1Name) ?>', '<?= addslashes($player2Name) ?>')"
+                                aria-label="Change table"
+                                title="Change table"
+                            >&#9998;</button>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -347,20 +681,34 @@ $hasTableCollisions = !empty($tableCollisions);
             <?php endif; ?>
         </section>
 
-        <!-- Swap controls (T074) -->
+        <!-- Swap controls (T074) - sticky on mobile -->
         <?php if (!empty($allocations)): ?>
-        <div class="action-buttons" style="margin-top: 1em;">
+        <div class="swap-controls" id="swap-controls">
             <button
                 onclick="swapSelectedTables()"
                 class="secondary"
                 id="swap-button"
                 disabled
             >
-                Swap Selected Tables
+                Swap Selected
             </button>
-            <small id="swap-status" style="line-height: 2.5;">Select two allocations to swap</small>
+            <span class="swap-status" id="swap-status">Select 2 to swap</span>
         </div>
         <?php endif; ?>
+
+        <!-- Modal for mobile table editing -->
+        <div class="modal-overlay" id="table-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Change Table</h3>
+                    <button type="button" class="modal-close" onclick="closeTableModal()" aria-label="Close">&times;</button>
+                </div>
+                <p class="modal-description" id="modal-matchup"></p>
+                <div class="table-options" id="modal-table-options">
+                    <!-- Options populated by JavaScript -->
+                </div>
+            </div>
+        </div>
 
         <footer>
             <small>
@@ -372,6 +720,21 @@ $hasTableCollisions = !empty($tableCollisions);
     </main>
 
     <script>
+        // Table data for modal (populated from PHP)
+        var tableData = <?= json_encode(array_map(function($t) {
+            $terrain = $t->getTerrainType();
+            return [
+                'id' => $t->id,
+                'number' => $t->tableNumber,
+                'terrain' => $terrain ? $terrain->name : null,
+                'emoji' => $terrain ? $terrain->emoji : null
+            ];
+        }, \TournamentTables\Models\Table::findByTournament($tournament->id))) ?>;
+
+        // Current modal state
+        var currentModalAllocationId = null;
+        var currentModalTableId = null;
+
         // Handle HTMX responses
         document.body.addEventListener('htmx:afterRequest', function(event) {
             if (event.detail.successful) {
@@ -394,15 +757,20 @@ $hasTableCollisions = !empty($tableCollisions);
             var button = document.getElementById('swap-button');
             var status = document.getElementById('swap-status');
 
+            if (!button || !status) return;
+
             if (checkboxes.length === 2) {
                 button.disabled = false;
-                status.textContent = 'Ready to swap ' + checkboxes.length + ' allocations';
+                status.textContent = 'Swap ' + checkboxes.length + ' selected';
             } else if (checkboxes.length === 1) {
                 button.disabled = true;
-                status.textContent = 'Select one more allocation to swap';
+                status.textContent = 'Select 1 more';
+            } else if (checkboxes.length > 2) {
+                button.disabled = true;
+                status.textContent = 'Select only 2';
             } else {
                 button.disabled = true;
-                status.textContent = 'Select two allocations to swap';
+                status.textContent = 'Select 2 to swap';
             }
         }
 
@@ -430,15 +798,15 @@ $hasTableCollisions = !empty($tableCollisions);
                         allocationId2: allocationId2
                     })
                 })
-                .then(response => response.json())
-                .then(data => {
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
                     if (data.error) {
                         alert('Error: ' + data.message);
                     } else {
                         location.reload();
                     }
                 })
-                .catch(error => {
+                .catch(function(error) {
                     alert('Failed to swap tables: ' + error.message);
                 });
             }
@@ -456,8 +824,8 @@ $hasTableCollisions = !empty($tableCollisions);
                     tableId: parseInt(newTableId)
                 })
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
                 if (data.error) {
                     alert('Error: ' + data.message);
                     location.reload(); // Reload to reset dropdown
@@ -466,11 +834,82 @@ $hasTableCollisions = !empty($tableCollisions);
                     location.reload();
                 }
             })
-            .catch(error => {
+            .catch(function(error) {
                 alert('Failed to change table assignment: ' + error.message);
                 location.reload();
             });
         }
+
+        // Open table change modal (mobile)
+        function openTableModal(allocationId, currentTableId, player1Name, player2Name) {
+            currentModalAllocationId = allocationId;
+            currentModalTableId = currentTableId;
+
+            // Set matchup description
+            document.getElementById('modal-matchup').textContent = player1Name + ' vs ' + player2Name;
+
+            // Build table options
+            var optionsContainer = document.getElementById('modal-table-options');
+            optionsContainer.innerHTML = '';
+
+            tableData.forEach(function(table) {
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'table-option-btn';
+                if (table.id === currentTableId) {
+                    btn.className += ' selected';
+                }
+
+                var label = 'Table ' + table.number;
+                if (table.emoji) {
+                    label += ' ' + table.emoji;
+                }
+                if (table.terrain) {
+                    label += ' <span class="table-option-terrain">(' + table.terrain + ')</span>';
+                }
+                btn.innerHTML = label;
+
+                btn.onclick = function() {
+                    selectTableOption(table.id);
+                };
+
+                optionsContainer.appendChild(btn);
+            });
+
+            // Show modal
+            document.getElementById('table-modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Select table option in modal
+        function selectTableOption(tableId) {
+            if (tableId !== currentModalTableId) {
+                changeTableAssignment(currentModalAllocationId, tableId);
+            }
+            closeTableModal();
+        }
+
+        // Close table change modal
+        function closeTableModal() {
+            document.getElementById('table-modal').classList.remove('active');
+            document.body.style.overflow = '';
+            currentModalAllocationId = null;
+            currentModalTableId = null;
+        }
+
+        // Close modal on backdrop click
+        document.getElementById('table-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeTableModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeTableModal();
+            }
+        });
     </script>
 </body>
 </html>

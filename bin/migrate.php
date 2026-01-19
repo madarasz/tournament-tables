@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS terrain_types (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     description TEXT,
+    emoji VARCHAR(10),
     sort_order INT NOT NULL DEFAULT 0,
     INDEX idx_sort_order (sort_order)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
