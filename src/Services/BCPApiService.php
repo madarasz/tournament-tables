@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace TournamentTables\Services;
 
 /**
- * Service for fetching pairing data from Best Coast Pairings (BCP) REST API.
+ * Service for fetching data from Best Coast Pairings (BCP) REST API.
  *
  * Reference: specs/001-table-allocation/research.md#2-bcp-rest-api
  *
  * BCP provides a public REST API that returns JSON data.
  */
-class BCPScraperService
+class BCPApiService
 {
     const BCP_API_BASE_URL = 'https://newprod-api.bestcoastpairings.com/v1/events';
-    const BCP_WEB_BASE_URL = 'https://www.bestcoastpairings.com';
 
     /** @var int */
     private $maxRetries = 3;
@@ -25,45 +24,67 @@ class BCPScraperService
     /** @var float */
     private $backoffMultiplier = 2.0;
 
-    /** @var string|null Mock base URL for HTML scraping (testing) */
-    private $mockBaseUrl;
-
     /** @var string|null Mock base URL for API calls (testing) */
     private $mockApiBaseUrl;
 
     public function __construct()
     {
-        // Check for mock BCP URLs in test environment
-        $this->mockBaseUrl = getenv('BCP_MOCK_BASE_URL') ?: null;
+        // Check for mock BCP URL in test environment
         $this->mockApiBaseUrl = getenv('BCP_MOCK_API_URL') ?: null;
     }
 
     /**
-     * Fetch tournament name from BCP event page.
+     * Fetch tournament name from BCP API.
      *
      * @param string $bcpUrl BCP event URL
      * @return string Tournament name
-     * @throws \RuntimeException If HTML fetch fails or name cannot be parsed
+     * @throws \RuntimeException If API fetch fails or name not found
      */
     public function fetchTournamentName(string $bcpUrl): string
     {
-        // In test mode, redirect BCP URLs to mock server
-        $fetchUrl = $this->resolveFetchUrl($bcpUrl);
-        $html = $this->fetchHtmlWithRetry($fetchUrl);
-        return $this->parseHtmlForTournamentName($html);
+        $eventId = $this->extractEventId($bcpUrl);
+        $eventData = $this->fetchEventDetails($eventId);
+
+        if (!isset($eventData['name']) || empty($eventData['name'])) {
+            throw new \RuntimeException("Tournament name not found in BCP API response.");
+        }
+
+        $name = trim($eventData['name']);
+        $name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+
+        // Truncate if too long (database VARCHAR 255 limit)
+        if (strlen($name) > 255) {
+            $name = substr($name, 0, 252) . '...';
+        }
+
+        return $name;
     }
 
     /**
-     * Resolve the actual URL to fetch, handling mock redirects for testing.
+     * Fetch event details from BCP API.
      *
-     * @param string $bcpUrl Original BCP URL
-     * @return string URL to fetch (mock or real)
+     * @param string $eventId BCP event ID
+     * @return array Event data including name
+     * @throws \RuntimeException If API request fails
      */
-    private function resolveFetchUrl(string $bcpUrl): string
+    public function fetchEventDetails(string $eventId): array
     {
-        $eventId = $this->extractEventId($bcpUrl);
-        $base = $this->mockBaseUrl ?? self::BCP_WEB_BASE_URL;
-        return rtrim($base, '/') . '/event/' . $eventId;
+        $url = $this->buildEventUrl($eventId);
+        return $this->fetchJsonWithRetry($url);
+    }
+
+    /**
+     * Build the API URL for fetching event details.
+     *
+     * @param string $eventId BCP event ID
+     * @return string API URL
+     */
+    public function buildEventUrl(string $eventId): string
+    {
+        if ($this->mockApiBaseUrl !== null) {
+            return rtrim($this->mockApiBaseUrl, '/') . "/{$eventId}";
+        }
+        return self::BCP_API_BASE_URL . "/{$eventId}";
     }
 
     /**
@@ -138,7 +159,7 @@ class BCPScraperService
         }
 
         throw new \RuntimeException(
-            "Failed to fetch BCP pairings after {$this->maxRetries} attempts: " .
+            "Failed to fetch BCP data after {$this->maxRetries} attempts: " .
             ($lastException ? $lastException->getMessage() : 'Unknown error'),
             0,
             $lastException
@@ -177,126 +198,13 @@ class BCPScraperService
                 throw new \RuntimeException("HTTP error: {$http_response_header[0]}");
             }
         }
-        
+
         $data = json_decode($response, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new \RuntimeException("Invalid JSON response: " . json_last_error_msg());
         }
 
         return $data;
-    }
-
-    /**
-     * Fetch HTML from URL with retry and exponential backoff.
-     *
-     * @param string $url URL to fetch
-     * @return string Raw HTML content
-     * @throws \RuntimeException If all retries fail
-     */
-    private function fetchHtmlWithRetry(string $url): string
-    {
-        $lastException = null;
-        $delay = $this->baseDelayMs;
-
-        for ($attempt = 1; $attempt <= $this->maxRetries; $attempt++) {
-            try {
-                return $this->fetchHtml($url);
-            } catch (\Exception $e) {
-                $lastException = $e;
-
-                if ($attempt < $this->maxRetries) {
-                    usleep($delay * 1000); // Convert ms to microseconds
-                    $delay = (int) ($delay * $this->backoffMultiplier);
-                }
-            }
-        }
-
-        throw new \RuntimeException(
-            "Unable to connect to BCP. Please try again later.",
-            0,
-            $lastException
-        );
-    }
-
-    /**
-     * Fetch HTML from BCP page using native PHP HTTP client.
-     *
-     * @param string $url URL to fetch
-     * @return string HTML content
-     * @throws \RuntimeException If request fails
-     */
-    private function fetchHtml(string $url): string
-    {
-        $context = stream_context_create([
-            'http' => [
-                'method' => 'GET',
-                'header' => implode("\r\n", [
-                    'Accept: text/html,application/xhtml+xml',
-                    'User-Agent: Mozilla/5.0 (compatible; TournamentTables/1.0)'
-                ]),
-                'timeout' => 10
-            ]
-        ]);
-
-        $response = @file_get_contents($url, false, $context);
-        if ($response === false) {
-            throw new \RuntimeException("Failed to fetch URL: {$url}");
-        }
-
-        // Check HTTP status code
-        if (isset($http_response_header[0])) {
-            if (!preg_match('/HTTP\/\d\.\d\s+2\d{2}/', $http_response_header[0])) {
-                throw new \RuntimeException("HTTP error: {$http_response_header[0]}");
-            }
-        }
-
-        return $response;
-    }
-
-    /**
-     * Parse tournament name from BCP HTML page.
-     *
-     * The tournament name is in the first <h3> element on the page.
-     *
-     * @param string $html HTML content from BCP page
-     * @return string Tournament name
-     * @throws \RuntimeException If name cannot be parsed
-     */
-    public function parseHtmlForTournamentName(string $html): string
-    {
-        // Suppress DOM parsing warnings for potentially malformed HTML
-        $previousErrorState = libxml_use_internal_errors(true);
-
-        $doc = new \DOMDocument();
-        $doc->loadHTML($html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-
-        // Restore error handling
-        libxml_clear_errors();
-        libxml_use_internal_errors($previousErrorState);
-
-        // Find the first h3 element
-        $h3Elements = $doc->getElementsByTagName('h3');
-        if ($h3Elements->length === 0) {
-            throw new \RuntimeException("Tournament name not found on BCP page. Please check URL.");
-        }
-
-        $h3 = $h3Elements->item(0);
-        $name = trim($h3->textContent);
-
-        // Validate name is not empty
-        if ($name === '') {
-            throw new \RuntimeException("Tournament name not found on BCP page. Please check URL.");
-        }
-
-        $name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
-
-        // Truncate if too long (database VARCHAR 255 limit)
-        if (strlen($name) > 255) {
-            $name = substr($name, 0, 252) . '...';
-        }
-
-        // Sanitize to prevent XSS
-        return $name;
     }
 
     /**

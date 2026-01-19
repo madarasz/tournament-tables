@@ -62,9 +62,10 @@ $routes = [
     'GET /login' => ['ViewController', 'login'],
 ];
 
-if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_BASE_URL') || getenv('BCP_MOCK_API_URL')) {
-    $routes['GET /mock-bcp/event/{id}'] = ['MockBcpController', 'event'];
+if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_API_URL')) {
+    // Order matters: more specific routes must come before more general ones
     $routes['GET /mock-bcp-api/{id}/pairings'] = ['MockBcpController', 'pairings'];
+    $routes['GET /mock-bcp-api/{id}'] = ['MockBcpController', 'eventDetails'];
 }
 
 // Match route
@@ -132,7 +133,7 @@ $controllers = [
     'HomeController' => HomeController::class,
 ];
 
-if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_BASE_URL')) {
+if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_API_URL')) {
     $controllers['MockBcpController'] = MockBcpController::class;
 }
 

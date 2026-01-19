@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace TournamentTables\Tests\Integration;
 
 use PHPUnit\Framework\TestCase;
-use TournamentTables\Services\BCPScraperService;
+use TournamentTables\Services\BCPApiService;
 use TournamentTables\Services\Pairing;
 
 /**
- * Integration tests for BCP scraper service.
+ * Integration tests for BCP API service.
  *
  * Reference: specs/001-table-allocation/research.md#2-bcp-rest-api
  * Tests use fixtures in tests/fixtures/bcp_api_response.json
  */
-class BCPScraperTest extends TestCase
+class BCPApiServiceTest extends TestCase
 {
     /**
      * @var string
@@ -38,6 +38,10 @@ class BCPScraperTest extends TestCase
         return json_decode($json, true);
     }
 
+    // -------------------------------------------------------------------------
+    // API Response Parsing Tests
+    // -------------------------------------------------------------------------
+
     /**
      * Test parsing API response fixture returns correct pairings.
      */
@@ -46,8 +50,8 @@ class BCPScraperTest extends TestCase
         $data = $this->loadJsonFixture('bcp_api_response.json');
         $this->assertNotEmpty($data);
 
-        $scraper = new BCPScraperService();
-        $pairings = $scraper->parseApiResponse($data);
+        $apiService = new BCPApiService();
+        $pairings = $apiService->parseApiResponse($data);
 
         $this->assertCount(6, $pairings);
         $this->assertContainsOnlyInstancesOf(Pairing::class, $pairings);
@@ -59,8 +63,8 @@ class BCPScraperTest extends TestCase
     public function testParsedPairingStructure(): void
     {
         $data = $this->loadJsonFixture('bcp_api_response.json');
-        $scraper = new BCPScraperService();
-        $pairings = $scraper->parseApiResponse($data);
+        $apiService = new BCPApiService();
+        $pairings = $apiService->parseApiResponse($data);
 
         // Check first pairing (Table 1)
         $first = $pairings[0];
@@ -82,8 +86,8 @@ class BCPScraperTest extends TestCase
     public function testAllPairingsHaveValidBcpIds(): void
     {
         $data = $this->loadJsonFixture('bcp_api_response.json');
-        $scraper = new BCPScraperService();
-        $pairings = $scraper->parseApiResponse($data);
+        $apiService = new BCPApiService();
+        $pairings = $apiService->parseApiResponse($data);
 
         foreach ($pairings as $pairing) {
             $this->assertNotEmpty($pairing->player1BcpId, 'Player 1 BCP ID should not be empty');
@@ -97,8 +101,8 @@ class BCPScraperTest extends TestCase
     public function testAllPairingsHaveValidNames(): void
     {
         $data = $this->loadJsonFixture('bcp_api_response.json');
-        $scraper = new BCPScraperService();
-        $pairings = $scraper->parseApiResponse($data);
+        $apiService = new BCPApiService();
+        $pairings = $apiService->parseApiResponse($data);
 
         foreach ($pairings as $pairing) {
             $this->assertNotEmpty($pairing->player1Name, 'Player 1 name should not be empty');
@@ -112,8 +116,8 @@ class BCPScraperTest extends TestCase
     public function testPairingsOrderedByTableNumber(): void
     {
         $data = $this->loadJsonFixture('bcp_api_response.json');
-        $scraper = new BCPScraperService();
-        $pairings = $scraper->parseApiResponse($data);
+        $apiService = new BCPApiService();
+        $pairings = $apiService->parseApiResponse($data);
 
         $previousTable = 0;
         foreach ($pairings as $pairing) {
@@ -128,8 +132,8 @@ class BCPScraperTest extends TestCase
     public function testScoresExtractedCorrectly(): void
     {
         $data = $this->loadJsonFixture('bcp_api_response.json');
-        $scraper = new BCPScraperService();
-        $pairings = $scraper->parseApiResponse($data);
+        $apiService = new BCPApiService();
+        $pairings = $apiService->parseApiResponse($data);
 
         // Table 1 players: score 2 each
         $this->assertEquals(2, $pairings[0]->player1Score);
@@ -149,8 +153,8 @@ class BCPScraperTest extends TestCase
      */
     public function testEmptyApiResponseReturnsEmptyArray(): void
     {
-        $scraper = new BCPScraperService();
-        $pairings = $scraper->parseApiResponse([]);
+        $apiService = new BCPApiService();
+        $pairings = $apiService->parseApiResponse([]);
 
         $this->assertIsArray($pairings);
         $this->assertEmpty($pairings);
@@ -163,8 +167,8 @@ class BCPScraperTest extends TestCase
     {
         $data = ['active' => [], 'deleted' => []];
 
-        $scraper = new BCPScraperService();
-        $pairings = $scraper->parseApiResponse($data);
+        $apiService = new BCPApiService();
+        $pairings = $apiService->parseApiResponse($data);
 
         $this->assertIsArray($pairings);
         $this->assertEmpty($pairings);
@@ -204,26 +208,30 @@ class BCPScraperTest extends TestCase
             ]
         ];
 
-        $scraper = new BCPScraperService();
-        $pairings = $scraper->parseApiResponse($data);
+        $apiService = new BCPApiService();
+        $pairings = $apiService->parseApiResponse($data);
 
         // Should only have the valid pairing
         $this->assertCount(1, $pairings);
         $this->assertEquals('player1_id', $pairings[0]->player1BcpId);
     }
 
+    // -------------------------------------------------------------------------
+    // URL Building and Extraction Tests
+    // -------------------------------------------------------------------------
+
     /**
      * Test extractEventId from URL.
      */
     public function testExtractEventIdFromUrl(): void
     {
-        $scraper = new BCPScraperService();
+        $apiService = new BCPApiService();
 
         $url1 = 'https://www.bestcoastpairings.com/event/t6OOun8POR60';
-        $this->assertEquals('t6OOun8POR60', $scraper->extractEventId($url1));
+        $this->assertEquals('t6OOun8POR60', $apiService->extractEventId($url1));
 
         $url2 = 'https://www.bestcoastpairings.com/event/abc123xyz?active_tab=pairings';
-        $this->assertEquals('abc123xyz', $scraper->extractEventId($url2));
+        $this->assertEquals('abc123xyz', $apiService->extractEventId($url2));
     }
 
     /**
@@ -231,10 +239,10 @@ class BCPScraperTest extends TestCase
      */
     public function testInvalidUrlThrowsException(): void
     {
-        $scraper = new BCPScraperService();
+        $apiService = new BCPApiService();
 
         $this->expectException(\InvalidArgumentException::class);
-        $scraper->extractEventId('https://example.com/not-bcp');
+        $apiService->extractEventId('https://example.com/not-bcp');
     }
 
     /**
@@ -242,15 +250,34 @@ class BCPScraperTest extends TestCase
      */
     public function testBuildPairingsUrl(): void
     {
-        $scraper = new BCPScraperService();
+        $apiService = new BCPApiService();
 
-        $url = $scraper->buildPairingsUrl('t6OOun8POR60', 2);
+        $url = $apiService->buildPairingsUrl('t6OOun8POR60', 2);
 
         $this->assertEquals(
             'https://newprod-api.bestcoastpairings.com/v1/events/t6OOun8POR60/pairings?eventId=t6OOun8POR60&round=2&pairingType=Pairing',
             $url
         );
     }
+
+    /**
+     * Test buildEventUrl generates correct API URL.
+     */
+    public function testBuildEventUrl(): void
+    {
+        $apiService = new BCPApiService();
+
+        $url = $apiService->buildEventUrl('NKsseGHSYuIw');
+
+        $this->assertEquals(
+            'https://newprod-api.bestcoastpairings.com/v1/events/NKsseGHSYuIw',
+            $url
+        );
+    }
+
+    // -------------------------------------------------------------------------
+    // Pairing Value Object Tests
+    // -------------------------------------------------------------------------
 
     /**
      * Test Pairing value object immutability.
@@ -312,14 +339,53 @@ class BCPScraperTest extends TestCase
         $this->assertNull($pairing->bcpTableNumber);
     }
 
+    // -------------------------------------------------------------------------
+    // Configuration Tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * Test retry mechanism parameters.
+     */
+    public function testRetryConfiguration(): void
+    {
+        $apiService = new BCPApiService();
+
+        // Default retry settings
+        $this->assertEquals(3, $apiService->getMaxRetries());
+        $this->assertEquals(1000, $apiService->getBaseDelayMs());
+        $this->assertEquals(2.0, $apiService->getBackoffMultiplier());
+    }
+
+    // -------------------------------------------------------------------------
+    // Event Details API Tests
+    // -------------------------------------------------------------------------
+
+    /**
+     * Test parsing event details API response fixture.
+     */
+    public function testParseEventDetailsApiResponse(): void
+    {
+        $data = $this->loadJsonFixture('bcp_event_api_response.json');
+        $this->assertNotEmpty($data);
+
+        $this->assertArrayHasKey('name', $data);
+        $this->assertArrayHasKey('id', $data);
+        $this->assertEquals('testEvent123', $data['id']);
+        $this->assertEquals('Contrast Clash - October 2026', $data['name']);
+    }
+
+    // -------------------------------------------------------------------------
+    // Live API Tests (Network)
+    // -------------------------------------------------------------------------
+
     /**
      * Test fetching from live BCP API.
      *
-     * This test makes actual network calls and is skipped unless LIVE_BCP_TESTS=1.
+     * This test makes actual network calls.
      * Optionally set BCP_TEST_EVENT_ID and BCP_TEST_ROUND environment variables.
      *
      * Example:
-     *   LIVE_BCP_TESTS=1 BCP_TEST_EVENT_ID=t6OOun8POR60 BCP_TEST_ROUND=1 vendor/bin/phpunit tests/Integration/BCPScraperTest.php::testFetchFromLiveBcpApi
+     *   BCP_TEST_EVENT_ID=t6OOun8POR60 BCP_TEST_ROUND=1 vendor/bin/phpunit tests/Integration/BCPApiServiceTest.php::testFetchFromLiveBcpApi
      */
     public function testFetchFromLiveBcpApi(): void
     {
@@ -327,10 +393,10 @@ class BCPScraperTest extends TestCase
         $eventId = getenv('BCP_TEST_EVENT_ID') ?: 't6OOun8POR60';
         $round = (int)(getenv('BCP_TEST_ROUND') ?: 1);
 
-        $scraper = new BCPScraperService();
+        $apiService = new BCPApiService();
 
         try {
-            $pairings = $scraper->fetchPairings($eventId, $round);
+            $pairings = $apiService->fetchPairings($eventId, $round);
 
             // Validate response structure
             $this->assertIsArray($pairings);
@@ -374,74 +440,70 @@ class BCPScraperTest extends TestCase
     }
 
     /**
-     * Test retry mechanism parameters.
-     */
-    public function testRetryConfiguration(): void
-    {
-        $scraper = new BCPScraperService();
-
-        // Default retry settings
-        $this->assertEquals(3, $scraper->getMaxRetries());
-        $this->assertEquals(1000, $scraper->getBaseDelayMs());
-        $this->assertEquals(2.0, $scraper->getBackoffMultiplier());
-    }
-
-    /**
-     * Test parsing tournament name from HTML fixture.
-     */
-    public function testParseHtmlForTournamentNameFromFixture(): void
-    {
-        $html = file_get_contents($this->fixturesPath . '/bcp_event_page.html');
-        $this->assertNotEmpty($html);
-
-        $scraper = new BCPScraperService();
-        $name = $scraper->parseHtmlForTournamentName($html);
-
-        $this->assertEquals('Contrast Clash - October 2026', $name);
-    }
-
-    /**
-     * Test parsing HTML fixture returns only the first h3.
-     */
-    public function testParseHtmlReturnsFirstH3FromFixture(): void
-    {
-        $html = file_get_contents($this->fixturesPath . '/bcp_event_page.html');
-
-        $scraper = new BCPScraperService();
-        $name = $scraper->parseHtmlForTournamentName($html);
-
-        // Should get the first h3, not "Other Section"
-        $this->assertStringNotContainsString('Other Section', $name);
-        $this->assertEquals('Contrast Clash - October 2026', $name);
-    }
-
-    /**
-     * Test fetching tournament name from live BCP page.
+     * Test fetching tournament name from live BCP API.
      *
-     * This test makes actual network calls and is skipped unless LIVE_BCP_TESTS=1.
+     * This test makes actual network calls.
      * Set BCP_TEST_URL environment variable for the event URL.
      *
      * Example:
-     *   LIVE_BCP_TESTS=1 BCP_TEST_URL=https://www.bestcoastpairings.com/event/NKsseGHSYuIw vendor/bin/phpunit tests/Integration/BCPScraperTest.php::testFetchTournamentNameFromLiveBcp
+     *   BCP_TEST_URL=https://www.bestcoastpairings.com/event/NKsseGHSYuIw vendor/bin/phpunit tests/Integration/BCPApiServiceTest.php::testFetchTournamentNameFromLiveBcp
      */
     public function testFetchTournamentNameFromLiveBcp(): void
     {
         $bcpUrl = getenv('BCP_TEST_URL') ?: 'https://www.bestcoastpairings.com/event/NKsseGHSYuIw';
 
-        $scraper = new BCPScraperService();
+        $apiService = new BCPApiService();
 
         try {
-            $name = $scraper->fetchTournamentName($bcpUrl);
+            $name = $apiService->fetchTournamentName($bcpUrl);
 
             // Validate response
             $this->assertIsString($name);
             $this->assertNotEmpty($name);
             $this->assertLessThanOrEqual(255, strlen($name));
+
+            // Name should contain printable characters (not garbage)
+            $this->assertMatchesRegularExpression('/[a-zA-Z]/', $name);
         } catch (\RuntimeException $e) {
-            // If network fails or page is unavailable, mark as incomplete
+            // If network fails or API is unavailable, mark as incomplete
             $this->markTestIncomplete(
-                "Failed to fetch tournament name from BCP: " . $e->getMessage() . "\n" .
-                "This might be due to: network issues, page not available, or BCP changes."
+                "Failed to fetch tournament name from BCP API: " . $e->getMessage() . "\n" .
+                "This might be due to: network issues, API not available, or BCP changes."
+            );
+        }
+    }
+
+    /**
+     * Test fetching event details from live BCP API.
+     *
+     * This test makes actual network calls.
+     *
+     * Example:
+     *   BCP_TEST_EVENT_ID=NKsseGHSYuIw vendor/bin/phpunit tests/Integration/BCPApiServiceTest.php::testFetchEventDetailsFromLiveBcp
+     */
+    public function testFetchEventDetailsFromLiveBcp(): void
+    {
+        $eventId = getenv('BCP_TEST_EVENT_ID') ?: 'NKsseGHSYuIw';
+
+        $apiService = new BCPApiService();
+
+        try {
+            $eventData = $apiService->fetchEventDetails($eventId);
+
+            // Validate response structure
+            $this->assertIsArray($eventData);
+            $this->assertArrayHasKey('name', $eventData);
+            $this->assertArrayHasKey('id', $eventData);
+
+            // Validate data types
+            $this->assertIsString($eventData['name']);
+            $this->assertNotEmpty($eventData['name']);
+            $this->assertEquals($eventId, $eventData['id']);
+        } catch (\RuntimeException $e) {
+            // If network fails or API is unavailable, mark as incomplete
+            $this->markTestIncomplete(
+                "Failed to fetch event details from BCP API: " . $e->getMessage() . "\n" .
+                "This might be due to: network issues, API not available, or BCP changes."
             );
         }
     }

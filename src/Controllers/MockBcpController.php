@@ -7,43 +7,33 @@ namespace TournamentTables\Controllers;
 /**
  * Mock BCP controller for E2E testing.
  *
- * Returns mock HTML and API responses that mimic BCP.
+ * Returns mock API responses that mimic BCP REST API.
  * Only available in test environment (APP_ENV=testing).
  */
 class MockBcpController extends BaseController
 {
     /**
-     * GET /mock-bcp/event/{eventId} - Return mock BCP event page HTML.
+     * GET /mock-bcp-api/{eventId} - Return mock BCP event details API response.
      *
-     * Returns HTML with an h3 element containing a tournament name
-     * derived from the event ID.
-     *
-     * Note: This endpoint is only useful for testing. In production,
-     * BCP_MOCK_BASE_URL is not set, so requests go to real BCP.
+     * Returns JSON mimicking the BCP events API structure with tournament name.
      */
-    public function event(array $params, ?array $body): void
+    public function eventDetails(array $params, ?array $body): void
     {
         $eventId = $params['id'] ?? 'unknown';
 
-        // Return mock BCP HTML with tournament name in h3
-        header('Content-Type: text/html; charset=UTF-8');
-        echo <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Best Coast Pairings - Mock</title>
-</head>
-<body>
-    <div class="container">
-        <h3>Test Tournament {$eventId}</h3>
-        <div class="event-details">
-            <p>This is a mock BCP event page for testing.</p>
-        </div>
-    </div>
-</body>
-</html>
-HTML;
+        header('Content-Type: application/json');
+
+        echo json_encode([
+            'id' => $eventId,
+            'name' => "Test Tournament {$eventId}",
+            'city' => 'Test City',
+            'country' => 'Test Country',
+            'eventDate' => '2026-01-01T00:00:00.000Z',
+            'numberOfRounds' => 3,
+            'totalPlayers' => 8,
+            'active' => true,
+            'ended' => false
+        ]);
     }
 
     /**

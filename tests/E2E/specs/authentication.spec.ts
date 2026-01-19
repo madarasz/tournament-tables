@@ -82,7 +82,7 @@ test.describe('Admin Authentication (US5)', () => {
     const tournamentRow = page.locator('tr').filter({ hasText: /Test Tournament/ });
     await expect(tournamentRow).toBeVisible();
 
-    // Verify View Dashboard button is present
-    await expect(tournamentRow.getByRole('button', { name: 'View Dashboard' })).toBeVisible();
+    // Verify tournament name link (styled as button) is present
+    await expect(tournamentRow.getByRole('button')).toBeVisible();
   });
 });

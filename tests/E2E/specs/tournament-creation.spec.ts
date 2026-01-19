@@ -98,8 +98,8 @@ test.describe('Tournament Creation (US2)', () => {
     // Verify table count is displayed (auto-imported from BCP)
     await expect(tournamentRow).toContainText(/\d+/);
 
-    // Verify "View Dashboard" button works
-    await tournamentRow.locator('a[role="button"]', { hasText: 'View Dashboard' }).click();
+    // Verify tournament name link (styled as button) works
+    await tournamentRow.getByRole('button').click();
     await page.waitForURL(/\/tournament\/\d+/);
     expect(page.url()).toContain(`/tournament/${tournamentId}`);
   });

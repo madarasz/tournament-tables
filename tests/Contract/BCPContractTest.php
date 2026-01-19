@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace TournamentTables\Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
-use TournamentTables\Services\BCPScraperService;
+use TournamentTables\Services\BCPApiService;
 
 /**
- * Contract tests for BCP integration.
+ * Contract tests for BCP API integration.
  *
- * These tests verify that the BCP API and page structure remain compatible
- * with our scraper service. They make a single request to BCP, cache the
+ * These tests verify that the BCP REST API remains compatible
+ * with our API service. They make requests to BCP, cache the
  * responses, and run multiple assertions against that cached data.
  *
  * IMPORTANT: These tests require network access to BCP servers.
@@ -25,14 +25,14 @@ class BCPContractTest extends TestCase
     /** @var string BCP event ID extracted from URL */
     const BCP_EVENT_ID = 'NKsseGHSYuIw';
 
-    /** @var string|null Cached HTML page content */
-    private static $htmlContent = null;
-
     /** @var array|null Cached API response for round 1 pairings */
     private static $pairingsData = null;
 
-    /** @var BCPScraperService */
-    private $scraper;
+    /** @var array|null Cached API response for event details */
+    private static $eventData = null;
+
+    /** @var BCPApiService */
+    private $apiService;
 
     /** @var bool Track if fetch was successful */
     private static $fetchSuccess = false;
@@ -50,37 +50,13 @@ class BCPContractTest extends TestCase
         parent::setUpBeforeClass();
 
         try {
-            self::fetchBcpHtmlPage();
             self::fetchBcpPairingsApi();
+            self::fetchBcpEventApi();
             self::$fetchSuccess = true;
         } catch (\Exception $e) {
             self::$fetchError = $e->getMessage();
             self::$fetchSuccess = false;
         }
-    }
-
-    /**
-     * Fetch and cache the BCP event HTML page.
-     */
-    private static function fetchBcpHtmlPage(): void
-    {
-        $context = stream_context_create([
-            'http' => [
-                'method' => 'GET',
-                'header' => implode("\r\n", [
-                    'Accept: text/html,application/xhtml+xml',
-                    'User-Agent: Mozilla/5.0 (compatible; TournamentTables/1.0; ContractTest)'
-                ]),
-                'timeout' => 15
-            ]
-        ]);
-
-        $response = @file_get_contents(self::BCP_EVENT_URL, false, $context);
-        if ($response === false) {
-            throw new \RuntimeException('Failed to fetch BCP event page');
-        }
-
-        self::$htmlContent = $response;
     }
 
     /**
@@ -118,6 +94,39 @@ class BCPContractTest extends TestCase
         self::$pairingsData = $data;
     }
 
+    /**
+     * Fetch and cache the BCP event details API response.
+     */
+    private static function fetchBcpEventApi(): void
+    {
+        $url = 'https://newprod-api.bestcoastpairings.com/v1/events/' . self::BCP_EVENT_ID;
+
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => implode("\r\n", [
+                    'Accept: application/json',
+                    'client-id: web-app',
+                    'env: bcp',
+                    'content-type: application/json'
+                ]),
+                'timeout' => 15
+            ]
+        ]);
+
+        $response = @file_get_contents($url, false, $context);
+        if ($response === false) {
+            throw new \RuntimeException('Failed to fetch BCP event API');
+        }
+
+        $data = json_decode($response, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \RuntimeException('Invalid JSON from BCP event API: ' . json_last_error_msg());
+        }
+
+        self::$eventData = $data;
+    }
+
     protected function setUp(): void
     {
         if (!self::$fetchSuccess) {
@@ -127,60 +136,75 @@ class BCPContractTest extends TestCase
             );
         }
 
-        $this->scraper = new BCPScraperService();
+        $this->apiService = new BCPApiService();
     }
 
     // -------------------------------------------------------------------------
-    // Tournament Name Tests (HTML Page Structure)
+    // Event Details API Tests (Tournament Name)
     // -------------------------------------------------------------------------
 
     /**
-     * Test that HTML page was fetched successfully.
+     * Test that event details API returns a name field.
      *
-     * Note: BCP is now a React SPA, so the initial HTML is just a shell.
-     * The tournament name is loaded via JavaScript, not server-rendered HTML.
-     * This test documents the current reality.
+     * This is the primary field we need for fetching tournament names.
      */
-    public function testHtmlPageFetchedSuccessfully(): void
+    public function testEventApiReturnsName(): void
     {
-        $this->assertNotNull(self::$htmlContent, 'HTML content should be cached');
-        $this->assertNotEmpty(self::$htmlContent, 'HTML content should not be empty');
+        $this->assertNotNull(self::$eventData, 'Event API data should be cached');
+        $this->assertArrayHasKey('name', self::$eventData, 'Response should have "name" key');
+        $this->assertNotEmpty(self::$eventData['name'], 'Tournament name should not be empty');
+        $this->assertIsString(self::$eventData['name'], 'Tournament name should be a string');
     }
 
     /**
-     * Test that BCP page is a JavaScript SPA (documents current state).
-     *
-     * This test will fail if BCP changes back to server-rendered HTML,
-     * which would actually be good for our scraping approach.
+     * Test that event details API returns expected structure.
      */
-    public function testBcpIsJavaScriptSpa(): void
+    public function testEventApiReturnsExpectedFields(): void
     {
-        // BCP currently returns a React SPA shell - content loaded via JS
-        $this->assertStringContainsString(
-            'You need to enable JavaScript',
-            self::$htmlContent,
-            'BCP should indicate JavaScript requirement (React SPA)'
-        );
-        $this->assertStringContainsString(
-            '<div id="root">',
-            self::$htmlContent,
-            'BCP should have React root element'
+        $this->assertArrayHasKey('id', self::$eventData, 'Response should have "id" key');
+        $this->assertArrayHasKey('name', self::$eventData, 'Response should have "name" key');
+    }
+
+    /**
+     * Test that event ID in response matches requested ID.
+     */
+    public function testEventApiReturnsMatchingId(): void
+    {
+        $this->assertEquals(
+            self::BCP_EVENT_ID,
+            self::$eventData['id'],
+            'Event ID in response should match requested ID'
         );
     }
 
     /**
-     * Test that HTML page does NOT contain h3 element (SPA limitation).
-     *
-     * This documents that server-side scraping won't work for tournament names.
-     * If this test starts failing, it means BCP might be server-rendering again.
+     * Test that tournament name is a reasonable length.
      */
-    public function testHtmlPageLacksServerRenderedContent(): void
+    public function testEventNameHasReasonableLength(): void
     {
-        // BCP is a SPA - h3 elements are loaded via JavaScript, not in initial HTML
-        $this->assertStringNotContainsString(
-            '<h3',
-            self::$htmlContent,
-            'BCP SPA does not server-render h3 elements (tournament name)'
+        $name = self::$eventData['name'];
+
+        // Tournament names should be between 1 and 255 characters
+        $this->assertGreaterThan(0, strlen($name), 'Tournament name should not be empty');
+        $this->assertLessThanOrEqual(
+            255,
+            strlen($name),
+            'Tournament name should fit in database VARCHAR(255)'
+        );
+    }
+
+    /**
+     * Test that tournament name contains printable characters.
+     */
+    public function testEventNameContainsPrintableCharacters(): void
+    {
+        $name = self::$eventData['name'];
+
+        // Name should contain at least some letters
+        $this->assertMatchesRegularExpression(
+            '/[a-zA-Z]/',
+            $name,
+            'Tournament name should contain letters'
         );
     }
 
@@ -204,7 +228,7 @@ class BCPContractTest extends TestCase
      */
     public function testCanParsePairings(): void
     {
-        $pairings = $this->scraper->parseApiResponse(self::$pairingsData);
+        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
         $this->assertIsArray($pairings, 'Parsed pairings should be an array');
         $this->assertNotEmpty($pairings, 'Should have at least one pairing');
@@ -219,7 +243,7 @@ class BCPContractTest extends TestCase
      */
     public function testPairingsHaveTableNumbers(): void
     {
-        $pairings = $this->scraper->parseApiResponse(self::$pairingsData);
+        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
         $tablesWithNumbers = 0;
         foreach ($pairings as $pairing) {
@@ -240,7 +264,7 @@ class BCPContractTest extends TestCase
      */
     public function testTableNumbersArePositiveIntegers(): void
     {
-        $pairings = $this->scraper->parseApiResponse(self::$pairingsData);
+        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
         foreach ($pairings as $pairing) {
             if ($pairing->bcpTableNumber !== null) {
@@ -262,7 +286,7 @@ class BCPContractTest extends TestCase
      */
     public function testPairingsAreSortedByTableNumber(): void
     {
-        $pairings = $this->scraper->parseApiResponse(self::$pairingsData);
+        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
         $prevTableNumber = 0;
         foreach ($pairings as $pairing) {
@@ -282,7 +306,7 @@ class BCPContractTest extends TestCase
      */
     public function testTableNumbersAreUnique(): void
     {
-        $pairings = $this->scraper->parseApiResponse(self::$pairingsData);
+        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
         $tableNumbers = [];
         foreach ($pairings as $pairing) {
@@ -306,7 +330,7 @@ class BCPContractTest extends TestCase
      */
     public function testPairingsHaveValidPlayer1Data(): void
     {
-        $pairings = $this->scraper->parseApiResponse(self::$pairingsData);
+        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
         foreach ($pairings as $index => $pairing) {
             $this->assertNotEmpty(
@@ -329,7 +353,7 @@ class BCPContractTest extends TestCase
      */
     public function testPairingsHaveValidPlayer2Data(): void
     {
-        $pairings = $this->scraper->parseApiResponse(self::$pairingsData);
+        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
         foreach ($pairings as $index => $pairing) {
             $this->assertNotEmpty(
@@ -352,7 +376,7 @@ class BCPContractTest extends TestCase
      */
     public function testPlayerNamesAreReasonable(): void
     {
-        $pairings = $this->scraper->parseApiResponse(self::$pairingsData);
+        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
         foreach ($pairings as $pairing) {
             // Names should contain letters (not just numbers/special chars)
@@ -374,7 +398,7 @@ class BCPContractTest extends TestCase
      */
     public function testPlayerIdsHaveExpectedFormat(): void
     {
-        $pairings = $this->scraper->parseApiResponse(self::$pairingsData);
+        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
         foreach ($pairings as $pairing) {
             // BCP IDs are typically alphanumeric strings
@@ -399,7 +423,7 @@ class BCPContractTest extends TestCase
      */
     public function testPlayerScoresAreNonNegativeIntegers(): void
     {
-        $pairings = $this->scraper->parseApiResponse(self::$pairingsData);
+        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
         foreach ($pairings as $pairing) {
             $this->assertIsInt(

@@ -422,8 +422,11 @@ docker-compose -f docker-compose.yml -f docker-compose.test.yml <command>
 ## BCP Integration
 
 ### REST API Integration
-**Service**: `src/Services/BCPScraperService.php`
-**API Endpoint**: `https://newprod-api.bestcoastpairings.com/v1/events/{eventId}/pairings`
+**Service**: `src/Services/BCPApiService.php`
+
+**API Endpoints**:
+- Event details: `https://newprod-api.bestcoastpairings.com/v1/events/{eventId}`
+- Pairings: `https://newprod-api.bestcoastpairings.com/v1/events/{eventId}/pairings`
 
 **Features**:
 - Extracts event ID from BCP URL patterns
@@ -432,11 +435,13 @@ docker-compose -f docker-compose.yml -f docker-compose.test.yml <command>
 - Maps BCP player IDs to local database
 
 ### Tournament Name Auto-Import
-The `fetchTournamentName()` method scrapes the BCP event page to automatically extract the tournament name from the first `<h3>` element on the page. This eliminates the need for manual name entry during tournament creation.
+The `fetchTournamentName()` method fetches tournament name from the BCP REST API. This eliminates the need for manual name entry during tournament creation.
 
 **Key Methods**:
-- `fetchTournamentName(string $bcpUrl): string` - Main entry point for fetching tournament name
-- `parseHtmlForTournamentName(string $html): string` - Parses HTML to extract name from first h3 element
+- `fetchTournamentName(string $bcpUrl): string` - Main entry point for fetching tournament name via API
+- `fetchEventDetails(string $eventId): array` - Fetches event metadata from BCP API
+- `buildEventUrl(string $eventId): string` - Builds API URL for event details
+- `fetchPairings(string $eventId, int $round): Pairing[]` - Fetches pairings for a round
 
 **Security**:
 - Name is sanitized with `htmlspecialchars()` to prevent XSS

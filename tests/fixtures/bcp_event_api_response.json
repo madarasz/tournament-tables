@@ -1,0 +1,11 @@
+{
+  "id": "testEvent123",
+  "name": "Contrast Clash - October 2026",
+  "city": "Budapest",
+  "country": "Hungary",
+  "eventDate": "2026-10-15T08:00:00.000Z",
+  "numberOfRounds": 3,
+  "totalPlayers": 16,
+  "active": true,
+  "ended": false
+}

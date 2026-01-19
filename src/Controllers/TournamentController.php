@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace TournamentTables\Controllers;
 
 use TournamentTables\Services\TournamentService;
-use TournamentTables\Services\BCPScraperService;
+use TournamentTables\Services\BCPApiService;
 use TournamentTables\Services\Pairing;
 use TournamentTables\Models\Tournament;
 use TournamentTables\Models\Round;
@@ -53,7 +53,7 @@ class TournamentController extends BaseController
 
         try {
             // Fetch tournament name from BCP page
-            $scraper = new BCPScraperService();
+            $scraper = new BCPApiService();
             try {
                 $scraper->extractEventId($bcpUrl);
                 $tournamentName = $scraper->fetchTournamentName($bcpUrl);
@@ -148,7 +148,7 @@ class TournamentController extends BaseController
     {
         try {
             // Extract event ID from BCP URL
-            $scraper = new BCPScraperService();
+            $scraper = new BCPApiService();
             $eventId = $scraper->extractEventId($tournament->bcpUrl);
 
             // Fetch pairings from BCP for Round 1

@@ -11,7 +11,7 @@ use TournamentTables\Models\Player;
 use TournamentTables\Models\Allocation;
 use TournamentTables\Middleware\AdminAuthMiddleware;
 use TournamentTables\Database\Connection;
-use TournamentTables\Services\BCPScraperService;
+use TournamentTables\Services\BCPApiService;
 use TournamentTables\Services\AllocationService;
 use TournamentTables\Services\CostCalculator;
 use TournamentTables\Services\TournamentHistory;
@@ -56,7 +56,7 @@ class RoundController extends BaseController
             }
 
             // Extract event ID from BCP URL
-            $scraper = new BCPScraperService();
+            $scraper = new BCPApiService();
             $eventId = $scraper->extractEventId($tournament->bcpUrl);
 
             // Fetch pairings from BCP
