@@ -21,9 +21,26 @@ class BCPApiServiceTest extends TestCase
      */
     private $fixturesPath;
 
+    /**
+     * @var string|false
+     */
+    private $originalMockUrl;
+
     protected function setUp(): void
     {
         $this->fixturesPath = __DIR__ . '/../fixtures';
+
+        // Save and clear mock URL to test actual URL building
+        $this->originalMockUrl = getenv('BCP_MOCK_API_URL');
+        putenv('BCP_MOCK_API_URL');
+    }
+
+    protected function tearDown(): void
+    {
+        // Restore original mock URL
+        if ($this->originalMockUrl !== false) {
+            putenv('BCP_MOCK_API_URL=' . $this->originalMockUrl);
+        }
     }
 
     /**

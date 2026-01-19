@@ -15,6 +15,7 @@
  * - $allocations: Array of Allocation models
  * - $conflicts: Array of conflict objects
  */
+declare(strict_types=1);
 
 $pageTitle = "{$tournament->name} - Round {$round->roundNumber}";
 $hasConflicts = !empty($conflicts);
@@ -628,21 +629,21 @@ $hasTableCollisions = !empty($tableCollisions);
                             <?php endif; ?>
                         </td>
 
-                        <!-- Player 1 with score -->
-                        <td title="<?= $player1Name ?> (<?= $allocation->player1Score ?>)">
+                        <!-- Player 1 with total score -->
+                        <td title="<?= $player1Name ?> (<?= $player1 ? $player1->totalScore : 0 ?>)">
                             <span class="player-name">
                                 <span class="player-name-full"><?= $player1Name ?></span>
                                 <span class="player-name-short"><?= $player1Short ?></span>
                             </span>
-                            <span class="player-score">(<?= $allocation->player1Score ?>)</span>
+                            <span class="player-score">(<?= $player1 ? $player1->totalScore : 0 ?>)</span>
                         </td>
-                        <!-- Player 2 with score -->
-                        <td title="<?= $player2Name ?> (<?= $allocation->player2Score ?>)">
+                        <!-- Player 2 with total score -->
+                        <td title="<?= $player2Name ?> (<?= $player2 ? $player2->totalScore : 0 ?>)">
                             <span class="player-name">
                                 <span class="player-name-full"><?= $player2Name ?></span>
                                 <span class="player-name-short"><?= $player2Short ?></span>
                             </span>
-                            <span class="player-score">(<?= $allocation->player2Score ?>)</span>
+                            <span class="player-score">(<?= $player2 ? $player2->totalScore : 0 ?>)</span>
                         </td>
 
                         <!-- Change table - dropdown on desktop, button on mobile -->
@@ -669,7 +670,7 @@ $hasTableCollisions = !empty($tableCollisions);
                             <button
                                 type="button"
                                 class="change-table-btn"
-                                onclick="openTableModal(<?= $allocation->id ?>, <?= $table ? $table->id : 'null' ?>, '<?= addslashes($player1Name) ?>', '<?= addslashes($player2Name) ?>')"
+                                onclick="openTableModal(<?= $allocation->id ?>, <?= $table ? $table->id : 'null' ?>, <?= json_encode($player1Name) ?>, <?= json_encode($player2Name) ?>)"
                                 aria-label="Change table"
                                 title="Change table"
                             >&#9998;</button>
@@ -721,6 +722,7 @@ $hasTableCollisions = !empty($tableCollisions);
 
     <script>
         // Table data for modal (populated from PHP)
+        // Use JSON_HEX_* flags to prevent XSS when embedding in script context
         var tableData = <?= json_encode(array_map(function($t) {
             $terrain = $t->getTerrainType();
             return [
@@ -729,7 +731,7 @@ $hasTableCollisions = !empty($tableCollisions);
                 'terrain' => $terrain ? $terrain->name : null,
                 'emoji' => $terrain ? $terrain->emoji : null
             ];
-        }, \TournamentTables\Models\Table::findByTournament($tournament->id))) ?>;
+        }, \TournamentTables\Models\Table::findByTournament($tournament->id)), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
 
         // Current modal state
         var currentModalAllocationId = null;
@@ -850,7 +852,10 @@ $hasTableCollisions = !empty($tableCollisions);
 
             // Build table options
             var optionsContainer = document.getElementById('modal-table-options');
-            optionsContainer.innerHTML = '';
+            // Clear existing options safely (remove all children)
+            while (optionsContainer.firstChild) {
+                optionsContainer.removeChild(optionsContainer.firstChild);
+            }
 
             tableData.forEach(function(table) {
                 var btn = document.createElement('button');
@@ -860,14 +865,18 @@ $hasTableCollisions = !empty($tableCollisions);
                     btn.className += ' selected';
                 }
 
-                var label = 'Table ' + table.number;
+                // Build button content using text nodes to prevent XSS
+                btn.appendChild(document.createTextNode('Table ' + table.number));
                 if (table.emoji) {
-                    label += ' ' + table.emoji;
+                    btn.appendChild(document.createTextNode(' ' + table.emoji));
                 }
                 if (table.terrain) {
-                    label += ' <span class="table-option-terrain">(' + table.terrain + ')</span>';
+                    btn.appendChild(document.createTextNode(' '));
+                    var terrainSpan = document.createElement('span');
+                    terrainSpan.className = 'table-option-terrain';
+                    terrainSpan.textContent = '(' + table.terrain + ')';
+                    btn.appendChild(terrainSpan);
                 }
-                btn.innerHTML = label;
 
                 btn.onclick = function() {
                     selectTableOption(table.id);

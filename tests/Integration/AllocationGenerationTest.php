@@ -221,10 +221,11 @@ class AllocationGenerationTest extends TestCase
      */
     public function testScoreBasedOrderingInAllocation(): void
     {
+        // Total scores (last two params) are used for sorting - higher total scores get lower table numbers
         $pairings = [
-            new Pairing('bcp_low1', 'Low 1', 0, 'bcp_low2', 'Low 2', 0, null),
-            new Pairing('bcp_high1', 'High 1', 4, 'bcp_high2', 'High 2', 4, null),
-            new Pairing('bcp_mid1', 'Mid 1', 2, 'bcp_mid2', 'Mid 2', 2, null),
+            new Pairing('bcp_low1', 'Low 1', 0, 'bcp_low2', 'Low 2', 0, null, 0, 0),
+            new Pairing('bcp_high1', 'High 1', 4, 'bcp_high2', 'High 2', 4, null, 4, 4),
+            new Pairing('bcp_mid1', 'Mid 1', 2, 'bcp_mid2', 'Mid 2', 2, null, 2, 2),
         ];
 
         $tables = $this->getTablesAsArray();

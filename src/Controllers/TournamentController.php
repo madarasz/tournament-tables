@@ -169,6 +169,14 @@ class TournamentController extends BaseController
                 }
             }
 
+            // Fetch total scores from BCP placings API
+            $totalScores = [];
+            try {
+                $totalScores = $scraper->fetchPlayerTotalScores($eventId);
+            } catch (\Exception $e) {
+                // Continue without total scores - not critical for round 1
+            }
+
             // Import pairings in a transaction
             Connection::beginTransaction();
 
@@ -189,16 +197,22 @@ class TournamentController extends BaseController
                 $pairingsImported = 0;
 
                 foreach ($pairings as $pairing) {
-                    // Find or create players
+                    // Get total scores for each player (default to 0 if not found)
+                    $player1TotalScore = $totalScores[$pairing->player1BcpId] ?? 0;
+                    $player2TotalScore = $totalScores[$pairing->player2BcpId] ?? 0;
+
+                    // Find or create players with total scores
                     $player1 = Player::findOrCreate(
                         $tournament->id,
                         $pairing->player1BcpId,
-                        $pairing->player1Name
+                        $pairing->player1Name,
+                        $player1TotalScore
                     );
                     $player2 = Player::findOrCreate(
                         $tournament->id,
                         $pairing->player2BcpId,
-                        $pairing->player2Name
+                        $pairing->player2Name,
+                        $player2TotalScore
                     );
 
                     // Round 1: Use BCP's table assignment

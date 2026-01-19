@@ -236,9 +236,6 @@ composer seed        # Seed terrain types
 # Run all test suites (recommended)
 composer test:unit
 
-# Or manually:
-docker-compose exec -w /var/www/app php ./vendor/bin/phpunit --testsuite unit,integration,performance,e2e --process-isolation
-
 # Run specific test suite
 docker-compose exec php ./vendor/bin/phpunit --testsuite unit
 docker-compose exec php ./vendor/bin/phpunit --testsuite integration
@@ -328,6 +325,7 @@ php -S localhost:8080 -t public public/index.php
 - **Controllers**: Thin controllers, delegate to services
 - **Views**: PHP templates, use layout.php for base structure
 - **Middleware**: Implement callable interface `(Request, Response, callable) => Response`
+- **No backward compatibility needed**
 
 ### Security Requirements
 - Always use prepared statements for SQL queries

@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS players (
     tournament_id INT NOT NULL,
     bcp_player_id VARCHAR(50) NOT NULL,
     name VARCHAR(255) NOT NULL,
+    total_score INT NOT NULL DEFAULT 0,
     UNIQUE INDEX idx_tournament_bcp_player (tournament_id, bcp_player_id),
     FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -350,13 +350,17 @@ class AllocationServiceTest extends TestCase
 
     /**
      * Create a pairing for testing.
+     *
+     * Total scores default to matching round scores for backward compatibility.
      */
     private function createPairing(
         string $player1BcpId,
         string $player2BcpId,
         int $player1Score,
         int $player2Score,
-        ?int $bcpTableNumber
+        ?int $bcpTableNumber,
+        ?int $player1TotalScore = null,
+        ?int $player2TotalScore = null
     ): Pairing {
         return new Pairing(
             $player1BcpId,
@@ -365,7 +369,9 @@ class AllocationServiceTest extends TestCase
             $player2BcpId,
             "Player {$player2BcpId}",
             $player2Score,
-            $bcpTableNumber
+            $bcpTableNumber,
+            $player1TotalScore ?? $player1Score,
+            $player2TotalScore ?? $player2Score
         );
     }
 

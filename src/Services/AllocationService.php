@@ -254,7 +254,7 @@ class AllocationService
     }
 
     /**
-     * Stable sort pairings by combined score (descending), then BCP ID (ascending).
+     * Stable sort pairings by combined total score (descending), then BCP ID (ascending).
      *
      * Reference: research.md#determinism-requirements
      *
@@ -271,7 +271,7 @@ class AllocationService
             $indexed[] = [
                 'pairing' => $pairing,
                 'index' => $index,
-                'score' => $pairing->getCombinedScore(),
+                'score' => $pairing->getCombinedTotalScore(),
                 'bcpId' => $pairing->getMinBcpId(),
             ];
         }

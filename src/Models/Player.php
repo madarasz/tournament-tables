@@ -26,16 +26,21 @@ class Player
     /** @var string */
     public $name;
 
+    /** @var int */
+    public $totalScore;
+
     public function __construct(
         ?int $id = null,
         int $tournamentId = 0,
         string $bcpPlayerId = '',
-        string $name = ''
+        string $name = '',
+        int $totalScore = 0
     ) {
         $this->id = $id;
         $this->tournamentId = $tournamentId;
         $this->bcpPlayerId = $bcpPlayerId;
         $this->name = $name;
+        $this->totalScore = $totalScore;
     }
 
     /**
@@ -47,7 +52,8 @@ class Player
             (int) $row['id'],
             (int) $row['tournament_id'],
             $row['bcp_player_id'],
-            $row['name']
+            $row['name'],
+            (int) ($row['total_score'] ?? 0)
         );
     }
 
@@ -95,19 +101,27 @@ class Player
     /**
      * Find or create a player.
      */
-    public static function findOrCreate(int $tournamentId, string $bcpPlayerId, string $name): self
+    public static function findOrCreate(int $tournamentId, string $bcpPlayerId, string $name, int $totalScore = 0): self
     {
         $player = self::findByTournamentAndBcpId($tournamentId, $bcpPlayerId);
         if ($player !== null) {
-            // Update name if it changed
+            // Update name and total score if changed
+            $needsUpdate = false;
             if ($player->name !== $name) {
                 $player->name = $name;
+                $needsUpdate = true;
+            }
+            if ($player->totalScore !== $totalScore) {
+                $player->totalScore = $totalScore;
+                $needsUpdate = true;
+            }
+            if ($needsUpdate) {
                 $player->save();
             }
             return $player;
         }
 
-        $player = new self(null, $tournamentId, $bcpPlayerId, $name);
+        $player = new self(null, $tournamentId, $bcpPlayerId, $name, $totalScore);
         $player->save();
         return $player;
     }
@@ -129,12 +143,13 @@ class Player
     private function insert(): bool
     {
         Connection::execute(
-            'INSERT INTO players (tournament_id, bcp_player_id, name)
-             VALUES (?, ?, ?)',
+            'INSERT INTO players (tournament_id, bcp_player_id, name, total_score)
+             VALUES (?, ?, ?, ?)',
             [
                 $this->tournamentId,
                 $this->bcpPlayerId,
                 $this->name,
+                $this->totalScore,
             ]
         );
 
@@ -148,9 +163,10 @@ class Player
     private function update(): bool
     {
         Connection::execute(
-            'UPDATE players SET name = ? WHERE id = ?',
+            'UPDATE players SET name = ?, total_score = ? WHERE id = ?',
             [
                 $this->name,
+                $this->totalScore,
                 $this->id,
             ]
         );
@@ -166,6 +182,7 @@ class Player
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'totalScore' => $this->totalScore,
         ];
     }
 }

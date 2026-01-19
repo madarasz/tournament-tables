@@ -1,0 +1,18 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "BCP Event Details",
+    "description": "Minimal schema for BCP event details API response. Only includes fields used by BCPApiService::fetchTournamentName().",
+    "type": "object",
+    "required": ["id", "name"],
+    "properties": {
+        "id": {
+            "type": "string",
+            "description": "BCP event ID"
+        },
+        "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Tournament name"
+        }
+    }
+}
