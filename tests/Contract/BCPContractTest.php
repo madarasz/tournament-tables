@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TournamentTables\Tests\Contract;
 
+use JsonSchema\Validator;
 use PHPUnit\Framework\TestCase;
 use TournamentTables\Services\BCPApiService;
 
@@ -11,8 +12,8 @@ use TournamentTables\Services\BCPApiService;
  * Contract tests for BCP API integration.
  *
  * These tests verify that the BCP REST API remains compatible
- * with our API service. They make requests to BCP, cache the
- * responses, and run multiple assertions against that cached data.
+ * with our API service by validating responses against JSON schemas
+ * that define the minimal fields we depend on.
  *
  * IMPORTANT: These tests require network access to BCP servers.
  * They should be run sparingly to avoid excessive load on BCP.
@@ -31,6 +32,9 @@ class BCPContractTest extends TestCase
     /** @var array|null Cached API response for event details */
     private static $eventData = null;
 
+    /** @var array|null Cached API response for player placings (total scores) */
+    private static $placingsData = null;
+
     /** @var BCPApiService */
     private $apiService;
 
@@ -39,6 +43,9 @@ class BCPContractTest extends TestCase
 
     /** @var string|null Error message if fetch failed */
     private static $fetchError = null;
+
+    /** @var string|false Original mock URL (saved for restoration) */
+    private $originalMockUrl;
 
     /**
      * Fetch BCP data once before all tests in this class.
@@ -52,6 +59,7 @@ class BCPContractTest extends TestCase
         try {
             self::fetchBcpPairingsApi();
             self::fetchBcpEventApi();
+            self::fetchBcpPlacingsApi();
             self::$fetchSuccess = true;
         } catch (\Exception $e) {
             self::$fetchError = $e->getMessage();
@@ -127,6 +135,40 @@ class BCPContractTest extends TestCase
         self::$eventData = $data;
     }
 
+    /**
+     * Fetch and cache the BCP player placings API response.
+     */
+    private static function fetchBcpPlacingsApi(): void
+    {
+        $url = 'https://newprod-api.bestcoastpairings.com/v1/events/' .
+               self::BCP_EVENT_ID . '/players?placings=true';
+
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => implode("\r\n", [
+                    'Accept: application/json',
+                    'client-id: web-app',
+                    'env: bcp',
+                    'content-type: application/json'
+                ]),
+                'timeout' => 15
+            ]
+        ]);
+
+        $response = @file_get_contents($url, false, $context);
+        if ($response === false) {
+            throw new \RuntimeException('Failed to fetch BCP placings API');
+        }
+
+        $data = json_decode($response, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \RuntimeException('Invalid JSON from BCP placings API: ' . json_last_error_msg());
+        }
+
+        self::$placingsData = $data;
+    }
+
     protected function setUp(): void
     {
         if (!self::$fetchSuccess) {
@@ -136,92 +178,91 @@ class BCPContractTest extends TestCase
             );
         }
 
+        // Save and clear mock URL to ensure we test against real BCP API
+        $this->originalMockUrl = getenv('BCP_MOCK_API_URL');
+        putenv('BCP_MOCK_API_URL');
+
         $this->apiService = new BCPApiService();
     }
 
+    protected function tearDown(): void
+    {
+        // Restore original mock URL
+        if ($this->originalMockUrl !== false) {
+            putenv('BCP_MOCK_API_URL=' . $this->originalMockUrl);
+        }
+    }
+
     // -------------------------------------------------------------------------
-    // Event Details API Tests (Tournament Name)
+    // Schema Validation Tests
     // -------------------------------------------------------------------------
 
     /**
-     * Test that event details API returns a name field.
+     * Test that event API response matches our minimal schema.
      *
-     * This is the primary field we need for fetching tournament names.
+     * Schema defines only fields used by BCPApiService::fetchTournamentName().
      */
-    public function testEventApiReturnsName(): void
+    public function testEventApiMatchesSchema(): void
     {
         $this->assertNotNull(self::$eventData, 'Event API data should be cached');
-        $this->assertArrayHasKey('name', self::$eventData, 'Response should have "name" key');
-        $this->assertNotEmpty(self::$eventData['name'], 'Tournament name should not be empty');
-        $this->assertIsString(self::$eventData['name'], 'Tournament name should be a string');
-    }
 
-    /**
-     * Test that event details API returns expected structure.
-     */
-    public function testEventApiReturnsExpectedFields(): void
-    {
-        $this->assertArrayHasKey('id', self::$eventData, 'Response should have "id" key');
-        $this->assertArrayHasKey('name', self::$eventData, 'Response should have "name" key');
-    }
+        $schema = $this->loadSchema('event.json');
+        $data = json_decode(json_encode(self::$eventData));
 
-    /**
-     * Test that event ID in response matches requested ID.
-     */
-    public function testEventApiReturnsMatchingId(): void
-    {
-        $this->assertEquals(
-            self::BCP_EVENT_ID,
-            self::$eventData['id'],
-            'Event ID in response should match requested ID'
+        $validator = new Validator();
+        $validator->validate($data, $schema);
+
+        $this->assertTrue(
+            $validator->isValid(),
+            'Event API response does not match schema: ' . $this->formatValidationErrors($validator)
         );
     }
 
     /**
-     * Test that tournament name is a reasonable length.
+     * Test that pairings API response matches our minimal schema.
+     *
+     * Schema defines only fields used by BCPApiService::parseApiResponse().
      */
-    public function testEventNameHasReasonableLength(): void
+    public function testPairingsApiMatchesSchema(): void
     {
-        $name = self::$eventData['name'];
+        $this->assertNotNull(self::$pairingsData, 'Pairings API data should be cached');
 
-        // Tournament names should be between 1 and 255 characters
-        $this->assertGreaterThan(0, strlen($name), 'Tournament name should not be empty');
-        $this->assertLessThanOrEqual(
-            255,
-            strlen($name),
-            'Tournament name should fit in database VARCHAR(255)'
+        $schema = $this->loadSchema('pairings.json');
+        $data = json_decode(json_encode(self::$pairingsData));
+
+        $validator = new Validator();
+        $validator->validate($data, $schema);
+
+        $this->assertTrue(
+            $validator->isValid(),
+            'Pairings API response does not match schema: ' . $this->formatValidationErrors($validator)
         );
     }
 
     /**
-     * Test that tournament name contains printable characters.
+     * Test that placings API response matches our minimal schema.
+     *
+     * Schema defines only fields used by BCPApiService::parsePlacingsResponse().
      */
-    public function testEventNameContainsPrintableCharacters(): void
+    public function testPlacingsApiMatchesSchema(): void
     {
-        $name = self::$eventData['name'];
+        $this->assertNotNull(self::$placingsData, 'Placings API data should be cached');
 
-        // Name should contain at least some letters
-        $this->assertMatchesRegularExpression(
-            '/[a-zA-Z]/',
-            $name,
-            'Tournament name should contain letters'
+        $schema = $this->loadSchema('placings.json');
+        $data = json_decode(json_encode(self::$placingsData));
+
+        $validator = new Validator();
+        $validator->validate($data, $schema);
+
+        $this->assertTrue(
+            $validator->isValid(),
+            'Placings API response does not match schema: ' . $this->formatValidationErrors($validator)
         );
     }
 
     // -------------------------------------------------------------------------
-    // Pairings API Structure Tests
+    // Functional Tests (verify our parsing logic works with real data)
     // -------------------------------------------------------------------------
-
-    /**
-     * Test that API response has the expected structure with 'active' array.
-     */
-    public function testApiResponseHasActiveArray(): void
-    {
-        $this->assertNotNull(self::$pairingsData, 'API data should be cached');
-        $this->assertIsArray(self::$pairingsData, 'API response should be an array');
-        $this->assertArrayHasKey('active', self::$pairingsData, 'Response should have "active" key');
-        $this->assertIsArray(self::$pairingsData['active'], '"active" should be an array');
-    }
 
     /**
      * Test that we can parse pairings from the API response.
@@ -234,101 +275,10 @@ class BCPContractTest extends TestCase
         $this->assertNotEmpty($pairings, 'Should have at least one pairing');
     }
 
-    // -------------------------------------------------------------------------
-    // Table Numbers Tests
-    // -------------------------------------------------------------------------
-
     /**
-     * Test that pairings have table numbers.
+     * Test that each pairing has valid player 1 data after parsing.
      */
-    public function testPairingsHaveTableNumbers(): void
-    {
-        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
-
-        $tablesWithNumbers = 0;
-        foreach ($pairings as $pairing) {
-            if ($pairing->bcpTableNumber !== null) {
-                $tablesWithNumbers++;
-            }
-        }
-
-        $this->assertGreaterThan(
-            0,
-            $tablesWithNumbers,
-            'At least one pairing should have a table number'
-        );
-    }
-
-    /**
-     * Test that table numbers are positive integers.
-     */
-    public function testTableNumbersArePositiveIntegers(): void
-    {
-        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
-
-        foreach ($pairings as $pairing) {
-            if ($pairing->bcpTableNumber !== null) {
-                $this->assertIsInt(
-                    $pairing->bcpTableNumber,
-                    'Table number should be an integer'
-                );
-                $this->assertGreaterThan(
-                    0,
-                    $pairing->bcpTableNumber,
-                    'Table number should be positive'
-                );
-            }
-        }
-    }
-
-    /**
-     * Test that table numbers are sorted in ascending order.
-     */
-    public function testPairingsAreSortedByTableNumber(): void
-    {
-        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
-
-        $prevTableNumber = 0;
-        foreach ($pairings as $pairing) {
-            if ($pairing->bcpTableNumber !== null) {
-                $this->assertGreaterThanOrEqual(
-                    $prevTableNumber,
-                    $pairing->bcpTableNumber,
-                    'Pairings should be sorted by table number'
-                );
-                $prevTableNumber = $pairing->bcpTableNumber;
-            }
-        }
-    }
-
-    /**
-     * Test that table numbers are unique within round 1.
-     */
-    public function testTableNumbersAreUnique(): void
-    {
-        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
-
-        $tableNumbers = [];
-        foreach ($pairings as $pairing) {
-            if ($pairing->bcpTableNumber !== null) {
-                $this->assertNotContains(
-                    $pairing->bcpTableNumber,
-                    $tableNumbers,
-                    "Table number {$pairing->bcpTableNumber} appears more than once"
-                );
-                $tableNumbers[] = $pairing->bcpTableNumber;
-            }
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // Round 1 Pairings Structure Tests
-    // -------------------------------------------------------------------------
-
-    /**
-     * Test that each pairing has valid player 1 data.
-     */
-    public function testPairingsHaveValidPlayer1Data(): void
+    public function testParsedPairingsHaveValidPlayer1Data(): void
     {
         $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
@@ -349,9 +299,9 @@ class BCPContractTest extends TestCase
     }
 
     /**
-     * Test that each pairing has valid player 2 data.
+     * Test that each pairing has valid player 2 data after parsing.
      */
-    public function testPairingsHaveValidPlayer2Data(): void
+    public function testParsedPairingsHaveValidPlayer2Data(): void
     {
         $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
@@ -372,143 +322,105 @@ class BCPContractTest extends TestCase
     }
 
     /**
-     * Test that player names are reasonable (not IDs or garbage).
+     * Test that we can parse total scores from the cached placings response.
      */
-    public function testPlayerNamesAreReasonable(): void
+    public function testCanParseTotalScores(): void
     {
-        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
+        $scores = $this->parsePlacingsData(self::$placingsData);
 
-        foreach ($pairings as $pairing) {
-            // Names should contain letters (not just numbers/special chars)
-            $this->assertMatchesRegularExpression(
-                '/[a-zA-Z]/',
-                $pairing->player1Name,
-                "Player 1 name '{$pairing->player1Name}' should contain letters"
-            );
-            $this->assertMatchesRegularExpression(
-                '/[a-zA-Z]/',
-                $pairing->player2Name,
-                "Player 2 name '{$pairing->player2Name}' should contain letters"
-            );
-        }
+        $this->assertIsArray($scores, 'Parsed scores should be an array');
+        $this->assertNotEmpty($scores, 'Should have at least one player score');
     }
 
     /**
-     * Test that BCP player IDs have expected format.
+     * Test that parsed total scores are non-negative integers.
      */
-    public function testPlayerIdsHaveExpectedFormat(): void
+    public function testParsedTotalScoresAreValid(): void
     {
-        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
+        $scores = $this->parsePlacingsData(self::$placingsData);
 
-        foreach ($pairings as $pairing) {
-            // BCP IDs are typically alphanumeric strings
-            $this->assertMatchesRegularExpression(
-                '/^[A-Za-z0-9]+$/',
-                $pairing->player1BcpId,
-                "Player 1 ID '{$pairing->player1BcpId}' should be alphanumeric"
-            );
-            $this->assertMatchesRegularExpression(
-                '/^[A-Za-z0-9]+$/',
-                $pairing->player2BcpId,
-                "Player 2 ID '{$pairing->player2BcpId}' should be alphanumeric"
-            );
+        foreach ($scores as $playerId => $score) {
+            $this->assertIsString($playerId, 'Player ID key should be string');
+            $this->assertIsInt($score, 'Score should be integer');
+            $this->assertGreaterThanOrEqual(0, $score, 'Score should be non-negative');
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Helper Methods
+    // -------------------------------------------------------------------------
+
     /**
-     * Test that player scores are non-negative integers.
+     * Load a JSON schema file.
      *
-     * Note: Round 1 scores are NOT always zero - BCP returns cumulative scores
-     * from the player's tournament history, even in round 1 pairings data.
+     * @param string $filename Schema filename (relative to schemas directory)
+     * @return object Decoded schema object
      */
-    public function testPlayerScoresAreNonNegativeIntegers(): void
+    private function loadSchema(string $filename): object
     {
-        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
+        $path = __DIR__ . '/schemas/' . $filename;
+        $this->assertFileExists($path, "Schema file not found: $filename");
 
-        foreach ($pairings as $pairing) {
-            $this->assertIsInt(
-                $pairing->player1Score,
-                'Player 1 score should be an integer'
-            );
-            $this->assertGreaterThanOrEqual(
-                0,
-                $pairing->player1Score,
-                'Player 1 score should be non-negative'
-            );
-            $this->assertIsInt(
-                $pairing->player2Score,
-                'Player 2 score should be an integer'
-            );
-            $this->assertGreaterThanOrEqual(
-                0,
-                $pairing->player2Score,
-                'Player 2 score should be non-negative'
-            );
+        $content = file_get_contents($path);
+        $schema = json_decode($content);
+
+        $this->assertNotNull($schema, "Failed to parse schema: $filename");
+
+        return $schema;
+    }
+
+    /**
+     * Format validation errors into a readable string.
+     *
+     * @param Validator $validator The validator with errors
+     * @return string Formatted error messages
+     */
+    private function formatValidationErrors(Validator $validator): string
+    {
+        $errors = [];
+        foreach ($validator->getErrors() as $error) {
+            $path = $error['property'] ? "[{$error['property']}] " : '';
+            $errors[] = $path . $error['message'];
         }
-    }
-
-    // -------------------------------------------------------------------------
-    // Raw API Response Structure Tests
-    // -------------------------------------------------------------------------
-
-    /**
-     * Test that raw pairings have expected fields.
-     */
-    public function testRawPairingsHaveExpectedFields(): void
-    {
-        $this->assertNotEmpty(self::$pairingsData['active'], 'Should have active pairings');
-
-        $firstPairing = self::$pairingsData['active'][0];
-
-        // Check for required fields our parser expects
-        $this->assertArrayHasKey('player1', $firstPairing, 'Should have player1 field');
-        $this->assertArrayHasKey('player2', $firstPairing, 'Should have player2 field');
-        $this->assertArrayHasKey('player1Game', $firstPairing, 'Should have player1Game field');
-        $this->assertArrayHasKey('player2Game', $firstPairing, 'Should have player2Game field');
+        return implode('; ', $errors);
     }
 
     /**
-     * Test that player objects have required nested structure.
+     * Parse placings data to extract total scores.
+     *
+     * Mirrors BCPApiService::parsePlacingsResponse() to avoid additional API calls.
+     *
+     * @param array $data Cached placings API response
+     * @return array<string, int> Map of BCP player ID to total score
      */
-    public function testPlayerObjectsHaveExpectedStructure(): void
+    private function parsePlacingsData(array $data): array
     {
-        $firstPairing = self::$pairingsData['active'][0];
+        $scores = [];
+        $players = $data['active'] ?? $data;
 
-        // Player 1 structure
-        $this->assertArrayHasKey('id', $firstPairing['player1'], 'player1 should have id');
-        $this->assertArrayHasKey('user', $firstPairing['player1'], 'player1 should have user');
-        $this->assertArrayHasKey(
-            'firstName',
-            $firstPairing['player1']['user'],
-            'player1.user should have firstName'
-        );
-        $this->assertArrayHasKey(
-            'lastName',
-            $firstPairing['player1']['user'],
-            'player1.user should have lastName'
-        );
+        if (!is_array($players)) {
+            return $scores;
+        }
 
-        // Player 2 structure
-        $this->assertArrayHasKey('id', $firstPairing['player2'], 'player2 should have id');
-        $this->assertArrayHasKey('user', $firstPairing['player2'], 'player2 should have user');
-    }
+        foreach ($players as $player) {
+            $bcpPlayerId = $player['id'] ?? null;
+            if ($bcpPlayerId === null) {
+                continue;
+            }
 
-    /**
-     * Test that game objects have points field.
-     */
-    public function testGameObjectsHavePointsField(): void
-    {
-        $firstPairing = self::$pairingsData['active'][0];
+            $totalScore = 0;
+            $overallMetrics = $player['overall_metrics'] ?? [];
 
-        $this->assertArrayHasKey(
-            'points',
-            $firstPairing['player1Game'],
-            'player1Game should have points'
-        );
-        $this->assertArrayHasKey(
-            'points',
-            $firstPairing['player2Game'],
-            'player2Game should have points'
-        );
+            foreach ($overallMetrics as $metric) {
+                if (isset($metric['name']) && $metric['name'] === 'Overall Score') {
+                    $totalScore = (int) ($metric['value'] ?? 0);
+                    break;
+                }
+            }
+
+            $scores[$bcpPlayerId] = $totalScore;
+        }
+
+        return $scores;
     }
 }

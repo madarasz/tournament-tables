@@ -40,10 +40,11 @@ class AllocationPriorityTest extends TestCase
     {
         $history = $this->createCleanHistory();
 
+        // Total scores (last two params) are used for sorting - higher total scores get lower table numbers
         $pairings = [
-            new Pairing('bcp_low1', 'Low 1', 0, 'bcp_low2', 'Low 2', 0, null),      // Score: 0
-            new Pairing('bcp_high1', 'High 1', 4, 'bcp_high2', 'High 2', 4, null),  // Score: 8
-            new Pairing('bcp_mid1', 'Mid 1', 2, 'bcp_mid2', 'Mid 2', 2, null),      // Score: 4
+            new Pairing('bcp_low1', 'Low 1', 0, 'bcp_low2', 'Low 2', 0, null, 0, 0),      // Total: 0
+            new Pairing('bcp_high1', 'High 1', 4, 'bcp_high2', 'High 2', 4, null, 4, 4),  // Total: 8
+            new Pairing('bcp_mid1', 'Mid 1', 2, 'bcp_mid2', 'Mid 2', 2, null, 2, 2),      // Total: 4
         ];
 
         $tables = [
@@ -100,7 +101,7 @@ class AllocationPriorityTest extends TestCase
         $history = $this->createMockHistoryWithTableUsage(['bcp_player1' => [1]]);
 
         $pairings = [
-            new Pairing('bcp_player1', 'Player 1', 2, 'bcp_player2', 'Player 2', 2, null),
+            new Pairing('bcp_player1', 'Player 1', 2, 'bcp_player2', 'Player 2', 2, null, 2, 2),
         ];
 
         $tables = [
@@ -133,7 +134,7 @@ class AllocationPriorityTest extends TestCase
         $history = $this->createMockHistoryWithTerrainUsage(['bcp_player1' => [1]]);
 
         $pairings = [
-            new Pairing('bcp_player1', 'Player 1', 2, 'bcp_player2', 'Player 2', 2, null),
+            new Pairing('bcp_player1', 'Player 1', 2, 'bcp_player2', 'Player 2', 2, null, 2, 2),
         ];
 
         $tables = [
@@ -165,7 +166,7 @@ class AllocationPriorityTest extends TestCase
         $history = $this->createCleanHistory();
 
         $pairings = [
-            new Pairing('bcp_player1', 'Player 1', 2, 'bcp_player2', 'Player 2', 2, null),
+            new Pairing('bcp_player1', 'Player 1', 2, 'bcp_player2', 'Player 2', 2, null, 2, 2),
         ];
 
         // Tables 3, 5, 1, 2, 4 (out of order)
@@ -205,7 +206,7 @@ class AllocationPriorityTest extends TestCase
         );
 
         $pairings = [
-            new Pairing('bcp_player1', 'Player 1', 2, 'bcp_player2', 'Player 2', 2, null),
+            new Pairing('bcp_player1', 'Player 1', 2, 'bcp_player2', 'Player 2', 2, null, 2, 2),
         ];
 
         // Table 1: used before (table reuse), terrain 1 (no terrain conflict)
@@ -237,9 +238,9 @@ class AllocationPriorityTest extends TestCase
         $history = $this->createCleanHistory();
 
         $pairings = [
-            new Pairing('bcp_a1', 'Player A1', 2, 'bcp_a2', 'Player A2', 2, null),
-            new Pairing('bcp_b1', 'Player B1', 2, 'bcp_b2', 'Player B2', 2, null),
-            new Pairing('bcp_c1', 'Player C1', 2, 'bcp_c2', 'Player C2', 2, null),
+            new Pairing('bcp_a1', 'Player A1', 2, 'bcp_a2', 'Player A2', 2, null, 2, 2),
+            new Pairing('bcp_b1', 'Player B1', 2, 'bcp_b2', 'Player B2', 2, null, 2, 2),
+            new Pairing('bcp_c1', 'Player C1', 2, 'bcp_c2', 'Player C2', 2, null, 2, 2),
         ];
 
         $tables = [
@@ -277,11 +278,11 @@ class AllocationPriorityTest extends TestCase
     {
         $history = $this->createCleanHistory();
 
-        // All pairings have the same score
+        // All pairings have the same total score
         $pairings = [
-            new Pairing('bcp_z1', 'Player Z1', 2, 'bcp_z2', 'Player Z2', 2, null),
-            new Pairing('bcp_a1', 'Player A1', 2, 'bcp_a2', 'Player A2', 2, null),
-            new Pairing('bcp_m1', 'Player M1', 2, 'bcp_m2', 'Player M2', 2, null),
+            new Pairing('bcp_z1', 'Player Z1', 2, 'bcp_z2', 'Player Z2', 2, null, 2, 2),
+            new Pairing('bcp_a1', 'Player A1', 2, 'bcp_a2', 'Player A2', 2, null, 2, 2),
+            new Pairing('bcp_m1', 'Player M1', 2, 'bcp_m2', 'Player M2', 2, null, 2, 2),
         ];
 
         $tables = [
@@ -323,8 +324,8 @@ class AllocationPriorityTest extends TestCase
         $history = $this->createCleanHistory();
 
         $pairings = [
-            new Pairing('bcp_p1', 'Player 1', 0, 'bcp_p2', 'Player 2', 0, 3), // BCP assigned table 3
-            new Pairing('bcp_p3', 'Player 3', 0, 'bcp_p4', 'Player 4', 0, 1), // BCP assigned table 1
+            new Pairing('bcp_p1', 'Player 1', 0, 'bcp_p2', 'Player 2', 0, 3, 0, 0), // BCP assigned table 3
+            new Pairing('bcp_p3', 'Player 3', 0, 'bcp_p4', 'Player 4', 0, 1, 0, 0), // BCP assigned table 1
         ];
 
         $tables = [

@@ -32,6 +32,12 @@ class Pairing
     /** @var int|null */
     public $bcpTableNumber;
 
+    /** @var int */
+    public $player1TotalScore;
+
+    /** @var int */
+    public $player2TotalScore;
+
     public function __construct(
         string $player1BcpId,
         string $player1Name,
@@ -39,7 +45,9 @@ class Pairing
         string $player2BcpId,
         string $player2Name,
         int $player2Score,
-        ?int $bcpTableNumber
+        ?int $bcpTableNumber,
+        int $player1TotalScore = 0,
+        int $player2TotalScore = 0
     ) {
         $this->player1BcpId = $player1BcpId;
         $this->player1Name = $player1Name;
@@ -48,16 +56,28 @@ class Pairing
         $this->player2Name = $player2Name;
         $this->player2Score = $player2Score;
         $this->bcpTableNumber = $bcpTableNumber;
+        $this->player1TotalScore = $player1TotalScore;
+        $this->player2TotalScore = $player2TotalScore;
     }
 
     /**
-     * Get combined score for both players.
+     * Get combined round score for both players.
      *
-     * Used for sorting pairings (higher scores get lower table numbers).
+     * Used for storing in allocations.
      */
     public function getCombinedScore(): int
     {
         return $this->player1Score + $this->player2Score;
+    }
+
+    /**
+     * Get combined total tournament score for both players.
+     *
+     * Used for sorting pairings (higher scores get lower table numbers).
+     */
+    public function getCombinedTotalScore(): int
+    {
+        return $this->player1TotalScore + $this->player2TotalScore;
     }
 
     /**

@@ -335,9 +335,9 @@ $hasAllocations = !empty($allocations);
                     <td class="table-number"><?= $table ? $table->tableNumber : 'N/A' ?></td>
                     <td class="terrain-type"><?= $terrainType ? htmlspecialchars($terrainType->name) : '-' ?></td>
                     <td class="player-name"><?= $player1 ? htmlspecialchars($player1->name) : 'Unknown' ?></td>
-                    <td class="player-score"><?= $allocation->player1Score ?></td>
+                    <td class="player-score"><?= $player1 ? $player1->totalScore : 0 ?></td>
                     <td class="vs-separator">vs</td>
-                    <td class="player-score"><?= $allocation->player2Score ?></td>
+                    <td class="player-score"><?= $player2 ? $player2->totalScore : 0 ?></td>
                     <td class="player-name"><?= $player2 ? htmlspecialchars($player2->name) : 'Unknown' ?></td>
                 </tr>
                 <?php endforeach; ?>

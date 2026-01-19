@@ -628,21 +628,21 @@ $hasTableCollisions = !empty($tableCollisions);
                             <?php endif; ?>
                         </td>
 
-                        <!-- Player 1 with score -->
-                        <td title="<?= $player1Name ?> (<?= $allocation->player1Score ?>)">
+                        <!-- Player 1 with total score -->
+                        <td title="<?= $player1Name ?> (<?= $player1 ? $player1->totalScore : 0 ?>)">
                             <span class="player-name">
                                 <span class="player-name-full"><?= $player1Name ?></span>
                                 <span class="player-name-short"><?= $player1Short ?></span>
                             </span>
-                            <span class="player-score">(<?= $allocation->player1Score ?>)</span>
+                            <span class="player-score">(<?= $player1 ? $player1->totalScore : 0 ?>)</span>
                         </td>
-                        <!-- Player 2 with score -->
-                        <td title="<?= $player2Name ?> (<?= $allocation->player2Score ?>)">
+                        <!-- Player 2 with total score -->
+                        <td title="<?= $player2Name ?> (<?= $player2 ? $player2->totalScore : 0 ?>)">
                             <span class="player-name">
                                 <span class="player-name-full"><?= $player2Name ?></span>
                                 <span class="player-name-short"><?= $player2Short ?></span>
                             </span>
-                            <span class="player-score">(<?= $allocation->player2Score ?>)</span>
+                            <span class="player-score">(<?= $player2 ? $player2->totalScore : 0 ?>)</span>
                         </td>
 
                         <!-- Change table - dropdown on desktop, button on mobile -->

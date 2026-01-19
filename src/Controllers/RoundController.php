@@ -67,6 +67,15 @@ class RoundController extends BaseController
                 return;
             }
 
+            // Fetch total scores from BCP placings API
+            $totalScores = [];
+            try {
+                $totalScores = $scraper->fetchPlayerTotalScores($eventId);
+            } catch (\Exception $e) {
+                // Log warning but continue - total scores are not critical
+                error_log("Warning: Could not fetch total scores: " . $e->getMessage());
+            }
+
             // Import pairings in a transaction
             Connection::beginTransaction();
 
@@ -93,16 +102,22 @@ class RoundController extends BaseController
                 $tableIndex = 0;
 
                 foreach ($pairings as $pairing) {
-                    // Find or create players
+                    // Get total scores for each player (default to 0 if not found)
+                    $player1TotalScore = $totalScores[$pairing->player1BcpId] ?? 0;
+                    $player2TotalScore = $totalScores[$pairing->player2BcpId] ?? 0;
+
+                    // Find or create players with total scores
                     $player1 = Player::findOrCreate(
                         $tournamentId,
                         $pairing->player1BcpId,
-                        $pairing->player1Name
+                        $pairing->player1Name,
+                        $player1TotalScore
                     );
                     $player2 = Player::findOrCreate(
                         $tournamentId,
                         $pairing->player2BcpId,
-                        $pairing->player2Name
+                        $pairing->player2Name,
+                        $player2TotalScore
                     );
 
                     // Determine table assignment
@@ -234,7 +249,9 @@ class RoundController extends BaseController
                 $player2->bcpPlayerId,
                 $player2->name,
                 $allocation->player2Score,
-                null // No BCP table for regeneration
+                null, // No BCP table for regeneration
+                $player1->totalScore,
+                $player2->totalScore
             );
         }
 

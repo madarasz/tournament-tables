@@ -301,6 +301,82 @@ class BCPApiService
         return trim("{$firstName} {$lastName}");
     }
 
+    /**
+     * Build URL for fetching player placings.
+     *
+     * @param string $eventId BCP event ID
+     * @return string API URL
+     */
+    public function buildPlacingsUrl(string $eventId): string
+    {
+        if ($this->mockApiBaseUrl !== null) {
+            return rtrim($this->mockApiBaseUrl, '/') . "/{$eventId}/players?placings=true";
+        }
+        return self::BCP_API_BASE_URL . "/{$eventId}/players?placings=true";
+    }
+
+    /**
+     * Fetch player placings (total scores) from BCP API.
+     *
+     * @param string $eventId BCP event ID
+     * @return array<string, int> Map of BCP player ID to total score
+     * @throws \RuntimeException If API request fails
+     */
+    public function fetchPlayerTotalScores(string $eventId): array
+    {
+        $url = $this->buildPlacingsUrl($eventId);
+        $data = $this->fetchJsonWithRetry($url);
+
+        return $this->parsePlacingsResponse($data);
+    }
+
+    /**
+     * Parse placings response to extract total scores.
+     *
+     * Response structure per player:
+     * {
+     *   "id": "FX29RXY6GP",
+     *   "overall_metrics": [
+     *     {"name": "Overall Score", "value": 57}
+     *   ]
+     * }
+     *
+     * @param array $data API response data
+     * @return array<string, int> Map of BCP player ID to total score
+     */
+    private function parsePlacingsResponse(array $data): array
+    {
+        $scores = [];
+
+        // The API returns players in 'active' array
+        $players = $data['active'] ?? $data;
+
+        if (!is_array($players)) {
+            return $scores;
+        }
+
+        foreach ($players as $player) {
+            $bcpPlayerId = $player['id'] ?? null;
+            if ($bcpPlayerId === null) {
+                continue;
+            }
+
+            $totalScore = 0;
+            $overallMetrics = $player['overall_metrics'] ?? [];
+
+            foreach ($overallMetrics as $metric) {
+                if (isset($metric['name']) && $metric['name'] === 'Overall Score') {
+                    $totalScore = (int) ($metric['value'] ?? 0);
+                    break;
+                }
+            }
+
+            $scores[$bcpPlayerId] = $totalScore;
+        }
+
+        return $scores;
+    }
+
     // Getters for retry configuration (used in tests)
 
     public function getMaxRetries(): int

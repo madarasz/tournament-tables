@@ -18,9 +18,24 @@ class BCPApiServiceTest extends TestCase
     /** @var BCPApiService */
     private $apiService;
 
+    /** @var string|false */
+    private $originalMockUrl;
+
     protected function setUp(): void
     {
+        // Save and clear mock URL to test actual URL building
+        $this->originalMockUrl = getenv('BCP_MOCK_API_URL');
+        putenv('BCP_MOCK_API_URL');
+
         $this->apiService = new BCPApiService();
+    }
+
+    protected function tearDown(): void
+    {
+        // Restore original mock URL
+        if ($this->originalMockUrl !== false) {
+            putenv('BCP_MOCK_API_URL=' . $this->originalMockUrl);
+        }
     }
 
     // -------------------------------------------------------------------------

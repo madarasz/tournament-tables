@@ -1,0 +1,41 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "BCP Placings Response",
+    "description": "Minimal schema for BCP placings API response. Only includes fields used by BCPApiService::parsePlacingsResponse().",
+    "type": "object",
+    "required": ["active"],
+    "properties": {
+        "active": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["id"],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "BCP player ID"
+                    },
+                    "overall_metrics": {
+                        "type": "array",
+                        "description": "Player metrics including Overall Score",
+                        "items": {
+                            "type": "object",
+                            "required": ["name", "value"],
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Metric name (e.g., 'Overall Score')"
+                                },
+                                "value": {
+                                    "type": "number",
+                                    "description": "Metric value"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
