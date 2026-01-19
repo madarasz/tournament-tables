@@ -11,7 +11,8 @@ import { setAdminTokenCookie } from '../helpers/auth';
  *
  * Tests critical terrain type assignment user flow:
  * - Accessing terrain configuration section on tournament dashboard
- * - Assigning terrain types to tables via dropdown selectors
+ * - Using "Set All Tables" quick setup to bulk assign terrain types
+ * - Assigning terrain types to individual tables via dropdown selectors
  * - Saving terrain configuration
  * - Persistence of terrain assignments after page reload
  *
@@ -88,11 +89,36 @@ test.describe('Terrain Type Configuration (US2)', () => {
     expect(options.some((opt) => opt.includes('Tomb World'))).toBeTruthy();
     expect(options.some((opt) => opt.includes('Octarius'))).toBeTruthy();
 
-    // Assign terrain types to tables:
+    // --- Test "Set All Tables" Quick Setup functionality ---
+    // Verify Quick Setup section is present
+    await expect(page.locator('.set-all-container')).toBeVisible();
+    await expect(page.locator('.set-all-label')).toContainText(
+      'Quick Setup: Set All Tables'
+    );
+
+    // Use "Set All Tables" to set all tables to Octarius (ID: 4)
+    const setAllDropdown = page.locator('#set-all-terrain');
+    const applyAllButton = page.locator('#apply-all-button');
+    await setAllDropdown.selectOption('4'); // Octarius
+    await applyAllButton.click();
+
+    // Verify feedback message appears
+    await expect(page.locator('#terrain-result')).toContainText(
+      'Applied terrain to 5 tables'
+    );
+
+    // Verify all tables now have Octarius selected
+    for (let i = 1; i <= 5; i++) {
+      await expect(
+        page.locator(`select[data-table-number="${i}"]`)
+      ).toHaveValue('4'); // Octarius ID
+    }
+
+    // --- Now customize individual tables (overriding the bulk setting) ---
     // Table 1 -> Volkus (ID: 1)
     // Table 2 -> Tomb World (ID: 2)
     // Table 3 -> Into the Dark (ID: 3)
-    // Table 4 -> (leave unassigned)
+    // Table 4 -> Octarius (ID: 4) - keep the "Set All" value
     // Table 5 -> Bheta-Decima (ID: 5)
 
     const table1Select = page.locator('select[data-table-number="1"]');
@@ -104,7 +130,7 @@ test.describe('Terrain Type Configuration (US2)', () => {
     const table3Select = page.locator('select[data-table-number="3"]');
     await table3Select.selectOption('3'); // Into the Dark
 
-    // Table 4 remains at default "No terrain assigned"
+    // Table 4 keeps Octarius from "Set All"
 
     const table5Select = page.locator('select[data-table-number="5"]');
     await table5Select.selectOption('5'); // Bheta-Decima
@@ -114,8 +140,8 @@ test.describe('Terrain Type Configuration (US2)', () => {
     await expect(table2Select).toHaveValue('2'); // Tomb World ID
     await expect(table3Select).toHaveValue('3'); // Into the Dark ID
     await expect(page.locator('select[data-table-number="4"]')).toHaveValue(
-      ''
-    ); // No terrain
+      '4'
+    ); // Octarius (from Set All)
     await expect(table5Select).toHaveValue('5'); // Bheta-Decima ID
 
     // Click save button
@@ -149,8 +175,8 @@ test.describe('Terrain Type Configuration (US2)', () => {
       '3'
     ); // Into the Dark
     await expect(page.locator('select[data-table-number="4"]')).toHaveValue(
-      ''
-    ); // No terrain
+      '4'
+    ); // Octarius (from Set All)
     await expect(page.locator('select[data-table-number="5"]')).toHaveValue(
       '5'
     ); // Bheta-Decima

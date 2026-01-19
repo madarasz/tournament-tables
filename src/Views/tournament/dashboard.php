@@ -165,6 +165,32 @@ $autoImport = $autoImport ?? null;
         <p>Assign terrain types to tables. Players will preferentially be assigned to terrain types they haven't experienced.</p>
 
         <form id="terrain-form">
+            <!-- Quick Setup: Set All Tables -->
+            <div class="set-all-container">
+                <label for="set-all-terrain" class="set-all-label">
+                    Quick Setup: Set All Tables
+                </label>
+                <div class="set-all-controls">
+                    <select id="set-all-terrain">
+                        <option value="">-- Select terrain type --</option>
+                        <?php foreach ($terrainTypes as $terrainType): ?>
+                        <option value="<?= $terrainType->id ?>">
+                            <?= $terrainType->emoji ? $terrainType->emoji . ' ' : '' ?><?= htmlspecialchars($terrainType->name) ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="button" id="apply-all-button" class="secondary">
+                        Apply to All
+                    </button>
+                    <button type="button" id="clear-all-button" class="outline secondary">
+                        Clear All
+                    </button>
+                </div>
+                <small class="set-all-hint">
+                    Changes apply to form only. Click "Save Terrain Configuration" below to save.
+                </small>
+            </div>
+
             <table role="grid">
                 <thead>
                     <tr>
@@ -215,6 +241,84 @@ $autoImport = $autoImport ?? null;
         <div id="terrain-result" style="margin-top: 1rem;"></div>
     </article>
 </section>
+
+<style>
+/* Responsive styles for Table Configuration - Set All Tables */
+.set-all-container {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--pico-card-background-color, #f8f9fa);
+    border-radius: var(--pico-border-radius, 0.25rem);
+    border: 1px solid var(--pico-muted-border-color, #e0e0e0);
+}
+
+.set-all-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.set-all-controls {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.set-all-controls select {
+    flex: 1;
+    min-width: 200px;
+    margin-bottom: 0;
+}
+
+.set-all-controls button {
+    white-space: nowrap;
+    margin-bottom: 0;
+    min-height: 44px; /* Touch-friendly target per NNG guidelines */
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.set-all-hint {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--pico-muted-color, #666);
+}
+
+/* Mobile: Stack elements vertically */
+@media (max-width: 576px) {
+    .set-all-controls {
+        flex-direction: column;
+    }
+
+    .set-all-controls select {
+        min-width: 100%;
+        width: 100%;
+    }
+
+    .set-all-controls button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Tablet: Keep horizontal but allow wrapping */
+@media (min-width: 577px) and (max-width: 768px) {
+    .set-all-controls select {
+        min-width: 180px;
+    }
+}
+
+/* Row highlight animation for visual feedback */
+@keyframes highlightFade {
+    0% { background-color: var(--pico-primary-focus, rgba(16, 149, 193, 0.25)); }
+    100% { background-color: transparent; }
+}
+
+.table-row-highlight {
+    animation: highlightFade 0.8s ease-out;
+}
+</style>
 
 <script>
 // Copy admin token to clipboard
@@ -379,5 +483,101 @@ document.getElementById('terrain-form').addEventListener('submit', function(e) {
         text.style.display = 'inline';
         result.innerHTML = '<div class="alert alert-error">Network error: ' + escapeHtml(error.message) + '</div>';
     });
+});
+
+// Apply terrain type to all tables
+document.getElementById('apply-all-button').addEventListener('click', function() {
+    var selectedTerrain = document.getElementById('set-all-terrain').value;
+
+    if (!selectedTerrain) {
+        // Flash the dropdown to indicate selection needed
+        var dropdown = document.getElementById('set-all-terrain');
+        dropdown.focus();
+        dropdown.style.outline = '2px solid var(--pico-primary, #1095c1)';
+        setTimeout(function() {
+            dropdown.style.outline = '';
+        }, 1500);
+        return;
+    }
+
+    var selects = document.querySelectorAll('select[data-table-number]');
+    var changedCount = 0;
+
+    selects.forEach(function(select) {
+        if (select.value !== selectedTerrain) {
+            select.value = selectedTerrain;
+            changedCount++;
+            // Visual feedback: briefly highlight changed rows
+            var row = select.closest('tr');
+            if (row) {
+                row.style.backgroundColor = 'var(--pico-primary-focus, rgba(16, 149, 193, 0.15))';
+                setTimeout(function() {
+                    row.style.backgroundColor = '';
+                }, 800);
+            }
+        }
+    });
+
+    // Show feedback
+    var result = document.getElementById('terrain-result');
+    if (changedCount > 0) {
+        result.innerHTML = '<div class="alert alert-info" style="background: var(--pico-primary-focus, rgba(16, 149, 193, 0.15)); border: 1px solid var(--pico-primary, #1095c1); padding: 0.75rem; border-radius: 0.25rem;">' +
+            'Applied terrain to ' + changedCount + ' table' + (changedCount !== 1 ? 's' : '') + '. Click "Save Terrain Configuration" to save changes.' +
+            '</div>';
+    } else {
+        result.innerHTML = '<div class="alert alert-info" style="background: var(--pico-primary-focus, rgba(16, 149, 193, 0.15)); border: 1px solid var(--pico-primary, #1095c1); padding: 0.75rem; border-radius: 0.25rem;">' +
+            'All tables already have this terrain type selected.' +
+            '</div>';
+    }
+
+    // Clear info message after 4 seconds
+    setTimeout(function() {
+        if (result.querySelector('.alert-info')) {
+            result.innerHTML = '';
+        }
+    }, 4000);
+});
+
+// Clear all terrain types
+document.getElementById('clear-all-button').addEventListener('click', function() {
+    var selects = document.querySelectorAll('select[data-table-number]');
+    var changedCount = 0;
+
+    selects.forEach(function(select) {
+        if (select.value !== '') {
+            select.value = '';
+            changedCount++;
+            // Visual feedback: briefly highlight changed rows
+            var row = select.closest('tr');
+            if (row) {
+                row.style.backgroundColor = 'var(--pico-secondary-focus, rgba(98, 119, 140, 0.15))';
+                setTimeout(function() {
+                    row.style.backgroundColor = '';
+                }, 800);
+            }
+        }
+    });
+
+    // Also reset the "set all" dropdown
+    document.getElementById('set-all-terrain').value = '';
+
+    // Show feedback
+    var result = document.getElementById('terrain-result');
+    if (changedCount > 0) {
+        result.innerHTML = '<div class="alert alert-info" style="background: var(--pico-secondary-focus, rgba(98, 119, 140, 0.15)); border: 1px solid var(--pico-secondary, #62778c); padding: 0.75rem; border-radius: 0.25rem;">' +
+            'Cleared terrain from ' + changedCount + ' table' + (changedCount !== 1 ? 's' : '') + '. Click "Save Terrain Configuration" to save changes.' +
+            '</div>';
+    } else {
+        result.innerHTML = '<div class="alert alert-info" style="background: var(--pico-secondary-focus, rgba(98, 119, 140, 0.15)); border: 1px solid var(--pico-secondary, #62778c); padding: 0.75rem; border-radius: 0.25rem;">' +
+            'All tables already have no terrain assigned.' +
+            '</div>';
+    }
+
+    // Clear info message after 4 seconds
+    setTimeout(function() {
+        if (result.querySelector('.alert-info')) {
+            result.innerHTML = '';
+        }
+    }, 4000);
 });
 </script>
