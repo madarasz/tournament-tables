@@ -17,6 +17,12 @@ services:
       bash -c "a2enmod rewrite && docker-php-ext-install pdo pdo_mysql &&
       echo 'PassEnv APP_ENV BCP_MOCK_BASE_URL BCP_MOCK_API_URL' >> /etc/apache2/apache2.conf &&
       apache2-foreground"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost/api/terrain-types"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   # Override mysql to use separate test data volume
   mysql:
