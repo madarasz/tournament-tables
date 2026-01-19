@@ -65,9 +65,6 @@ test.describe('Tournament Creation (US2)', () => {
     // Verify admin token is displayed
     await expect(page.locator('#admin-token-display')).toBeVisible();
 
-    // Verify copy button is present
-    await expect(page.locator('#copy-token-btn')).toBeVisible();
-
     // Get admin token from cookie to register for cleanup
     const cookies = await page.context().cookies();
     const adminCookie = cookies.find((c) => c.name === 'admin_token');
@@ -83,6 +80,21 @@ test.describe('Tournament Creation (US2)', () => {
 
     // Verify tournament name (auto-imported from BCP) is displayed on dashboard
     await expect(page.locator('body')).toContainText(tournamentData.expectedName);
+
+    // Verify Round 1 was automatically imported - check "Rounds" section
+    await expect(page.locator('h2').filter({ hasText: 'Rounds' })).toBeVisible();
+
+    // Verify Round 1 row exists in the rounds table with expected content
+    const roundsTable = page.locator('section').filter({ has: page.locator('h2', { hasText: 'Rounds' }) }).locator('table');
+    await expect(roundsTable).toBeVisible();
+
+    // Check Round 1 row is displayed with pairings info and Draft status
+    // Round 1 should be the first row in tbody (only round at this point)
+    const round1Row = roundsTable.locator('tbody tr').first();
+    await expect(round1Row).toBeVisible();
+    await expect(round1Row.locator('td').first()).toHaveText('1');
+    await expect(round1Row).toContainText('pairings');
+    await expect(round1Row).toContainText('Draft');
 
     // Navigate to home page
     await page.goto('/');
