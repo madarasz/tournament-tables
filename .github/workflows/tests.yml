@@ -76,4 +76,4 @@ jobs:
         run: php bin/seed-terrain-types.php
 
       - name: Run PHPUnit tests
-        run: vendor/bin/phpunit --testsuite unit,integration,performance,e2e --process-isolation
+        run: vendor/bin/phpunit --testsuite unit,integration,performance,e2e,contract

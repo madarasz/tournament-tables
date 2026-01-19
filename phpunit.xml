@@ -4,6 +4,7 @@
          bootstrap="vendor/autoload.php"
          colors="true"
          verbose="true"
+         processIsolation="true"
          stopOnFailure="false">
     <testsuites>
         <testsuite name="unit">
