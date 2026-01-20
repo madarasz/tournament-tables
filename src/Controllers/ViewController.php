@@ -116,6 +116,9 @@ class ViewController extends BaseController
             $conflicts = array_merge($conflicts, $allocation->getConflicts());
         }
 
+        // Get all rounds for navigation
+        $rounds = Round::findByTournament($tournamentId);
+
         // Render the round management view
         include __DIR__ . '/../Views/round/manage.php';
     }

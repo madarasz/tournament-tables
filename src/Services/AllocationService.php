@@ -13,7 +13,7 @@ namespace TournamentTables\Services;
  * 1. Round 1: Use BCP's original table assignments (FR-007.1)
  * 2. Round 2+: Sort pairings by combined score (descending)
  * 3. For each pairing, calculate cost for each available table
- * 4. Select lowest-cost table (tie-break by table number)
+ * 4. Select lowest-cost table (tie-break by original BCP table)
  * 5. Record allocation with audit trail (FR-014)
  */
 class AllocationService
@@ -159,7 +159,7 @@ class AllocationService
                     'costBreakdown' => [
                         'tableReuse' => 0,
                         'terrainReuse' => 0,
-                        'tableNumber' => 0,
+                        'bcpTableMismatch' => 0,
                     ],
                     'reasons' => [$reason],
                     'alternativesConsidered' => [],
@@ -204,9 +204,9 @@ class AllocationService
             // Track as alternative (will remove selected table later)
             $alternatives[$tableNumber] = $costResult->totalCost;
 
-            // Select best table (lowest cost, tie-break by table number)
+            // Select best table (lowest cost, tie-break by original BCP table match)
             if ($bestCost === null || $costResult->totalCost < $bestCost ||
-                ($costResult->totalCost === $bestCost && $tableNumber < $bestTable['tableNumber'])) {
+                ($costResult->totalCost === $bestCost && $tableNumber === $pairing->bcpTableNumber)) {
                 $bestCost = $costResult->totalCost;
                 $bestTable = $table;
             }

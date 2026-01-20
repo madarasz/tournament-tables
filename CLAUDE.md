@@ -42,7 +42,7 @@ Singleton PDO wrapper with prepared statement helpers. All queries use parameter
 
 ### Service Layer
 - **AllocationService**: Priority-weighted greedy allocation algorithm
-- **CostCalculator**: Cost function (P1: 100k table reuse, P2: 10k terrain reuse, P3: 1 table number)
+- **CostCalculator**: Cost function (P1: 100k table reuse, P2: 10k terrain reuse, P3: 1 BCP table mismatch)
 - **BCPApiService**: BCP REST API integration with exponential backoff retry
 - **TournamentHistory**: Tracks player table/terrain usage across rounds
 
@@ -115,8 +115,10 @@ For manual Docker commands or local development without Docker, see `docs/develo
 
 **Cost Function** (`src/Services/CostCalculator.php`):
 ```
-cost = (100,000 × table_reuse) + (10,000 × terrain_reuse) + table_number
+cost = (100,000 × table_reuse) + (10,000 × terrain_reuse) + bcp_table_mismatch
 ```
+
+Where `bcp_table_mismatch` = 1 if table differs from original BCP assignment, 0 otherwise.
 
 ## BCP Integration
 
