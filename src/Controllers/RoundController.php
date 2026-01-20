@@ -250,6 +250,10 @@ class RoundController extends BaseController
                 continue;
             }
 
+            // Look up BCP table number from preserved lookup
+            $bcpTableKey = $player1->bcpPlayerId . ':' . $player2->bcpPlayerId;
+            $bcpTableNumber = $bcpTableLookup[$bcpTableKey] ?? null;
+
             $pairings[] = new Pairing(
                 $player1->bcpPlayerId,
                 $player1->name,
@@ -257,7 +261,7 @@ class RoundController extends BaseController
                 $player2->bcpPlayerId,
                 $player2->name,
                 $allocation->player2Score,
-                null, // No BCP table for regeneration
+                $bcpTableNumber,
                 $player1->totalScore,
                 $player2->totalScore
             );

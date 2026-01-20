@@ -155,25 +155,26 @@ class AllocationPriorityTest extends TestCase
     }
 
     /**
-     * Test table number preference (lower is better).
+     * Test original BCP table preference.
      *
-     * FR-007: Prefer lower table numbers for visibility.
+     * FR-007: Prefer original BCP table assignments when no constraints.
      *
      * @group priority
      */
-    public function testLowerTableNumberPreferred(): void
+    public function testOriginalBcpTablePreferred(): void
     {
         $history = $this->createCleanHistory();
 
+        // Pairing with original BCP table = 3
         $pairings = [
-            new Pairing('bcp_player1', 'Player 1', 2, 'bcp_player2', 'Player 2', 2, null, 2, 2),
+            new Pairing('bcp_player1', 'Player 1', 2, 'bcp_player2', 'Player 2', 2, 3, 2, 2),
         ];
 
-        // Tables 3, 5, 1, 2, 4 (out of order)
+        // Tables in random order
         $tables = [
-            ['tableNumber' => 3, 'terrainTypeId' => null, 'terrainTypeName' => null],
-            ['tableNumber' => 5, 'terrainTypeId' => null, 'terrainTypeName' => null],
             ['tableNumber' => 1, 'terrainTypeId' => null, 'terrainTypeName' => null],
+            ['tableNumber' => 5, 'terrainTypeId' => null, 'terrainTypeName' => null],
+            ['tableNumber' => 3, 'terrainTypeId' => null, 'terrainTypeName' => null],
             ['tableNumber' => 2, 'terrainTypeId' => null, 'terrainTypeName' => null],
             ['tableNumber' => 4, 'terrainTypeId' => null, 'terrainTypeName' => null],
         ];
@@ -182,11 +183,11 @@ class AllocationPriorityTest extends TestCase
 
         $this->assertCount(1, $result->allocations);
 
-        // Should choose table 1 (lowest number)
+        // Should choose table 3 (original BCP table)
         $this->assertEquals(
-            1,
+            3,
             $result->allocations[0]['tableNumber'],
-            'Should prefer lowest table number when no constraints'
+            'Should prefer original BCP table when no constraints'
         );
     }
 
@@ -361,15 +362,15 @@ class AllocationPriorityTest extends TestCase
         );
 
         $this->assertGreaterThan(
-            CostCalculator::COST_TABLE_NUMBER,
+            CostCalculator::COST_BCP_TABLE_MISMATCH,
             CostCalculator::COST_TERRAIN_REUSE,
-            'Terrain reuse cost should be higher than table number cost'
+            'Terrain reuse cost should be higher than BCP table mismatch cost'
         );
 
         // Verify specific values match spec (P1 > P2 > P3)
         $this->assertEquals(100000, CostCalculator::COST_TABLE_REUSE);
         $this->assertEquals(10000, CostCalculator::COST_TERRAIN_REUSE);
-        $this->assertEquals(1, CostCalculator::COST_TABLE_NUMBER);
+        $this->assertEquals(1, CostCalculator::COST_BCP_TABLE_MISMATCH);
     }
 
     // Helper methods

@@ -262,7 +262,7 @@ class AllocationServiceTest extends TestCase
         $this->assertArrayHasKey('costBreakdown', $reason);
         $this->assertArrayHasKey('tableReuse', $reason['costBreakdown']);
         $this->assertArrayHasKey('terrainReuse', $reason['costBreakdown']);
-        $this->assertArrayHasKey('tableNumber', $reason['costBreakdown']);
+        $this->assertArrayHasKey('bcpTableMismatch', $reason['costBreakdown']);
         $this->assertArrayHasKey('reasons', $reason);
         $this->assertArrayHasKey('alternativesConsidered', $reason);
         $this->assertArrayHasKey('isRound1', $reason);
