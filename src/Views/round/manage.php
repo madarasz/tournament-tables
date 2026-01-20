@@ -68,7 +68,7 @@ function abbreviateName($fullName) {
  */
 function playerHasTerrainReuse($playerName, $conflicts) {
     foreach ($conflicts as $c) {
-        if ($c['type'] === 'TERRAIN_REUSE' && strpos($c['message'], $playerName) === 0) {
+        if ($c['type'] === 'TERRAIN_REUSE' && strpos($c['message'], $playerName . ' ') === 0) {
             return true;
         }
     }

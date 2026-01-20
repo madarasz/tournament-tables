@@ -183,11 +183,6 @@ class TournamentHistory
      */
     protected function queryPlayerTerrainHistory($playerId): array
     {
-        // DEBUG: Log query input
-        error_log("DEBUG queryPlayerTerrainHistory: playerId=" . var_export($playerId, true) .
-            ", tournamentId=" . $this->tournamentId .
-            ", currentRound=" . $this->currentRound);
-
         // If round 1, there's no history
         if ($this->currentRound <= 1) {
             return [];
@@ -222,17 +217,12 @@ class TournamentHistory
             ";
         }
 
-        $result = Connection::fetchAll($sql, [
+        return Connection::fetchAll($sql, [
             $this->tournamentId,
             $playerId,
             $playerId,
             $this->currentRound,
         ]);
-
-        // DEBUG: Log query result
-        error_log("DEBUG queryPlayerTerrainHistory result: " . json_encode($result));
-
-        return $result;
     }
 
     /**

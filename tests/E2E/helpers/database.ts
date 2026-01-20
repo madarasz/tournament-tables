@@ -56,6 +56,7 @@ export async function cleanupTestData(tournamentId: number): Promise<void> {
   const connection = await getConnection();
 
   try {
+    await connection.beginTransaction();
     // Delete in correct order due to foreign keys
     await connection.query(
       'DELETE FROM allocations WHERE round_id IN (SELECT id FROM rounds WHERE tournament_id = ?)',
@@ -73,6 +74,10 @@ export async function cleanupTestData(tournamentId: number): Promise<void> {
     await connection.query('DELETE FROM tournaments WHERE id = ?', [
       tournamentId,
     ]);
+    await connection.commit();
+  } catch (err) {
+    await connection.rollback();
+    throw err;
   } finally {
     await connection.end();
   }
