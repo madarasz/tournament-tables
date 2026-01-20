@@ -12,11 +12,8 @@ use TournamentTables\Database\Connection;
  * Represents a tournament round containing pairings and allocations.
  * Reference: specs/001-table-allocation/data-model.md#round
  */
-class Round
+class Round extends BaseModel
 {
-    /** @var int|null */
-    public $id;
-
     /** @var int */
     public $tournamentId;
 
@@ -38,6 +35,11 @@ class Round
         $this->isPublished = $isPublished;
     }
 
+    protected static function getTableName(): string
+    {
+        return 'rounds';
+    }
+
     /**
      * Create instance from database row.
      */
@@ -52,31 +54,13 @@ class Round
     }
 
     /**
-     * Find round by ID.
-     */
-    public static function find(int $id): ?self
-    {
-        $row = Connection::fetchOne(
-            'SELECT * FROM rounds WHERE id = ?',
-            [$id]
-        );
-
-        return $row ? self::fromRow($row) : null;
-    }
-
-    /**
      * Find all rounds for a tournament.
      *
      * @return Round[]
      */
     public static function findByTournament(int $tournamentId): array
     {
-        $rows = Connection::fetchAll(
-            'SELECT * FROM rounds WHERE tournament_id = ? ORDER BY round_number ASC',
-            [$tournamentId]
-        );
-
-        return array_map([self::class, 'fromRow'], $rows);
+        return self::findByTournamentId($tournamentId, 'round_number ASC');
     }
 
     /**
@@ -123,20 +107,9 @@ class Round
     }
 
     /**
-     * Save the round (insert or update).
-     */
-    public function save(): bool
-    {
-        if ($this->id === null) {
-            return $this->insert();
-        }
-        return $this->update();
-    }
-
-    /**
      * Insert a new round.
      */
-    private function insert(): bool
+    protected function insert(): bool
     {
         Connection::execute(
             'INSERT INTO rounds (tournament_id, round_number, is_published)
@@ -155,7 +128,7 @@ class Round
     /**
      * Update an existing round.
      */
-    private function update(): bool
+    protected function update(): bool
     {
         Connection::execute(
             'UPDATE rounds SET is_published = ? WHERE id = ?',

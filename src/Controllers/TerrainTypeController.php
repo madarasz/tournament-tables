@@ -23,9 +23,7 @@ class TerrainTypeController extends BaseController
         $terrainTypes = TerrainType::all();
 
         $this->success([
-            'terrainTypes' => array_map(function ($tt) {
-                return $tt->toArray();
-            }, $terrainTypes),
+            'terrainTypes' => $this->toArrayMap($terrainTypes),
         ]);
     }
 }

@@ -12,11 +12,8 @@ use TournamentTables\Database\Connection;
  * Represents a physical table at the tournament venue.
  * Reference: specs/001-table-allocation/data-model.md#table
  */
-class Table
+class Table extends BaseModel
 {
-    /** @var int|null */
-    public $id;
-
     /** @var int */
     public $tournamentId;
 
@@ -38,6 +35,11 @@ class Table
         $this->terrainTypeId = $terrainTypeId;
     }
 
+    protected static function getTableName(): string
+    {
+        return 'tables';
+    }
+
     /**
      * Create instance from database row.
      */
@@ -52,31 +54,13 @@ class Table
     }
 
     /**
-     * Find table by ID.
-     */
-    public static function find(int $id): ?self
-    {
-        $row = Connection::fetchOne(
-            'SELECT * FROM tables WHERE id = ?',
-            [$id]
-        );
-
-        return $row ? self::fromRow($row) : null;
-    }
-
-    /**
      * Find all tables for a tournament.
      *
      * @return Table[]
      */
     public static function findByTournament(int $tournamentId): array
     {
-        $rows = Connection::fetchAll(
-            'SELECT * FROM tables WHERE tournament_id = ? ORDER BY table_number ASC',
-            [$tournamentId]
-        );
-
-        return array_map([self::class, 'fromRow'], $rows);
+        return self::findByTournamentId($tournamentId, 'table_number ASC');
     }
 
     /**
@@ -109,20 +93,9 @@ class Table
     }
 
     /**
-     * Save the table (insert or update).
-     */
-    public function save(): bool
-    {
-        if ($this->id === null) {
-            return $this->insert();
-        }
-        return $this->update();
-    }
-
-    /**
      * Insert a new table.
      */
-    private function insert(): bool
+    protected function insert(): bool
     {
         Connection::execute(
             'INSERT INTO tables (tournament_id, table_number, terrain_type_id)
@@ -141,7 +114,7 @@ class Table
     /**
      * Update an existing table.
      */
-    private function update(): bool
+    protected function update(): bool
     {
         Connection::execute(
             'UPDATE tables SET terrain_type_id = ? WHERE id = ?',

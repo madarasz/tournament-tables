@@ -79,16 +79,6 @@ class ViewController extends BaseController
     }
 
     /**
-     * Ensure session is started.
-     */
-    private function ensureSession(): void
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-    }
-
-    /**
      * GET /tournament/{id}/round/{n} - Round management (admin).
      */
     public function showRound(array $params, ?array $body): void

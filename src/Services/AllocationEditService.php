@@ -18,6 +18,8 @@ use InvalidArgumentException;
  */
 class AllocationEditService
 {
+    use DatabaseQueryHelper;
+
     /** @var PDO */
     private $db;
 
@@ -84,14 +86,11 @@ class AllocationEditService
             ];
         }
 
-        // Build allocation_reason JSON with conflicts
-        $allocationReason = json_encode(['conflicts' => $conflicts]);
-
         // Update allocation with new table and conflicts
         $stmt = $this->db->prepare(
             'UPDATE allocations SET table_id = ?, allocation_reason = ? WHERE id = ?'
         );
-        $stmt->execute([$newTableId, $allocationReason, $allocationId]);
+        $stmt->execute([$newTableId, $this->encodeAllocationReason($conflicts), $allocationId]);
 
         return [
             'success' => true,
@@ -159,14 +158,10 @@ class AllocationEditService
                 $round['round_number']
             );
 
-            // Build allocation_reason JSON with conflicts
-            $allocationReason1 = json_encode(['conflicts' => $conflicts1]);
-            $allocationReason2 = json_encode(['conflicts' => $conflicts2]);
-
             // Swap tables and update conflicts
             $stmt = $this->db->prepare('UPDATE allocations SET table_id = ?, allocation_reason = ? WHERE id = ?');
-            $stmt->execute([$table2, $allocationReason1, $allocationId1]);
-            $stmt->execute([$table1, $allocationReason2, $allocationId2]);
+            $stmt->execute([$table2, $this->encodeAllocationReason($conflicts1), $allocationId1]);
+            $stmt->execute([$table1, $this->encodeAllocationReason($conflicts2), $allocationId2]);
 
             $this->db->commit();
 
@@ -193,6 +188,7 @@ class AllocationEditService
      * Calculate conflicts for an allocation.
      *
      * Checks if players have used the table or terrain before.
+     * Delegates to TournamentHistory for history queries.
      *
      * @param int $player1Id Player 1 ID
      * @param int $player2Id Player 2 ID
@@ -213,9 +209,12 @@ class AllocationEditService
         // Get table info
         $table = $this->getTable($tableId);
 
+        // Use TournamentHistory for history checks (avoid duplicate query logic)
+        $history = $this->getTournamentHistory($tournamentId, $currentRound);
+
         // Check table reuse for each player
         foreach ([$player1Id, $player2Id] as $playerId) {
-            if ($this->hasPlayerUsedTable($playerId, $table['table_number'], $tournamentId, $currentRound)) {
+            if ($history->hasPlayerUsedTable($playerId, (int) $table['table_number'])) {
                 $player = $this->getPlayer($playerId);
                 $conflicts[] = [
                     'type' => 'TABLE_REUSE',
@@ -227,10 +226,11 @@ class AllocationEditService
 
         // Check terrain reuse if table has terrain type
         if ($table['terrain_type_id'] !== null) {
+            $terrainTypeId = (int) $table['terrain_type_id'];
             foreach ([$player1Id, $player2Id] as $playerId) {
-                if ($this->hasPlayerExperiencedTerrain($playerId, $table['terrain_type_id'], $tournamentId, $currentRound)) {
+                if ($history->hasPlayerExperiencedTerrain($playerId, $terrainTypeId)) {
                     $player = $this->getPlayer($playerId);
-                    $terrainType = $this->getTerrainType($table['terrain_type_id']);
+                    $terrainType = $this->getTerrainType($terrainTypeId);
                     $conflicts[] = [
                         'type' => 'TERRAIN_REUSE',
                         'message' => $player['name'] . ' previously experienced ' . $terrainType['name'],
@@ -244,79 +244,52 @@ class AllocationEditService
     }
 
     /**
-     * Check if player has used a table before.
+     * Get TournamentHistory instance for conflict checking.
+     *
+     * Delegates to TournamentHistory to avoid duplicate query logic.
      */
-    private function hasPlayerUsedTable(int $playerId, int $tableNumber, int $tournamentId, int $currentRound): bool
+    private function getTournamentHistory(int $tournamentId, int $currentRound): TournamentHistory
     {
-        $stmt = $this->db->prepare('
-            SELECT COUNT(*) as count
-            FROM allocations a
-            JOIN rounds r ON a.round_id = r.id
-            JOIN tables t ON a.table_id = t.id
-            WHERE r.tournament_id = ?
-              AND (a.player1_id = ? OR a.player2_id = ?)
-              AND t.table_number = ?
-              AND r.round_number < ?
-        ');
-        $stmt->execute([$tournamentId, $playerId, $playerId, $tableNumber, $currentRound]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $result['count'] > 0;
+        return new TournamentHistory($tournamentId, $currentRound);
     }
 
     /**
-     * Check if player has experienced a terrain type before.
+     * Encode conflicts as JSON allocation reason.
+     *
+     * @param array $conflicts List of conflict arrays
+     * @return string JSON string for allocation_reason column
      */
-    private function hasPlayerExperiencedTerrain(int $playerId, int $terrainTypeId, int $tournamentId, int $currentRound): bool
+    private function encodeAllocationReason(array $conflicts): string
     {
-        $stmt = $this->db->prepare('
-            SELECT COUNT(*) as count
-            FROM allocations a
-            JOIN rounds r ON a.round_id = r.id
-            JOIN tables t ON a.table_id = t.id
-            WHERE r.tournament_id = ?
-              AND (a.player1_id = ? OR a.player2_id = ?)
-              AND t.terrain_type_id = ?
-              AND r.round_number < ?
-        ');
-        $stmt->execute([$tournamentId, $playerId, $playerId, $terrainTypeId, $currentRound]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $result['count'] > 0;
+        return json_encode(['conflicts' => $conflicts]);
     }
 
-    // Helper methods
+    // Helper methods using DatabaseQueryHelper trait
 
     private function getAllocation(int $allocationId): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM allocations WHERE id = ?');
-        $stmt->execute([$allocationId]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $result ?: null;
+        return $this->fetchById('allocations', $allocationId);
     }
 
     private function getAllocationByRoundAndTable(int $roundId, int $tableId): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM allocations WHERE round_id = ? AND table_id = ?');
-        $stmt->execute([$roundId, $tableId]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $result ?: null;
+        return $this->fetchOneWhere('allocations', [
+            'round_id' => $roundId,
+            'table_id' => $tableId,
+        ]);
     }
 
     private function getTable(int $tableId): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM tables WHERE id = ?');
-        $stmt->execute([$tableId]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $result ?: null;
+        return $this->fetchById('tables', $tableId);
     }
 
     private function getRound(int $roundId): ?array
     {
-        $stmt = $this->db->prepare('SELECT r.*, t.id as tournament_id FROM rounds r JOIN tournaments t ON r.tournament_id = t.id WHERE r.id = ?');
+        // This needs a join, so we use a custom query
+        $stmt = $this->db->prepare(
+            'SELECT r.*, t.id as tournament_id FROM rounds r JOIN tournaments t ON r.tournament_id = t.id WHERE r.id = ?'
+        );
         $stmt->execute([$roundId]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -325,19 +298,11 @@ class AllocationEditService
 
     private function getPlayer(int $playerId): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM players WHERE id = ?');
-        $stmt->execute([$playerId]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $result ?: null;
+        return $this->fetchById('players', $playerId);
     }
 
     private function getTerrainType(int $terrainTypeId): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM terrain_types WHERE id = ?');
-        $stmt->execute([$terrainTypeId]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return $result ?: null;
+        return $this->fetchById('terrain_types', $terrainTypeId);
     }
 }

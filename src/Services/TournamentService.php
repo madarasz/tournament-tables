@@ -18,7 +18,6 @@ use RuntimeException;
  */
 class TournamentService
 {
-    private const BCP_URL_PATTERN = '#^https://www\.bestcoastpairings\.com/event/([A-Za-z0-9]+)/?(\?.*)?$#';
 
     /**
      * Create a new tournament.
@@ -48,9 +47,7 @@ class TournamentService
         $adminToken = TokenGenerator::generate();
 
         // Create tournament and tables in transaction
-        Connection::beginTransaction();
-
-        try {
+        return Connection::executeInTransaction(function () use ($name, $bcpEventId, $bcpUrl, $tableCount, $adminToken) {
             // Create tournament
             $tournament = new Tournament(
                 null,
@@ -65,16 +62,11 @@ class TournamentService
             // Create tables
             Table::createForTournament($tournament->id, $tableCount);
 
-            Connection::commit();
-
             return [
                 'tournament' => $tournament,
                 'adminToken' => $adminToken,
             ];
-        } catch (\Exception $e) {
-            Connection::rollBack();
-            throw $e;
-        }
+        });
     }
 
     /**
@@ -111,38 +103,14 @@ class TournamentService
     /**
      * Validate BCP URL format.
      *
+     * Delegates to BcpUrlValidator for centralized URL validation.
+     *
      * @param string $url URL to validate
      * @return array{valid: bool, eventId?: string, error?: string}
      */
     public function validateBcpUrl(string $url): array
     {
-        $url = trim($url);
-
-        if (empty($url)) {
-            return ['valid' => false, 'error' => 'BCP URL is required'];
-        }
-
-        // Check it starts with https://
-        if (strpos($url, 'https://') !== 0) {
-            return ['valid' => false, 'error' => 'URL must use HTTPS'];
-        }
-
-        // Check domain
-        if (strpos($url, 'bestcoastpairings.com') === false) {
-            return ['valid' => false, 'error' => 'URL must be from bestcoastpairings.com'];
-        }
-
-        // Extract event ID
-        if (!preg_match(self::BCP_URL_PATTERN, $url, $matches)) {
-            return ['valid' => false, 'error' => 'Invalid BCP URL format. Must be https://www.bestcoastpairings.com/event/{event ID}'];
-        }
-
-        $eventId = $matches[1];
-        if (empty($eventId)) {
-            return ['valid' => false, 'error' => 'Missing event ID in URL'];
-        }
-
-        return ['valid' => true, 'eventId' => $eventId];
+        return BcpUrlValidator::validate($url);
     }
 
     /**
@@ -187,13 +155,12 @@ class TournamentService
 
     /**
      * Normalize BCP URL (strip query params).
+     *
+     * Delegates to BcpUrlValidator for centralized URL normalization.
      */
     private function normalizeUrl(string $url): string
     {
-        if (preg_match(self::BCP_URL_PATTERN, $url, $matches)) {
-            return 'https://www.bestcoastpairings.com/event/' . $matches[1];
-        }
-        return $url;
+        return BcpUrlValidator::normalize($url);
     }
 
     /**
@@ -214,9 +181,7 @@ class TournamentService
             throw new InvalidArgumentException('Tournament not found');
         }
 
-        Connection::beginTransaction();
-
-        try {
+        return Connection::executeInTransaction(function () use ($tournament, $tournamentId) {
             // Fetch all rounds for this tournament
             $rounds = Round::findByTournament($tournamentId);
 
@@ -237,15 +202,8 @@ class TournamentService
 
             // Now delete the tournament
             // CASCADE will handle rounds, tables, and players
-            $result = $tournament->delete();
-
-            Connection::commit();
-
-            return $result;
-        } catch (\Exception $e) {
-            Connection::rollBack();
-            throw $e;
-        }
+            return $tournament->delete();
+        });
     }
 
     /**
@@ -261,9 +219,7 @@ class TournamentService
             throw new InvalidArgumentException('Tournament not found');
         }
 
-        Connection::beginTransaction();
-
-        try {
+        return Connection::executeInTransaction(function () use ($tournamentId, $tableConfigs) {
             foreach ($tableConfigs as $config) {
                 $tableNumber = $config['tableNumber'] ?? null;
                 $terrainTypeId = $config['terrainTypeId'] ?? null;
@@ -279,12 +235,7 @@ class TournamentService
                 }
             }
 
-            Connection::commit();
-
             return Table::findByTournament($tournamentId);
-        } catch (\Exception $e) {
-            Connection::rollBack();
-            throw $e;
-        }
+        });
     }
 }

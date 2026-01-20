@@ -9,13 +9,9 @@ use TournamentTables\Models\Round;
 use TournamentTables\Models\Table;
 use TournamentTables\Models\Player;
 use TournamentTables\Models\Allocation;
-use TournamentTables\Middleware\AdminAuthMiddleware;
 use TournamentTables\Database\Connection;
 use TournamentTables\Services\BCPApiService;
-use TournamentTables\Services\AllocationService;
-use TournamentTables\Services\CostCalculator;
-use TournamentTables\Services\TournamentHistory;
-use TournamentTables\Services\Pairing;
+use TournamentTables\Services\AllocationGenerationService;
 
 /**
  * Round management controller.
@@ -24,6 +20,13 @@ use TournamentTables\Services\Pairing;
  */
 class RoundController extends BaseController
 {
+    private AllocationGenerationService $generationService;
+
+    public function __construct()
+    {
+        $this->generationService = new AllocationGenerationService();
+    }
+
     /**
      * POST /api/tournaments/{id}/rounds/{n}/import - Import pairings from BCP.
      *
@@ -35,9 +38,7 @@ class RoundController extends BaseController
         $roundNumber = (int) ($params['n'] ?? 0);
 
         // Verify authenticated tournament matches requested tournament
-        $authTournament = AdminAuthMiddleware::getTournament();
-        if ($authTournament === null || $authTournament->id !== $tournamentId) {
-            $this->unauthorized('Token does not match this tournament');
+        if (!$this->verifyTournamentAuth($tournamentId)) {
             return;
         }
 
@@ -179,7 +180,7 @@ class RoundController extends BaseController
 
                 // For round 2+, automatically run allocation generation to optimize table assignments
                 if ($roundNumber > 1) {
-                    $generationResult = $this->runAllocationGeneration($tournamentId, $roundNumber, $round);
+                    $generationResult = $this->generationService->generate($tournamentId, $roundNumber, $round);
 
                     $this->success([
                         'roundNumber' => $roundNumber,
@@ -212,148 +213,6 @@ class RoundController extends BaseController
     }
 
     /**
-     * Run allocation generation for a round.
-     *
-     * Helper method used by both import (for round 2+) and generate actions.
-     *
-     * @param int $tournamentId Tournament ID
-     * @param int $roundNumber Round number
-     * @param Round $round Round model
-     * @return array Result with allocations, conflicts, and summary
-     */
-    private function runAllocationGeneration(int $tournamentId, int $roundNumber, Round $round): array
-    {
-        // Get existing allocations to extract pairings
-        $existingAllocations = Allocation::findByRound($round->id);
-
-        // Build BCP table lookup from existing allocations before deleting
-        // Key: player1BcpId:player2BcpId, Value: bcpTableNumber
-        $bcpTableLookup = [];
-        foreach ($existingAllocations as $alloc) {
-            if ($alloc->bcpTableNumber !== null) {
-                $p1 = Player::find($alloc->player1Id);
-                $p2 = Player::find($alloc->player2Id);
-                if ($p1 && $p2) {
-                    $key = $p1->bcpPlayerId . ':' . $p2->bcpPlayerId;
-                    $bcpTableLookup[$key] = $alloc->bcpTableNumber;
-                }
-            }
-        }
-
-        // Build pairings from existing allocations
-        $pairings = [];
-        foreach ($existingAllocations as $allocation) {
-            $player1 = Player::find($allocation->player1Id);
-            $player2 = Player::find($allocation->player2Id);
-
-            if ($player1 === null || $player2 === null) {
-                continue;
-            }
-
-            // Look up BCP table number from preserved lookup
-            $bcpTableKey = $player1->bcpPlayerId . ':' . $player2->bcpPlayerId;
-            $bcpTableNumber = $bcpTableLookup[$bcpTableKey] ?? null;
-
-            $pairings[] = new Pairing(
-                $player1->bcpPlayerId,
-                $player1->name,
-                $allocation->player1Score,
-                $player2->bcpPlayerId,
-                $player2->name,
-                $allocation->player2Score,
-                $bcpTableNumber,
-                $player1->totalScore,
-                $player2->totalScore
-            );
-        }
-
-        // Get tables
-        $tables = Table::findByTournament($tournamentId);
-        $tablesArray = array_map(function ($t) {
-            $terrain = $t->getTerrainType();
-            return [
-                'id' => $t->id,
-                'tableNumber' => $t->tableNumber,
-                'terrainTypeId' => $t->terrainTypeId,
-                'terrainTypeName' => $terrain ? $terrain->name : null,
-            ];
-        }, $tables);
-
-        // Generate allocations
-        $allocationService = new AllocationService(new CostCalculator());
-        $history = new TournamentHistory($tournamentId, $roundNumber);
-
-        $result = $allocationService->generateAllocations(
-            $pairings,
-            $tablesArray,
-            $roundNumber,
-            $history
-        );
-
-        // Save allocations in transaction
-        Connection::beginTransaction();
-
-        try {
-            // Clear existing allocations
-            $round->clearAllocations();
-
-            // Create player ID lookup
-            $playerLookup = [];
-            foreach (Player::findByTournament($tournamentId) as $player) {
-                $playerLookup[$player->bcpPlayerId] = $player->id;
-            }
-
-            // Create table ID lookup
-            $tableLookup = [];
-            foreach ($tables as $table) {
-                $tableLookup[$table->tableNumber] = $table->id;
-            }
-
-            // Save new allocations
-            $savedAllocations = [];
-            foreach ($result->allocations as $allocData) {
-                $player1Id = $playerLookup[$allocData['player1']['bcpId']] ?? null;
-                $player2Id = $playerLookup[$allocData['player2']['bcpId']] ?? null;
-                $tableId = $tableLookup[$allocData['tableNumber']] ?? null;
-
-                if ($player1Id === null || $player2Id === null || $tableId === null) {
-                    continue;
-                }
-
-                // Retrieve preserved BCP table number from lookup
-                $bcpTableKey = $allocData['player1']['bcpId'] . ':' . $allocData['player2']['bcpId'];
-                $bcpTableNumber = $bcpTableLookup[$bcpTableKey] ?? null;
-
-                $allocation = new Allocation(
-                    null,
-                    $round->id,
-                    $tableId,
-                    $player1Id,
-                    $player2Id,
-                    $allocData['player1']['score'],
-                    $allocData['player2']['score'],
-                    $allocData['reason'],
-                    $bcpTableNumber
-                );
-                $allocation->save();
-
-                $savedAllocations[] = $allocation->toArray();
-            }
-
-            Connection::commit();
-
-            return [
-                'allocations' => $savedAllocations,
-                'conflicts' => $result->conflicts,
-                'summary' => $result->summary,
-            ];
-        } catch (\Exception $e) {
-            Connection::rollBack();
-            throw $e;
-        }
-    }
-
-    /**
      * POST /api/tournaments/{id}/rounds/{n}/generate - Generate allocations.
      *
      * Reference: FR-007
@@ -364,9 +223,7 @@ class RoundController extends BaseController
         $roundNumber = (int) ($params['n'] ?? 0);
 
         // Verify authenticated tournament matches requested tournament
-        $authTournament = AdminAuthMiddleware::getTournament();
-        if ($authTournament === null || $authTournament->id !== $tournamentId) {
-            $this->unauthorized('Token does not match this tournament');
+        if (!$this->verifyTournamentAuth($tournamentId)) {
             return;
         }
 
@@ -392,7 +249,7 @@ class RoundController extends BaseController
         }
 
         try {
-            $result = $this->runAllocationGeneration($tournamentId, $roundNumber, $round);
+            $result = $this->generationService->generate($tournamentId, $roundNumber, $round);
 
             $this->success([
                 'roundNumber' => $roundNumber,
@@ -416,9 +273,7 @@ class RoundController extends BaseController
         $roundNumber = (int) ($params['n'] ?? 0);
 
         // Verify authenticated tournament matches requested tournament
-        $authTournament = AdminAuthMiddleware::getTournament();
-        if ($authTournament === null || $authTournament->id !== $tournamentId) {
-            $this->unauthorized('Token does not match this tournament');
+        if (!$this->verifyTournamentAuth($tournamentId)) {
             return;
         }
 
@@ -458,9 +313,7 @@ class RoundController extends BaseController
         $roundNumber = (int) ($params['n'] ?? 0);
 
         // Verify authenticated tournament matches requested tournament
-        $authTournament = AdminAuthMiddleware::getTournament();
-        if ($authTournament === null || $authTournament->id !== $tournamentId) {
-            $this->unauthorized('Token does not match this tournament');
+        if (!$this->verifyTournamentAuth($tournamentId)) {
             return;
         }
 
@@ -482,9 +335,7 @@ class RoundController extends BaseController
         $this->success([
             'roundNumber' => $round->roundNumber,
             'isPublished' => $round->isPublished,
-            'allocations' => array_map(function ($a) {
-                return $a->toArray();
-            }, $allocations),
+            'allocations' => $this->toArrayMap($allocations),
             'conflicts' => $conflicts,
         ]);
     }

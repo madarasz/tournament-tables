@@ -12,11 +12,8 @@ use TournamentTables\Database\Connection;
  * Represents a tournament participant imported from BCP.
  * Reference: specs/001-table-allocation/data-model.md#player
  */
-class Player
+class Player extends BaseModel
 {
-    /** @var int|null */
-    public $id;
-
     /** @var int */
     public $tournamentId;
 
@@ -43,6 +40,11 @@ class Player
         $this->totalScore = $totalScore;
     }
 
+    protected static function getTableName(): string
+    {
+        return 'players';
+    }
+
     /**
      * Create instance from database row.
      */
@@ -58,31 +60,13 @@ class Player
     }
 
     /**
-     * Find player by ID.
-     */
-    public static function find(int $id): ?self
-    {
-        $row = Connection::fetchOne(
-            'SELECT * FROM players WHERE id = ?',
-            [$id]
-        );
-
-        return $row ? self::fromRow($row) : null;
-    }
-
-    /**
      * Find all players for a tournament.
      *
      * @return Player[]
      */
     public static function findByTournament(int $tournamentId): array
     {
-        $rows = Connection::fetchAll(
-            'SELECT * FROM players WHERE tournament_id = ? ORDER BY name ASC',
-            [$tournamentId]
-        );
-
-        return array_map([self::class, 'fromRow'], $rows);
+        return self::findByTournamentId($tournamentId, 'name ASC');
     }
 
     /**
@@ -127,20 +111,9 @@ class Player
     }
 
     /**
-     * Save the player (insert or update).
-     */
-    public function save(): bool
-    {
-        if ($this->id === null) {
-            return $this->insert();
-        }
-        return $this->update();
-    }
-
-    /**
      * Insert a new player.
      */
-    private function insert(): bool
+    protected function insert(): bool
     {
         Connection::execute(
             'INSERT INTO players (tournament_id, bcp_player_id, name, total_score)
@@ -160,7 +133,7 @@ class Player
     /**
      * Update an existing player.
      */
-    private function update(): bool
+    protected function update(): bool
     {
         Connection::execute(
             'UPDATE players SET name = ?, total_score = ? WHERE id = ?',

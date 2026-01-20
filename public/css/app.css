@@ -1,0 +1,422 @@
+/**
+ * Tournament Tables - Application Styles
+ *
+ * Extracted from inline styles across views to reduce duplication.
+ * Reference: docs/refactoring-plan.md
+ */
+
+:root {
+  --primary: #1095c1;
+  --primary-hover: #0d7ea8;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+nav {
+  background: var(--primary);
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 1rem;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+.brand {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.alert {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
+
+.alert-success {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.alert-error {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.alert-warning {
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  color: #856404;
+}
+
+/* Conflict highlighting */
+.conflict {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+}
+
+.conflict-severe {
+  background: #f8d7da;
+  border-left: 4px solid #dc3545;
+}
+
+/* Loading indicator */
+.htmx-indicator {
+  display: none;
+}
+
+.htmx-request .htmx-indicator {
+  display: inline;
+}
+
+.htmx-request.htmx-indicator {
+  display: inline;
+}
+
+/* Table styling */
+table {
+  width: 100%;
+}
+
+th {
+  text-align: left;
+}
+
+/* Large text for venue displays */
+.venue-display {
+  font-size: 1.5rem;
+}
+
+.venue-display th,
+.venue-display td {
+  padding: 1rem;
+}
+
+/* Admin token display */
+.token-display {
+  font-family: monospace;
+  font-size: 1.2rem;
+  background: #f5f5f5;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  user-select: all;
+}
+
+/* Footer */
+footer {
+  margin-top: 3rem;
+  padding: 1rem;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+}
+/* ==========================================================================
+   Status Labels & Badges
+   ========================================================================== */
+
+.status-success {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.status-warning {
+  color: #ff9800;
+  font-weight: bold;
+}
+
+.status-draft {
+  color: #ff9800;
+  font-weight: bold;
+}
+
+.status-published {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+/* Badge styles */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.badge-success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.badge-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.badge-info {
+  background: rgba(16, 149, 193, 0.15);
+  color: #0d7ea8;
+}
+
+/* ==========================================================================
+   Alert Info Variants (for JavaScript-generated alerts)
+   ========================================================================== */
+
+.alert-info {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
+
+.alert-info-primary {
+  background: var(--pico-primary-focus, rgba(16, 149, 193, 0.15));
+  border: 1px solid var(--pico-primary, #1095c1);
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+}
+
+.alert-info-secondary {
+  background: var(--pico-secondary-focus, rgba(98, 119, 140, 0.15));
+  border: 1px solid var(--pico-secondary, #62778c);
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+}
+
+/* ==========================================================================
+   Warning Articles (Published Round, etc.)
+   ========================================================================== */
+
+.warning-article {
+  background-color: #fff3e0;
+  border-left: 4px solid #ff9800;
+}
+
+.info-article {
+  background-color: #e3f2fd;
+  border-left: 4px solid #2196f3;
+}
+
+/* ==========================================================================
+   Form Elements
+   ========================================================================== */
+
+/* Hidden elements for loading states */
+.hidden {
+  display: none !important;
+}
+
+/* Loading indicator visibility */
+.loading-indicator {
+  display: none;
+}
+
+.is-loading .loading-indicator {
+  display: inline;
+}
+
+.is-loading .loading-text {
+  display: none;
+}
+
+/* Result containers */
+.form-result {
+  margin-top: 1rem;
+}
+
+/* ==========================================================================
+   Text Utilities
+   ========================================================================== */
+
+.text-muted {
+  color: #666;
+}
+
+.text-small {
+  font-size: 0.9rem;
+}
+
+.text-small-muted {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* ==========================================================================
+   Spacing Utilities
+   ========================================================================== */
+
+.mt-1 {
+  margin-top: 1rem;
+}
+
+.mt-2 {
+  margin-top: 2rem;
+}
+
+.mb-1 {
+  margin-bottom: 1rem;
+}
+
+.mb-2 {
+  margin-bottom: 2rem;
+}
+
+/* ==========================================================================
+   Table Styling Enhancements
+   ========================================================================== */
+
+/* Row highlight animation for terrain changes */
+.row-highlight-primary {
+  background-color: var(--pico-primary-focus, rgba(16, 149, 193, 0.15));
+  transition: background-color 0.3s ease;
+}
+
+.row-highlight-secondary {
+  background-color: var(--pico-secondary-focus, rgba(98, 119, 140, 0.15));
+  transition: background-color 0.3s ease;
+}
+
+/* Allocation row states */
+.allocation-row.has-conflict {
+  background: #fff3cd;
+}
+
+.allocation-row.has-collision {
+  background: #f8d7da;
+}
+
+/* ==========================================================================
+   Round Status Indicators
+   ========================================================================== */
+
+.round-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.round-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.round-status-dot.published {
+  background-color: #4caf50;
+}
+
+.round-status-dot.draft {
+  background-color: #ff9800;
+}
+
+/* ==========================================================================
+   Conflict & Collision Badges
+   ========================================================================== */
+
+.conflict-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffc107;
+}
+
+.collision-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #dc3545;
+}
+
+.published-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #28a745;
+}
+
+/* ==========================================================================
+   Terrain Type Colors
+   ========================================================================== */
+
+.terrain-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  margin-right: 0.5rem;
+}
+
+/* ==========================================================================
+   Button States
+   ========================================================================== */
+
+button.is-loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Mobile Responsive Utilities
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .show-mobile {
+    display: block !important;
+  }
+
+  .text-truncate-mobile {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 769px) {
+  .show-mobile {
+    display: none !important;
+  }
+}

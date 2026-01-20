@@ -12,11 +12,8 @@ use TournamentTables\Database\Connection;
  * Represents assignment of a player pairing to a table for a specific round.
  * Reference: specs/001-table-allocation/data-model.md#allocation
  */
-class Allocation
+class Allocation extends BaseModel
 {
-    /** @var int|null */
-    public $id;
-
     /** @var int */
     public $roundId;
 
@@ -63,6 +60,11 @@ class Allocation
         $this->bcpTableNumber = $bcpTableNumber;
     }
 
+    protected static function getTableName(): string
+    {
+        return 'allocations';
+    }
+
     /**
      * Create instance from database row.
      */
@@ -88,19 +90,6 @@ class Allocation
             $reason,
             $bcpTableNumber
         );
-    }
-
-    /**
-     * Find allocation by ID.
-     */
-    public static function find(int $id): ?self
-    {
-        $row = Connection::fetchOne(
-            'SELECT * FROM allocations WHERE id = ?',
-            [$id]
-        );
-
-        return $row ? self::fromRow($row) : null;
     }
 
     /**
@@ -136,25 +125,10 @@ class Allocation
     }
 
     /**
-     * Save the allocation (insert or update).
-     */
-    public function save(): bool
-    {
-        if ($this->id === null) {
-            return $this->insert();
-        }
-        return $this->update();
-    }
-
-    /**
      * Insert a new allocation.
      */
-    private function insert(): bool
+    protected function insert(): bool
     {
-        $reasonJson = $this->allocationReason !== null
-            ? json_encode($this->allocationReason)
-            : null;
-
         Connection::execute(
             'INSERT INTO allocations (round_id, table_id, player1_id, player2_id, player1_score, player2_score, allocation_reason, bcp_table_number)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -165,7 +139,7 @@ class Allocation
                 $this->player2Id,
                 $this->player1Score,
                 $this->player2Score,
-                $reasonJson,
+                $this->serializeReason(),
                 $this->bcpTableNumber,
             ]
         );
@@ -177,17 +151,13 @@ class Allocation
     /**
      * Update an existing allocation.
      */
-    private function update(): bool
+    protected function update(): bool
     {
-        $reasonJson = $this->allocationReason !== null
-            ? json_encode($this->allocationReason)
-            : null;
-
         Connection::execute(
             'UPDATE allocations SET table_id = ?, allocation_reason = ? WHERE id = ?',
             [
                 $this->tableId,
-                $reasonJson,
+                $this->serializeReason(),
                 $this->id,
             ]
         );
@@ -196,16 +166,13 @@ class Allocation
     }
 
     /**
-     * Delete the allocation.
+     * Serialize allocation reason to JSON.
      */
-    public function delete(): bool
+    private function serializeReason(): ?string
     {
-        if ($this->id === null) {
-            return false;
-        }
-
-        Connection::execute('DELETE FROM allocations WHERE id = ?', [$this->id]);
-        return true;
+        return $this->allocationReason !== null
+            ? json_encode($this->allocationReason)
+            : null;
     }
 
     /**
@@ -267,14 +234,31 @@ class Allocation
     }
 
     /**
+     * Get common array data for both toArray and toPublicArray.
+     *
+     * @return array{table: Table|null, player1: Player|null, player2: Player|null, terrainType: TerrainType|null}
+     */
+    private function getRelatedEntities(): array
+    {
+        $table = $this->getTable();
+        return [
+            'table' => $table,
+            'player1' => $this->getPlayer1(),
+            'player2' => $this->getPlayer2(),
+            'terrainType' => $table ? $table->getTerrainType() : null,
+        ];
+    }
+
+    /**
      * Convert to array for JSON serialization.
      */
     public function toArray(): array
     {
-        $table = $this->getTable();
-        $player1 = $this->getPlayer1();
-        $player2 = $this->getPlayer2();
-        $terrainType = $table ? $table->getTerrainType() : null;
+        $entities = $this->getRelatedEntities();
+        $table = $entities['table'];
+        $player1 = $entities['player1'];
+        $player2 = $entities['player2'];
+        $terrainType = $entities['terrainType'];
 
         return [
             'id' => $this->id,
@@ -299,10 +283,11 @@ class Allocation
      */
     public function toPublicArray(): array
     {
-        $table = $this->getTable();
-        $player1 = $this->getPlayer1();
-        $player2 = $this->getPlayer2();
-        $terrainType = $table ? $table->getTerrainType() : null;
+        $entities = $this->getRelatedEntities();
+        $table = $entities['table'];
+        $player1 = $entities['player1'];
+        $player2 = $entities['player2'];
+        $terrainType = $entities['terrainType'];
 
         return [
             'tableNumber' => $table ? $table->tableNumber : null,

@@ -191,4 +191,29 @@ class Connection
     {
         return self::getInstance()->inTransaction();
     }
+
+    /**
+     * Execute a callback within a database transaction.
+     *
+     * Automatically handles begin, commit, and rollback.
+     * If the callback throws an exception, the transaction is rolled back
+     * and the exception is re-thrown.
+     *
+     * @param callable $callback The function to execute within the transaction
+     * @return mixed The return value of the callback
+     * @throws \Exception Any exception thrown by the callback
+     */
+    public static function executeInTransaction(callable $callback)
+    {
+        self::beginTransaction();
+
+        try {
+            $result = $callback();
+            self::commit();
+            return $result;
+        } catch (\Exception $e) {
+            self::rollBack();
+            throw $e;
+        }
+    }
 }
