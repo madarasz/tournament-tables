@@ -38,6 +38,9 @@ class Allocation
     /** @var array|null */
     public $allocationReason;
 
+    /** @var int|null Original BCP table assignment */
+    public $bcpTableNumber;
+
     public function __construct(
         ?int $id = null,
         int $roundId = 0,
@@ -46,7 +49,8 @@ class Allocation
         int $player2Id = 0,
         int $player1Score = 0,
         int $player2Score = 0,
-        ?array $allocationReason = null
+        ?array $allocationReason = null,
+        ?int $bcpTableNumber = null
     ) {
         $this->id = $id;
         $this->roundId = $roundId;
@@ -56,6 +60,7 @@ class Allocation
         $this->player1Score = $player1Score;
         $this->player2Score = $player2Score;
         $this->allocationReason = $allocationReason;
+        $this->bcpTableNumber = $bcpTableNumber;
     }
 
     /**
@@ -68,6 +73,10 @@ class Allocation
             $reason = json_decode($row['allocation_reason'], true);
         }
 
+        $bcpTableNumber = isset($row['bcp_table_number']) && $row['bcp_table_number'] !== null
+            ? (int) $row['bcp_table_number']
+            : null;
+
         return new self(
             (int) $row['id'],
             (int) $row['round_id'],
@@ -76,7 +85,8 @@ class Allocation
             (int) $row['player2_id'],
             (int) $row['player1_score'],
             (int) $row['player2_score'],
-            $reason
+            $reason,
+            $bcpTableNumber
         );
     }
 
@@ -146,8 +156,8 @@ class Allocation
             : null;
 
         Connection::execute(
-            'INSERT INTO allocations (round_id, table_id, player1_id, player2_id, player1_score, player2_score, allocation_reason)
-             VALUES (?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO allocations (round_id, table_id, player1_id, player2_id, player1_score, player2_score, allocation_reason, bcp_table_number)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $this->roundId,
                 $this->tableId,
@@ -156,6 +166,7 @@ class Allocation
                 $this->player1Score,
                 $this->player2Score,
                 $reasonJson,
+                $this->bcpTableNumber,
             ]
         );
 
@@ -240,6 +251,19 @@ class Allocation
     public function hasConflicts(): bool
     {
         return count($this->getConflicts()) > 0;
+    }
+
+    /**
+     * Check if current table differs from original BCP assignment.
+     * Returns false if BCP table number is not available.
+     */
+    public function hasBcpTableDifference(): bool
+    {
+        if ($this->bcpTableNumber === null) {
+            return false;
+        }
+        $table = $this->getTable();
+        return $table && $table->tableNumber !== $this->bcpTableNumber;
     }
 
     /**
