@@ -187,7 +187,8 @@ class TournamentImportService
                         $player2->id,
                         $pairing->player1Score,
                         $pairing->player2Score,
-                        $reason
+                        $reason,
+                        $pairing->bcpTableNumber
                     );
                     $allocation->save();
                     $pairingsImported++;

@@ -31,6 +31,12 @@ function setButtonLoading(button, indicator, text, isLoading) {
 
     btn.disabled = isLoading;
 
+    if (isLoading) {
+        btn.classList.add('is-loading');
+    } else {
+        btn.classList.remove('is-loading');
+    }
+    
     if (ind) {
         ind.style.display = isLoading ? 'inline' : 'none';
     }

@@ -211,8 +211,10 @@ class Connection
             $result = $callback();
             self::commit();
             return $result;
-        } catch (\Exception $e) {
-            self::rollBack();
+        } catch (\Throwable $e) {
+            if (self::inTransaction()) {
+                self::rollBack();
+            }
             throw $e;
         }
     }

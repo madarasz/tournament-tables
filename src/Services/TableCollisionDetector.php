@@ -60,23 +60,6 @@ class TableCollisionDetector
     }
 
     /**
-     * Get collision count for a round.
-     */
-    public function getCollisionCount(int $roundId): int
-    {
-        $count = Connection::fetchColumn(
-            'SELECT COUNT(*) FROM (
-                SELECT table_id FROM allocations
-                WHERE round_id = ?
-                GROUP BY table_id
-                HAVING COUNT(*) > 1
-            ) AS duplicates',
-            [$roundId]
-        );
-        return (int) $count;
-    }
-
-    /**
      * Check if a specific table has a collision in a round.
      */
     public function hasTableCollision(int $roundId, int $tableId): bool

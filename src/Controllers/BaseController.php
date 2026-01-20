@@ -373,6 +373,8 @@ abstract class BaseController
      */
     protected function renderView(string $view, array $data = []): void
     {
+        // Sanitize view name to prevent path traversal
+        $view = str_replace(['..', '/', '\\'], '', basename($view));
         extract($data);
 
         $viewPath = __DIR__ . '/../Views/' . $view . '.php';

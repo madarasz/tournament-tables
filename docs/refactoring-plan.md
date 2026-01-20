@@ -112,10 +112,10 @@ This document tracks code quality improvements across the codebase. When analyzi
 #### Step 7: Verification (COMPLETED)
 - [x] Run PHPUnit tests: `composer test:unit` - 214 tests, 649 assertions passed
 - [x] Run E2E tests: `composer test:e2e` - 4 tests passed
-- [ ] Manual test: Create tournament, dashboard displays correctly
-- [ ] Manual test: Import round from BCP, alerts work
-- [ ] Manual test: Edit allocation, collision detection works
-- [ ] Manual test: Public views display correctly
+- [x] Manual test: Create tournament, dashboard displays correctly
+- [x] Manual test: Import round from BCP, alerts work
+- [x] Manual test: Edit allocation, collision detection works
+- [x] Manual test: Public views display correctly
 
 ---
 
@@ -269,8 +269,8 @@ if ($authTournament === null || $authTournament->id !== $tournamentId) {
 #### Phase 4: Verification - COMPLETED
 - [x] Run PHPUnit tests: `composer test:unit` - 214 tests passed
 - [x] Run E2E tests: `composer test:e2e` - 4 tests passed
-- [ ] Manual test: All admin operations work
-- [ ] Manual test: All public views render correctly
+- [x] Manual test: All admin operations work
+- [x] Manual test: All public views render correctly
 
 ---
 
@@ -473,8 +473,8 @@ $reasons = $this->reasons !== null ? json_encode($this->reasons) : null;
 #### Phase 4: Verification - COMPLETED
 - [x] Run PHPUnit tests: `composer test:unit` - 214 tests, 649 assertions passed
 - [x] Run E2E tests: `composer test:e2e` - 4 tests passed
-- [ ] Manual test: Verify all model operations still work
-- [ ] Manual test: Verify public/admin views render correctly
+- [x] Manual test: Verify all model operations still work
+- [x] Manual test: Verify public/admin views render correctly
 
 ---
 
