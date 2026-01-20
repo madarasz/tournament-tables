@@ -18,8 +18,33 @@
 declare(strict_types=1);
 
 $pageTitle = "{$tournament->name} - Round {$round->roundNumber}";
-$hasConflicts = !empty($conflicts);
 $isPublished = $round->isPublished;
+
+// Separate terrain reuse (warnings) from actual conflicts
+$warnings = [];
+$actualConflicts = [];
+foreach ($conflicts as $conflict) {
+    if ($conflict['type'] === 'TERRAIN_REUSE') {
+        $warnings[] = $conflict;
+    } else {
+        $actualConflicts[] = $conflict;
+    }
+}
+$conflicts = $actualConflicts;
+$hasConflicts = !empty($conflicts);
+$hasWarnings = !empty($warnings);
+
+// Calculate prev/next rounds for navigation
+$prevRound = null;
+$nextRound = null;
+foreach ($rounds as $r) {
+    if ($r->roundNumber === $round->roundNumber - 1) {
+        $prevRound = $r;
+    }
+    if ($r->roundNumber === $round->roundNumber + 1) {
+        $nextRound = $r;
+    }
+}
 
 /**
  * Abbreviate player name for mobile display.
@@ -35,6 +60,19 @@ function abbreviateName($fullName) {
     $firstInitial = mb_substr($parts[0], 0, 1) . '.';
     array_shift($parts);
     return $firstInitial . ' ' . implode(' ', $parts);
+}
+
+/**
+ * Check if a specific player has terrain reuse conflict.
+ * Returns true if the player name appears in a TERRAIN_REUSE conflict message.
+ */
+function playerHasTerrainReuse($playerName, $conflicts) {
+    foreach ($conflicts as $c) {
+        if ($c['type'] === 'TERRAIN_REUSE' && strpos($c['message'], $playerName) === 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -104,12 +142,6 @@ $hasTableCollisions = !empty($tableCollisions);
         .conflict-table-reuse:nth-child(even) {
             background-color: #ffcdd2 !important;
             border-left: 4px solid #f44336;
-        }
-        .conflict-terrain-reuse,
-        .conflict-terrain-reuse:nth-child(odd),
-        .conflict-terrain-reuse:nth-child(even) {
-            background-color: #ffe0b2 !important;
-            border-left: 4px solid #ff9800;
         }
 
         /* Badges */
@@ -471,7 +503,7 @@ $hasTableCollisions = !empty($tableCollisions);
     <main class="container">
         <nav>
             <ul>
-                <li><strong>Tournament Tables</strong></li>
+                <li><strong><a href="/" style="text-decoration: none;">Tournament Tables</a></strong></li>
             </ul>
             <ul>
                 <li><a href="/tournament/<?= $tournament->id ?>"><?= htmlspecialchars($tournament->name) ?></a></li>
@@ -565,6 +597,31 @@ $hasTableCollisions = !empty($tableCollisions);
         </section>
         <?php endif; ?>
 
+        <?php if ($hasWarnings): ?>
+        <section class="warning-list" style="padding: 0.5em; background-color: #f5f5f5b7; border-radius: 4px; border-left: 4px solid #9e9e9e;">
+            <h5 style="color: #666; margin: 0;">Warnings <em>- the allocation is still valid</em></h5>
+            <?php foreach ($warnings as $warning): ?>
+            <div style="padding: 0.5em 0; color: #666; font-size: 0.7em;">
+                <?= htmlspecialchars($warning['message']) ?>
+            </div>
+            <?php endforeach; ?>
+        </section>
+        <?php endif; ?>
+
+        <!-- Round navigation -->
+        <nav style="display: flex; justify-content: space-between; margin-bottom: 1em;">
+            <div>
+                <?php if ($prevRound): ?>
+                <a href="/tournament/<?= $tournament->id ?>/round/<?= $prevRound->roundNumber ?>">&laquo; Round <?= $prevRound->roundNumber ?></a>
+                <?php endif; ?>
+            </div>
+            <div>
+                <?php if ($nextRound): ?>
+                <a href="/tournament/<?= $tournament->id ?>/round/<?= $nextRound->roundNumber ?>">Round <?= $nextRound->roundNumber ?> &raquo;</a>
+                <?php endif; ?>
+            </div>
+        </nav>
+
         <section id="allocation-results">
             <?php if (empty($allocations)): ?>
             <article>
@@ -610,7 +667,7 @@ $hasTableCollisions = !empty($tableCollisions);
                         $rowClass = '';
                         if ($hasTableCollision) $rowClass = 'conflict-table-collision';
                         elseif ($hasTableReuse) $rowClass = 'conflict-table-reuse';
-                        elseif ($hasTerrainReuse) $rowClass = 'conflict-terrain-reuse';
+                        // Note: terrain reuse no longer highlights rows - shown via emoji instead
 
                         $table = $allocation->getTable();
                         $player1 = $allocation->getPlayer1();
@@ -642,8 +699,7 @@ $hasTableCollisions = !empty($tableCollisions);
                         <?php $bcpDiff = formatBcpDifference($allocation); ?>
                         <td class="table-cell" title="<?= $terrainName ? "Table {$table->tableNumber} ({$terrainName})" : "Table " . ($table ? $table->tableNumber : 'N/A') ?>">
                             <?php if ($table): ?>
-                                <span class="header-full">Table <?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?><?= $bcpDiff['emoji'] ?></span>
-                                <span class="header-short">Table<?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?><?= $bcpDiff['emoji'] ?></span>
+                                <span><?= $bcpDiff['emoji'] ?> Table <?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?></span>
                                 <?php if ($terrainName): ?>
                                     <span class="terrain-suffix header-full">(<?= $terrainName ?>)</span>
                                 <?php endif; ?>
@@ -654,18 +710,20 @@ $hasTableCollisions = !empty($tableCollisions);
                         </td>
 
                         <!-- Player 1 with total score -->
-                        <td title="<?= $player1Name ?> (<?= $player1 ? $player1->totalScore : 0 ?>)">
+                        <?php $p1TerrainReuse = playerHasTerrainReuse($player1Name, $allocationConflicts); ?>
+                        <td title="<?= $player1Name ?> (<?= $player1 ? $player1->totalScore : 0 ?>)<?= $p1TerrainReuse ? ' - Already experienced this terrain' : '' ?>">
                             <span class="player-name">
-                                <span class="player-name-full"><?= $player1Name ?></span>
-                                <span class="player-name-short"><?= $player1Short ?></span>
+                                <span class="player-name-full"><?= $player1Name ?><?= $p1TerrainReuse ? ' <span title="Already experienced this terrain">😑</span>' : '' ?></span>
+                                <span class="player-name-short"><?= $player1Short ?><?= $p1TerrainReuse ? ' 😑' : '' ?></span>
                             </span>
                             <span class="player-score">(<?= $player1 ? $player1->totalScore : 0 ?>)</span>
                         </td>
                         <!-- Player 2 with total score -->
-                        <td title="<?= $player2Name ?> (<?= $player2 ? $player2->totalScore : 0 ?>)">
+                        <?php $p2TerrainReuse = playerHasTerrainReuse($player2Name, $allocationConflicts); ?>
+                        <td title="<?= $player2Name ?> (<?= $player2 ? $player2->totalScore : 0 ?>)<?= $p2TerrainReuse ? ' - Already experienced this terrain' : '' ?>">
                             <span class="player-name">
-                                <span class="player-name-full"><?= $player2Name ?></span>
-                                <span class="player-name-short"><?= $player2Short ?></span>
+                                <span class="player-name-full"><?= $player2Name ?><?= $p2TerrainReuse ? ' <span title="Already experienced this terrain">😑</span>' : '' ?></span>
+                                <span class="player-name-short"><?= $player2Short ?><?= $p2TerrainReuse ? ' 😑' : '' ?></span>
                             </span>
                             <span class="player-score">(<?= $player2 ? $player2->totalScore : 0 ?>)</span>
                         </td>
