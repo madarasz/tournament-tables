@@ -8,7 +8,8 @@ import { setAdminTokenCookie } from '../helpers/auth';
  * Tests the critical allocation editing workflow including:
  * - Editing individual table assignments via dropdown
  * - Creating table collisions by assigning same table to multiple pairings
- * - Swapping tables between pairings and creating TABLE_REUSE conflicts
+ * - Swapping tables between pairings (no confirmation - UX #6)
+ * - Creating TABLE_REUSE conflicts via swap
  * - Regenerating allocations to resolve conflicts
  *
  * Uses direct MySQL data import for deterministic test data.
@@ -138,9 +139,7 @@ test.describe('Allocation Editing', () => {
     const swapButton = page.getByRole('button', { name: 'Swap Selected' });
     await expect(swapButton).toBeEnabled();
 
-    // Handle confirmation dialog and click swap
-    page.once('dialog', (dialog) => dialog.accept());
-
+    // Click swap - no confirmation dialog needed (UX Improvement #6: reversible action)
     // Wait for swap API response and page reload
     await Promise.all([
       page.waitForResponse(

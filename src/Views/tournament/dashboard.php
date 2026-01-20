@@ -17,7 +17,7 @@
  */
 
 $title = $tournament->name;
-$tableCount = $tournament->tableCount;
+$tableCount = count($tables); // Use actual table count from database
 $hasRounds = !empty($rounds);
 $justCreated = $justCreated ?? false;
 $adminToken = $adminToken ?? null;
@@ -38,7 +38,7 @@ $autoImport = $autoImport ?? null;
         <p class="status-warning">
             Note: Could not auto-import Round 1: <?= htmlspecialchars($autoImport['error']) ?>
         </p>
-        <p>You can manually import Round 1 using the form below.</p>
+        <p>You can manually import Round 1 using the button in the Rounds table below.</p>
     <?php endif; ?>
 
     <p><strong>Important:</strong> Save your admin token. You'll need it to manage this tournament from other devices or browsers.</p>
@@ -85,78 +85,59 @@ $autoImport = $autoImport ?? null;
     </article>
 </section>
 
+<?php
+// Calculate next round number (MAX + 1 or 1 if no rounds)
+$nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNumber; }, $rounds)) + 1 : 1;
+?>
 <section>
     <h2>Rounds</h2>
 
-    <?php if ($hasRounds): ?>
     <table role="grid">
         <thead>
             <tr>
-                <th>Round</th>
-                <th>Allocations</th>
+                <th class="text-center">Round</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th class="text-center">Actions</th>
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($rounds as $round): ?>
-            <tr>
-                <td><strong><?= $round->roundNumber ?></strong></td>
-                <td><?= $round->getAllocationCount() ?> pairings</td>
-                <td>
-                    <?php if ($round->isPublished): ?>
-                        <span class="status-published">Published</span>
-                    <?php else: ?>
-                        <span class="status-draft">Draft</span>
-                    <?php endif; ?>
-                </td>
-                <td>
-                    <a href="/tournament/<?= $tournament->id ?>/round/<?= $round->roundNumber ?>" role="button" class="secondary">
-                        Manage
-                    </a>
+            <?php if ($hasRounds): ?>
+                <?php foreach ($rounds as $round): ?>
+                <tr>
+                    <td class="text-center"><strong><?= $round->roundNumber ?></strong></td>
+                    <td>
+                        <?php if ($round->isPublished): ?>
+                            <span class="status-published">Published</span>
+                        <?php else: ?>
+                            <span class="status-draft">Draft</span>
+                        <?php endif; ?>
+                    </td>
+                    <td class="text-center">
+                        <a href="/tournament/<?= $tournament->id ?>/round/<?= $round->roundNumber ?>" role="button" class="secondary">
+                            Manage
+                        </a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+            <!-- Import next round row -->
+            <tr class="import-round-row">
+                <td colspan="3" class="import-round-cell">
+                    <button
+                        type="button"
+                        id="import-round-button"
+                        class="outline"
+                        data-round-number="<?= $nextRoundNumber ?>"
+                        data-tournament-id="<?= $tournament->id ?>"
+                    >
+                        <span id="import-indicator" style="display: none;">Importing...</span>
+                        <span id="import-text">+ Import Round <?= $nextRoundNumber ?></span>
+                    </button>
+                    <div id="import-result" class="import-result"></div>
                 </td>
             </tr>
-            <?php endforeach; ?>
         </tbody>
     </table>
-    <?php else: ?>
-    <article>
-        <p>No rounds imported yet. Use the form below to import a round from BCP.</p>
-    </article>
-    <?php endif; ?>
-</section>
-
-<section>
-    <h2>Import New Round</h2>
-    <article>
-        <p>Import pairings from Best Coast Pairings for a specific round.</p>
-
-        <form id="import-form">
-            <div class="grid">
-                <label>
-                    Round Number
-                    <input
-                        type="number"
-                        id="round-number"
-                        name="roundNumber"
-                        min="1"
-                        max="10"
-                        value="<?= count($rounds) + 1 ?>"
-                        required
-                    />
-                </label>
-                <div>
-                    <label>&nbsp;</label>
-                    <button type="submit" id="import-button">
-                        <span id="import-indicator" style="display: none;">Importing...</span>
-                        <span id="import-text">Import from BCP</span>
-                    </button>
-                </div>
-            </div>
-        </form>
-
-        <div id="import-result" style="margin-top: 1rem;"></div>
-    </article>
 </section>
 
 <section>
@@ -243,6 +224,35 @@ $autoImport = $autoImport ?? null;
 </section>
 
 <style>
+/* Utility classes */
+.text-center {
+    text-align: center;
+}
+
+/* Import Round Row Styles */
+.import-round-row {
+    background: transparent;
+}
+
+.import-round-cell {
+    text-align: center;
+    padding: 1rem !important;
+    border-top: 1px dashed var(--pico-muted-border-color, #e0e0e0);
+}
+
+.import-round-cell button {
+    margin: 0 auto;
+    min-width: 200px;
+}
+
+.import-result {
+    margin-top: 0.75rem;
+}
+
+.import-result:empty {
+    display: none;
+}
+
 /* Responsive styles for Table Configuration - Set All Tables */
 .set-all-container {
     margin-bottom: 1.5rem;
@@ -364,16 +374,17 @@ function copyAdminToken() {
     });
 }
 
-document.getElementById('import-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    var roundNumber = document.getElementById('round-number').value;
+// Import round button handler
+document.getElementById('import-round-button').addEventListener('click', function() {
+    var button = this;
+    var roundNumber = button.getAttribute('data-round-number');
+    var tournamentId = button.getAttribute('data-tournament-id');
 
     // Show loading state
-    setButtonLoading('import-button', 'import-indicator', 'import-text', true);
+    setButtonLoading('import-round-button', 'import-indicator', 'import-text', true);
     document.getElementById('import-result').innerHTML = '';
 
-    fetch('/api/tournaments/<?= $tournament->id ?>/rounds/' + roundNumber + '/import', {
+    fetch('/api/tournaments/' + tournamentId + '/rounds/' + roundNumber + '/import', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -385,15 +396,13 @@ document.getElementById('import-form').addEventListener('submit', function(e) {
         });
     })
     .then(function(response) {
-        setButtonLoading('import-button', 'import-indicator', 'import-text', false);
+        setButtonLoading('import-round-button', 'import-indicator', 'import-text', false);
 
         if (response.status >= 200 && response.status < 300) {
-            showAlert('import-result', 'success',
-                'Successfully imported ' + escapeHtml(String(response.data.pairingsImported)) + ' pairings for Round ' + escapeHtml(roundNumber) + '. ' +
-                '<a href="/tournament/<?= $tournament->id ?>/round/' + roundNumber + '">Manage Round ' + roundNumber + '</a>'
-            );
-            // Reload after a short delay to show updated rounds list
-            setTimeout(function() { location.reload(); }, 2000);
+            // Redirect immediately to manage page with success info in query params
+            var pairingsCount = response.data.pairingsImported || 0;
+            window.location.href = '/tournament/' + tournamentId + '/round/' + roundNumber +
+                '?imported=1&pairings=' + encodeURIComponent(pairingsCount);
         } else {
             showAlert('import-result', 'error',
                 'Error: ' + escapeHtml(response.data.message || 'Failed to import round')
@@ -401,7 +410,7 @@ document.getElementById('import-form').addEventListener('submit', function(e) {
         }
     })
     .catch(function(error) {
-        setButtonLoading('import-button', 'import-indicator', 'import-text', false);
+        setButtonLoading('import-round-button', 'import-indicator', 'import-text', false);
         showAlert('import-result', 'error', 'Network error: ' + escapeHtml(error.message));
     });
 });

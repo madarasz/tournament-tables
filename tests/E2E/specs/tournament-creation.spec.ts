@@ -88,12 +88,11 @@ test.describe('Tournament Creation (US2)', () => {
     const roundsTable = page.locator('section').filter({ has: page.locator('h2', { hasText: 'Rounds' }) }).locator('table');
     await expect(roundsTable).toBeVisible();
 
-    // Check Round 1 row is displayed with pairings info and Draft status
+    // Check Round 1 row is displayed with Draft status
     // Round 1 should be the first row in tbody (only round at this point)
     const round1Row = roundsTable.locator('tbody tr').first();
     await expect(round1Row).toBeVisible();
     await expect(round1Row.locator('td').first()).toHaveText('1');
-    await expect(round1Row).toContainText('pairings');
     await expect(round1Row).toContainText('Draft');
 
     // Navigate to home page
@@ -114,5 +113,60 @@ test.describe('Tournament Creation (US2)', () => {
     await tournamentRow.getByRole('button').click();
     await page.waitForURL(/\/tournament\/\d+/);
     expect(page.url()).toContain(`/tournament/${tournamentId}`);
+  });
+
+  /**
+   * Test: Import Round from Dashboard - Auto-Redirect to Manage Page
+   *
+   * Verifies UX Improvement #5: After importing a round from the dashboard,
+   * the user should be immediately redirected to the manage page with a
+   * success message displayed.
+   *
+   * Reference: docs/ui-ux-improvements.md - Improvement #5
+   */
+  test('should redirect to manage page after importing round from dashboard', async ({
+    page,
+  }) => {
+    // Step 1: Create a tournament (which auto-imports Round 1)
+    await page.goto('/tournament/create');
+    const tournamentData = generateUniqueTournament('RoundImport');
+    await page.locator('input[name="bcpUrl"]').fill(tournamentData.bcpUrl);
+    await page.locator('button[type="submit"]').click();
+
+    // Wait for redirect to dashboard
+    await page.waitForURL(/\/tournament\/\d+/, { timeout: 10000 });
+
+    // Extract tournament ID from URL and register for cleanup
+    const url = page.url();
+    const tournamentIdMatch = url.match(/\/tournament\/(\d+)/);
+    expect(tournamentIdMatch).toBeTruthy();
+    const tournamentId = parseInt(tournamentIdMatch![1], 10);
+
+    const cookies = await page.context().cookies();
+    const adminCookie = cookies.find((c) => c.name === 'admin_token');
+    expect(adminCookie).toBeTruthy();
+    const decodedCookie = decodeURIComponent(adminCookie!.value);
+    const cookieData = JSON.parse(decodedCookie);
+    const actualAdminToken = cookieData.tournaments[tournamentId].token;
+    registerTournament(cleanupContext, tournamentId, actualAdminToken);
+
+    // Step 2: Click "Import Round 2" button on dashboard
+    const importButton = page.locator('#import-round-button');
+    await expect(importButton).toBeVisible();
+    await expect(importButton).toContainText('Import Round 2');
+    await importButton.click();
+
+    // Step 3: Verify redirect to manage page (with query parameters)
+    await page.waitForURL(/\/tournament\/\d+\/round\/2/, { timeout: 10000 });
+    expect(page.url()).toMatch(/\/tournament\/\d+\/round\/2\?imported=1/);
+
+    // Step 4: Verify success message is displayed on manage page
+    const successMessage = page.locator('#import-success-message');
+    await expect(successMessage).toBeVisible();
+    await expect(successMessage).toContainText('Round 2 imported successfully');
+    await expect(successMessage).toContainText('pairings loaded from BCP');
+
+    // Verify we're on the correct round's manage page
+    await expect(page.locator('h1')).toContainText('Round 2');
   });
 });
