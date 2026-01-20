@@ -16,7 +16,8 @@ services:
     command: >
       bash -c "a2enmod rewrite && docker-php-ext-install pdo pdo_mysql &&
       echo 'PassEnv APP_ENV BCP_MOCK_BASE_URL BCP_MOCK_API_URL' >> /etc/apache2/apache2.conf &&
-      apache2-foreground"
+      echo '<?php declare(strict_types=1); return [\"host\"=>\"mysql\",\"database\"=>\"tournament_tables\",\"username\"=>\"root\",\"password\"=>\"root\",\"charset\"=>\"utf8mb4\"];' > config/database.php &&
+      php bin/migrate.php && apache2-foreground"
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost/api/terrain-types"]
       interval: 5s
