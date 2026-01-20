@@ -44,7 +44,7 @@ export async function setAdminTokenCookie(
       value: cookieValue,
       domain: url.hostname,
       path: '/',
-      httpOnly: true,
+      httpOnly: false, // Must be false so JavaScript can read it for X-Admin-Token header
       sameSite: 'Lax',
       expires: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60, // 30 days
     },

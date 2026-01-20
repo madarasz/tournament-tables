@@ -286,9 +286,14 @@ $hasTableCollisions = !empty($tableCollisions);
         .conflict-list {
             margin-top: 1em;
             padding: 1em;
+            color: #666;
             background-color: #fff3e0;
             border-radius: 4px;
         }
+        .conflict-list h3 {
+            margin: 0;
+            color: #666;
+        }   
         .conflict-item {
             padding: 0.5em 0;
             border-bottom: 1px solid #ffe0b2;
@@ -587,7 +592,6 @@ $hasTableCollisions = !empty($tableCollisions);
         <?php if ($hasConflicts): ?>
         <section class="conflict-list">
             <h3>Conflicts</h3>
-            <p>The following constraint violations were detected. These allocations represent the best available options.</p>
             <?php foreach ($conflicts as $conflict): ?>
             <div class="conflict-item">
                 <span class="conflict-type"><?= htmlspecialchars($conflict['type']) ?>:</span>
@@ -752,7 +756,7 @@ $hasTableCollisions = !empty($tableCollisions);
                             <button
                                 type="button"
                                 class="change-table-btn"
-                                onclick="openTableModal(<?= $allocation->id ?>, <?= $table ? $table->id : 'null' ?>, <?= json_encode($player1Name) ?>, <?= json_encode($player2Name) ?>)"
+                                onclick="openTableModal(<?= $allocation->id ?>, <?= $table ? $table->id : 'null' ?>, <?= htmlspecialchars(json_encode($player1 ? $player1->name : 'Unknown'), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($player2 ? $player2->name : 'Unknown'), ENT_QUOTES) ?>)"
                                 aria-label="Change table"
                                 title="Change table"
                             >&#9998;</button>
