@@ -66,12 +66,6 @@ class AllocationEditService
         // Check if table is already used in this round (by a different allocation)
         $existingAllocation = $this->getAllocationByRoundAndTable($allocation['round_id'], $newTableId);
 
-        // Update allocation
-        $stmt = $this->db->prepare(
-            'UPDATE allocations SET table_id = ? WHERE id = ?'
-        );
-        $stmt->execute([$newTableId, $allocationId]);
-
         // Recalculate conflicts for this allocation
         $conflicts = $this->calculateConflicts(
             $allocation['player1_id'],
@@ -89,6 +83,15 @@ class AllocationEditService
                 'otherAllocationId' => $existingAllocation['id'],
             ];
         }
+
+        // Build allocation_reason JSON with conflicts
+        $allocationReason = json_encode(['conflicts' => $conflicts]);
+
+        // Update allocation with new table and conflicts
+        $stmt = $this->db->prepare(
+            'UPDATE allocations SET table_id = ?, allocation_reason = ? WHERE id = ?'
+        );
+        $stmt->execute([$newTableId, $allocationReason, $allocationId]);
 
         return [
             'success' => true,
@@ -139,13 +142,6 @@ class AllocationEditService
             $table1 = $allocation1['table_id'];
             $table2 = $allocation2['table_id'];
 
-            // Swap tables
-            $stmt = $this->db->prepare('UPDATE allocations SET table_id = ? WHERE id = ?');
-            $stmt->execute([$table2, $allocationId1]);
-            $stmt->execute([$table1, $allocationId2]);
-
-            $this->db->commit();
-
             // Calculate conflicts for both allocations
             $conflicts1 = $this->calculateConflicts(
                 $allocation1['player1_id'],
@@ -162,6 +158,17 @@ class AllocationEditService
                 $round['tournament_id'],
                 $round['round_number']
             );
+
+            // Build allocation_reason JSON with conflicts
+            $allocationReason1 = json_encode(['conflicts' => $conflicts1]);
+            $allocationReason2 = json_encode(['conflicts' => $conflicts2]);
+
+            // Swap tables and update conflicts
+            $stmt = $this->db->prepare('UPDATE allocations SET table_id = ?, allocation_reason = ? WHERE id = ?');
+            $stmt->execute([$table2, $allocationReason1, $allocationId1]);
+            $stmt->execute([$table1, $allocationReason2, $allocationId2]);
+
+            $this->db->commit();
 
             return [
                 'success' => true,

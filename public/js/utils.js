@@ -26,7 +26,14 @@ function escapeHtml(text) {
 function getCookie(name) {
     var value = '; ' + document.cookie;
     var parts = value.split('; ' + name + '=');
-    if (parts.length === 2) return parts.pop().split(';').shift();
+    if (parts.length === 2) {
+        var rawValue = parts.pop().split(';').shift();
+        try {
+            return decodeURIComponent(rawValue);
+        } catch (e) {
+            return rawValue;
+        }
+    }
     return '';
 }
 

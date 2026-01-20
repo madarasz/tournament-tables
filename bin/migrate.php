@@ -131,6 +131,35 @@ SQL;
 
     echo "Migration complete. All tables created.\n";
 
+    // Add missing columns to existing tables (for upgrades)
+    $alterStatements = [
+        [
+            'table' => 'players',
+            'column' => 'total_score',
+            'sql' => 'ALTER TABLE players ADD COLUMN total_score INT NOT NULL DEFAULT 0'
+        ],
+        [
+            'table' => 'terrain_types',
+            'column' => 'emoji',
+            'sql' => 'ALTER TABLE terrain_types ADD COLUMN emoji VARCHAR(10) AFTER description'
+        ],
+    ];
+
+    foreach ($alterStatements as $alter) {
+        $checkSql = "SELECT COUNT(*) FROM information_schema.COLUMNS
+                     WHERE TABLE_SCHEMA = :db AND TABLE_NAME = :table AND COLUMN_NAME = :column";
+        $stmt = $pdo->prepare($checkSql);
+        $stmt->execute(['db' => $dbName, 'table' => $alter['table'], 'column' => $alter['column']]);
+        $exists = (int) $stmt->fetchColumn() > 0;
+
+        if (!$exists) {
+            $pdo->exec($alter['sql']);
+            echo "Added column '{$alter['column']}' to '{$alter['table']}' table.\n";
+        }
+    }
+
+    echo "Schema upgrade complete.\n";
+
 } catch (PDOException $e) {
     fwrite(STDERR, "Database error: " . $e->getMessage() . "\n");
     exit(1);

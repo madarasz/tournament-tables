@@ -138,11 +138,12 @@ class RoundController extends BaseController
                         ];
                     } else {
                         // Round 2+: Assign tables sequentially as placeholders
-                        // These will be optimized when "Generate allocations" is called
+                        // Allocation generation runs automatically after import to optimize assignments
                         if ($tableIndex < count($tables)) {
                             $table = $tables[$tableIndex];
                             $tableIndex++;
                         }
+
                         $reason = [
                             'timestamp' => date('c'),
                             'totalCost' => 0,
@@ -175,12 +176,27 @@ class RoundController extends BaseController
 
                 Connection::commit();
 
-                $this->success([
-                    'roundNumber' => $roundNumber,
-                    'pairingsImported' => $pairingsImported,
-                    'playersImported' => $playersImported,
-                    'message' => "Imported {$pairingsImported} pairings for round {$roundNumber}",
-                ]);
+                // For round 2+, automatically run allocation generation to optimize table assignments
+                if ($roundNumber > 1) {
+                    $generationResult = $this->runAllocationGeneration($tournamentId, $roundNumber, $round);
+
+                    $this->success([
+                        'roundNumber' => $roundNumber,
+                        'pairingsImported' => $pairingsImported,
+                        'playersImported' => $playersImported,
+                        'message' => "Imported {$pairingsImported} pairings for round {$roundNumber} and generated optimized allocations",
+                        'allocations' => $generationResult['allocations'],
+                        'conflicts' => $generationResult['conflicts'],
+                        'summary' => $generationResult['summary'],
+                    ]);
+                } else {
+                    $this->success([
+                        'roundNumber' => $roundNumber,
+                        'pairingsImported' => $pairingsImported,
+                        'playersImported' => $playersImported,
+                        'message' => "Imported {$pairingsImported} pairings for round {$roundNumber}",
+                    ]);
+                }
             } catch (\Exception $e) {
                 Connection::rollBack();
                 throw $e;
@@ -195,42 +211,19 @@ class RoundController extends BaseController
     }
 
     /**
-     * POST /api/tournaments/{id}/rounds/{n}/generate - Generate allocations.
+     * Run allocation generation for a round.
      *
-     * Reference: FR-007
+     * Helper method used by both import (for round 2+) and generate actions.
+     *
+     * @param int $tournamentId Tournament ID
+     * @param int $roundNumber Round number
+     * @param Round $round Round model
+     * @return array Result with allocations, conflicts, and summary
      */
-    public function generate(array $params, ?array $body): void
+    private function runAllocationGeneration(int $tournamentId, int $roundNumber, Round $round): array
     {
-        $tournamentId = (int) ($params['id'] ?? 0);
-        $roundNumber = (int) ($params['n'] ?? 0);
-
-        // Verify authenticated tournament matches requested tournament
-        $authTournament = AdminAuthMiddleware::getTournament();
-        if ($authTournament === null || $authTournament->id !== $tournamentId) {
-            $this->unauthorized('Token does not match this tournament');
-            return;
-        }
-
-        // Validate round number
-        if ($roundNumber < 1) {
-            $this->validationError(['roundNumber' => ['Round number must be positive']]);
-            return;
-        }
-
-        // Get round
-        $round = Round::findByTournamentAndNumber($tournamentId, $roundNumber);
-        if ($round === null) {
-            $this->error('no_round', 'Round not found. Import pairings first.', 400);
-            return;
-        }
-
         // Get existing allocations to extract pairings
         $existingAllocations = Allocation::findByRound($round->id);
-
-        if (empty($existingAllocations)) {
-            $this->error('no_pairings', 'No pairings available for this round. Import pairings first.', 400);
-            return;
-        }
 
         // Build pairings from existing allocations
         $pairings = [];
@@ -325,15 +318,66 @@ class RoundController extends BaseController
 
             Connection::commit();
 
-            $this->success([
-                'roundNumber' => $roundNumber,
+            return [
                 'allocations' => $savedAllocations,
                 'conflicts' => $result->conflicts,
                 'summary' => $result->summary,
-            ]);
+            ];
         } catch (\Exception $e) {
             Connection::rollBack();
-            $this->error('generation_failed', 'Failed to save allocations: ' . $e->getMessage(), 500);
+            throw $e;
+        }
+    }
+
+    /**
+     * POST /api/tournaments/{id}/rounds/{n}/generate - Generate allocations.
+     *
+     * Reference: FR-007
+     */
+    public function generate(array $params, ?array $body): void
+    {
+        $tournamentId = (int) ($params['id'] ?? 0);
+        $roundNumber = (int) ($params['n'] ?? 0);
+
+        // Verify authenticated tournament matches requested tournament
+        $authTournament = AdminAuthMiddleware::getTournament();
+        if ($authTournament === null || $authTournament->id !== $tournamentId) {
+            $this->unauthorized('Token does not match this tournament');
+            return;
+        }
+
+        // Validate round number
+        if ($roundNumber < 1) {
+            $this->validationError(['roundNumber' => ['Round number must be positive']]);
+            return;
+        }
+
+        // Get round
+        $round = Round::findByTournamentAndNumber($tournamentId, $roundNumber);
+        if ($round === null) {
+            $this->error('no_round', 'Round not found. Import pairings first.', 400);
+            return;
+        }
+
+        // Get existing allocations to verify pairings exist
+        $existingAllocations = Allocation::findByRound($round->id);
+
+        if (empty($existingAllocations)) {
+            $this->error('no_pairings', 'No pairings available for this round. Import pairings first.', 400);
+            return;
+        }
+
+        try {
+            $result = $this->runAllocationGeneration($tournamentId, $roundNumber, $round);
+
+            $this->success([
+                'roundNumber' => $roundNumber,
+                'allocations' => $result['allocations'],
+                'conflicts' => $result['conflicts'],
+                'summary' => $result['summary'],
+            ]);
+        } catch (\Exception $e) {
+            $this->error('generation_failed', 'Failed to generate allocations: ' . $e->getMessage(), 500);
         }
     }
 
