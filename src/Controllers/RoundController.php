@@ -165,7 +165,8 @@ class RoundController extends BaseController
                             $player2->id,
                             $pairing->player1Score,
                             $pairing->player2Score,
-                            $reason
+                            $reason,
+                            $pairing->bcpTableNumber
                         );
                         $allocation->save();
                     }
@@ -224,6 +225,20 @@ class RoundController extends BaseController
     {
         // Get existing allocations to extract pairings
         $existingAllocations = Allocation::findByRound($round->id);
+
+        // Build BCP table lookup from existing allocations before deleting
+        // Key: player1BcpId:player2BcpId, Value: bcpTableNumber
+        $bcpTableLookup = [];
+        foreach ($existingAllocations as $alloc) {
+            if ($alloc->bcpTableNumber !== null) {
+                $p1 = Player::find($alloc->player1Id);
+                $p2 = Player::find($alloc->player2Id);
+                if ($p1 && $p2) {
+                    $key = $p1->bcpPlayerId . ':' . $p2->bcpPlayerId;
+                    $bcpTableLookup[$key] = $alloc->bcpTableNumber;
+                }
+            }
+        }
 
         // Build pairings from existing allocations
         $pairings = [];
@@ -301,6 +316,10 @@ class RoundController extends BaseController
                     continue;
                 }
 
+                // Retrieve preserved BCP table number from lookup
+                $bcpTableKey = $allocData['player1']['bcpId'] . ':' . $allocData['player2']['bcpId'];
+                $bcpTableNumber = $bcpTableLookup[$bcpTableKey] ?? null;
+
                 $allocation = new Allocation(
                     null,
                     $round->id,
@@ -309,7 +328,8 @@ class RoundController extends BaseController
                     $player2Id,
                     $allocData['player1']['score'],
                     $allocData['player2']['score'],
-                    $allocData['reason']
+                    $allocData['reason'],
+                    $bcpTableNumber
                 );
                 $allocation->save();
 

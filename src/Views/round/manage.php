@@ -37,6 +37,20 @@ function abbreviateName($fullName) {
     return $firstInitial . ' ' . implode(' ', $parts);
 }
 
+/**
+ * Format BCP table difference indicator.
+ * Returns array with 'emoji' and 'detail' keys.
+ */
+function formatBcpDifference($allocation) {
+    if (!$allocation->hasBcpTableDifference()) {
+        return ['emoji' => '', 'detail' => ''];
+    }
+    return [
+        'emoji' => ' 🆕',
+        'detail' => '<small class="bcp-diff">• BCP: Table ' . $allocation->bcpTableNumber . '</small>'
+    ];
+}
+
 // Detect table collisions (multiple allocations with same table)
 $tableUsage = [];
 $tableCollisions = [];
@@ -146,6 +160,15 @@ $hasTableCollisions = !empty($tableCollisions);
             font-style: italic;
             color: #666;
             font-size: 0.85em;
+        }
+
+        /* BCP table difference indicator */
+        .bcp-diff {
+            display: block;
+            color: #666;
+            font-size: 0.75em;
+            font-weight: normal;
+            margin-top: 2px;
         }
 
         /* VS separator column */
@@ -556,8 +579,7 @@ $hasTableCollisions = !empty($tableCollisions);
                             <span class="header-short" aria-label="Select"></span>
                         </th>
                         <th class="table-cell">
-                            <span class="header-full">Table</span>
-                            <span class="header-short">T#</span>
+                            <span>Table</span>
                         </th>
                         <th>
                             <span>Player 1</span>
@@ -617,13 +639,15 @@ $hasTableCollisions = !empty($tableCollisions);
                         </td>
 
                         <!-- Table number with terrain -->
+                        <?php $bcpDiff = formatBcpDifference($allocation); ?>
                         <td class="table-cell" title="<?= $terrainName ? "Table {$table->tableNumber} ({$terrainName})" : "Table " . ($table ? $table->tableNumber : 'N/A') ?>">
                             <?php if ($table): ?>
-                                <span class="header-full">Table <?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?></span>
-                                <span class="header-short">T<?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?></span>
+                                <span class="header-full">Table <?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?><?= $bcpDiff['emoji'] ?></span>
+                                <span class="header-short">Table<?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?><?= $bcpDiff['emoji'] ?></span>
                                 <?php if ($terrainName): ?>
                                     <span class="terrain-suffix header-full">(<?= $terrainName ?>)</span>
                                 <?php endif; ?>
+                                <?= $bcpDiff['detail'] ?>
                             <?php else: ?>
                                 N/A
                             <?php endif; ?>

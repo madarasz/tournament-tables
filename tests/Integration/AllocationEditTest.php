@@ -205,6 +205,164 @@ class AllocationEditTest extends TestCase
         $this->editService->editTableAssignment($allocation->id, $invalidTableId);
     }
 
+    /**
+     * Test BCP table number persistence.
+     */
+    public function testBcpTableNumberPersistence(): void
+    {
+        $round = new Round();
+        $round->tournamentId = $this->tournament->id;
+        $round->roundNumber = 1;
+        $round->isPublished = false;
+        $round->save();
+
+        $tables = Table::findByTournament($this->tournament->id);
+        $players = Player::findByTournament($this->tournament->id);
+
+        // Create allocation with BCP table number
+        $allocation = new Allocation(
+            null,
+            $round->id,
+            $tables[0]->id,
+            $players[0]->id,
+            $players[1]->id,
+            0,
+            0,
+            null,
+            5 // BCP table number
+        );
+        $allocation->save();
+
+        // Retrieve and verify
+        $retrieved = Allocation::find($allocation->id);
+        $this->assertEquals(5, $retrieved->bcpTableNumber);
+    }
+
+    /**
+     * Test BCP table number can be null.
+     */
+    public function testBcpTableNumberCanBeNull(): void
+    {
+        $round = new Round();
+        $round->tournamentId = $this->tournament->id;
+        $round->roundNumber = 1;
+        $round->isPublished = false;
+        $round->save();
+
+        $tables = Table::findByTournament($this->tournament->id);
+        $players = Player::findByTournament($this->tournament->id);
+
+        // Create allocation without BCP table number
+        $allocation = new Allocation(
+            null,
+            $round->id,
+            $tables[0]->id,
+            $players[0]->id,
+            $players[1]->id,
+            0,
+            0,
+            null,
+            null // No BCP table number
+        );
+        $allocation->save();
+
+        // Retrieve and verify
+        $retrieved = Allocation::find($allocation->id);
+        $this->assertNull($retrieved->bcpTableNumber);
+    }
+
+    /**
+     * Test hasBcpTableDifference returns false when bcpTableNumber is null.
+     */
+    public function testHasBcpTableDifferenceReturnsFalseWhenNull(): void
+    {
+        $round = new Round();
+        $round->tournamentId = $this->tournament->id;
+        $round->roundNumber = 1;
+        $round->isPublished = false;
+        $round->save();
+
+        $tables = Table::findByTournament($this->tournament->id);
+        $players = Player::findByTournament($this->tournament->id);
+
+        $allocation = new Allocation(
+            null,
+            $round->id,
+            $tables[0]->id,
+            $players[0]->id,
+            $players[1]->id,
+            0,
+            0,
+            null,
+            null // No BCP table number
+        );
+        $allocation->save();
+
+        $this->assertFalse($allocation->hasBcpTableDifference());
+    }
+
+    /**
+     * Test hasBcpTableDifference returns false when table matches BCP table.
+     */
+    public function testHasBcpTableDifferenceReturnsFalseWhenMatches(): void
+    {
+        $round = new Round();
+        $round->tournamentId = $this->tournament->id;
+        $round->roundNumber = 1;
+        $round->isPublished = false;
+        $round->save();
+
+        $tables = Table::findByTournament($this->tournament->id);
+        $players = Player::findByTournament($this->tournament->id);
+
+        // Assign to table 1 with BCP table number 1 (same)
+        $allocation = new Allocation(
+            null,
+            $round->id,
+            $tables[0]->id, // table_number = 1
+            $players[0]->id,
+            $players[1]->id,
+            0,
+            0,
+            null,
+            1 // BCP table number = 1
+        );
+        $allocation->save();
+
+        $this->assertFalse($allocation->hasBcpTableDifference());
+    }
+
+    /**
+     * Test hasBcpTableDifference returns true when table differs from BCP table.
+     */
+    public function testHasBcpTableDifferenceReturnsTrueWhenDiffers(): void
+    {
+        $round = new Round();
+        $round->tournamentId = $this->tournament->id;
+        $round->roundNumber = 1;
+        $round->isPublished = false;
+        $round->save();
+
+        $tables = Table::findByTournament($this->tournament->id);
+        $players = Player::findByTournament($this->tournament->id);
+
+        // Assign to table 1 with BCP table number 5 (different)
+        $allocation = new Allocation(
+            null,
+            $round->id,
+            $tables[0]->id, // table_number = 1
+            $players[0]->id,
+            $players[1]->id,
+            0,
+            0,
+            null,
+            5 // BCP table number = 5
+        );
+        $allocation->save();
+
+        $this->assertTrue($allocation->hasBcpTableDifference());
+    }
+
     // Helper methods
 
     private function isDatabaseAvailable(): bool

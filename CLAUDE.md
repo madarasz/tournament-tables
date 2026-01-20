@@ -320,6 +320,7 @@ php -S localhost:8080 -t public public/index.php
 - PHP 7.4.33 compatibility (no PHP 8.x features like match expressions, named arguments, etc.)
 
 ### Code Conventions
+- **Avoid code duplication**: Use helper functions
 - **Models**: Static methods for CRUD operations, `fromRow()` for hydration
 - **Services**: Business logic, stateless where possible
 - **Controllers**: Thin controllers, delegate to services

@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS allocations (
     player1_score INT NOT NULL DEFAULT 0,
     player2_score INT NOT NULL DEFAULT 0,
     allocation_reason JSON,
+    bcp_table_number INT DEFAULT NULL,
     INDEX idx_round_table (round_id, table_id),
     UNIQUE INDEX idx_round_player1 (round_id, player1_id),
     UNIQUE INDEX idx_round_player2 (round_id, player2_id),
@@ -142,6 +143,11 @@ SQL;
             'table' => 'terrain_types',
             'column' => 'emoji',
             'sql' => 'ALTER TABLE terrain_types ADD COLUMN emoji VARCHAR(10) AFTER description'
+        ],
+        [
+            'table' => 'allocations',
+            'column' => 'bcp_table_number',
+            'sql' => 'ALTER TABLE allocations ADD COLUMN bcp_table_number INT DEFAULT NULL'
         ],
     ];
 
