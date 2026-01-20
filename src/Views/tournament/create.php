@@ -23,7 +23,8 @@ ob_start();
         </label>
 
         <button type="submit" id="submit-btn">
-            Create Tournament
+            <span id="submit-indicator" style="display: none;">Creating...</span>
+            <span id="submit-text">Create Tournament</span>
         </button>
     </form>
 
@@ -33,9 +34,7 @@ ob_start();
 <script>
 // Show loading state when form is submitted
 document.getElementById('createTournamentForm').addEventListener('submit', function(e) {
-    var button = document.getElementById('submit-btn');
-    button.disabled = true;
-    button.textContent = 'Creating...';
+    setButtonLoading('submit-btn', 'submit-indicator', 'submit-text', true);
 });
 </script>
 

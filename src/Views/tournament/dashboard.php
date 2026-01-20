@@ -31,11 +31,11 @@ $autoImport = $autoImport ?? null;
     </header>
 
     <?php if ($autoImport && $autoImport['success']): ?>
-        <p style="color: #4caf50; font-weight: bold;">
+        <p class="status-success">
             Round 1 imported automatically! Created <?= $autoImport['tableCount'] ?> tables from <?= $autoImport['pairingsImported'] ?> pairings.
         </p>
     <?php elseif ($autoImport && !$autoImport['success']): ?>
-        <p style="color: #ff9800; font-weight: bold;">
+        <p class="status-warning">
             Note: Could not auto-import Round 1: <?= htmlspecialchars($autoImport['error']) ?>
         </p>
         <p>You can manually import Round 1 using the form below.</p>
@@ -50,7 +50,7 @@ $autoImport = $autoImport ?? null;
             Copy Token
         </button>
     </div>
-    <p style="font-size: 0.9rem; color: #666;">
+    <p class="text-small-muted">
         This token has been saved in your browser cookies for 30 days.
         You can dismiss this message - the token will remain accessible from your cookies.
     </p>
@@ -105,9 +105,9 @@ $autoImport = $autoImport ?? null;
                 <td><?= $round->getAllocationCount() ?> pairings</td>
                 <td>
                     <?php if ($round->isPublished): ?>
-                        <span style="color: #4caf50;">Published</span>
+                        <span class="status-published">Published</span>
                     <?php else: ?>
-                        <span style="color: #ff9800;">Draft</span>
+                        <span class="status-draft">Draft</span>
                     <?php endif; ?>
                 </td>
                 <td>
@@ -368,16 +368,10 @@ document.getElementById('import-form').addEventListener('submit', function(e) {
     e.preventDefault();
 
     var roundNumber = document.getElementById('round-number').value;
-    var button = document.getElementById('import-button');
-    var indicator = document.getElementById('import-indicator');
-    var text = document.getElementById('import-text');
-    var result = document.getElementById('import-result');
 
     // Show loading state
-    button.disabled = true;
-    indicator.style.display = 'inline';
-    text.style.display = 'none';
-    result.innerHTML = '';
+    setButtonLoading('import-button', 'import-indicator', 'import-text', true);
+    document.getElementById('import-result').innerHTML = '';
 
     fetch('/api/tournaments/<?= $tournament->id ?>/rounds/' + roundNumber + '/import', {
         method: 'POST',
@@ -391,39 +385,30 @@ document.getElementById('import-form').addEventListener('submit', function(e) {
         });
     })
     .then(function(response) {
-        button.disabled = false;
-        indicator.style.display = 'none';
-        text.style.display = 'inline';
+        setButtonLoading('import-button', 'import-indicator', 'import-text', false);
 
         if (response.status >= 200 && response.status < 300) {
-            result.innerHTML = '<div class="alert alert-success">' +
+            showAlert('import-result', 'success',
                 'Successfully imported ' + escapeHtml(String(response.data.pairingsImported)) + ' pairings for Round ' + escapeHtml(roundNumber) + '. ' +
-                '<a href="/tournament/<?= $tournament->id ?>/round/' + roundNumber + '">Manage Round ' + roundNumber + '</a>' +
-                '</div>';
+                '<a href="/tournament/<?= $tournament->id ?>/round/' + roundNumber + '">Manage Round ' + roundNumber + '</a>'
+            );
             // Reload after a short delay to show updated rounds list
             setTimeout(function() { location.reload(); }, 2000);
         } else {
-            result.innerHTML = '<div class="alert alert-error">' +
-                'Error: ' + escapeHtml(response.data.message || 'Failed to import round') +
-                '</div>';
+            showAlert('import-result', 'error',
+                'Error: ' + escapeHtml(response.data.message || 'Failed to import round')
+            );
         }
     })
     .catch(function(error) {
-        button.disabled = false;
-        indicator.style.display = 'none';
-        text.style.display = 'inline';
-        result.innerHTML = '<div class="alert alert-error">Network error: ' + escapeHtml(error.message) + '</div>';
+        setButtonLoading('import-button', 'import-indicator', 'import-text', false);
+        showAlert('import-result', 'error', 'Network error: ' + escapeHtml(error.message));
     });
 });
 
 // Terrain type configuration form handler
 document.getElementById('terrain-form').addEventListener('submit', function(e) {
     e.preventDefault();
-
-    var button = document.getElementById('save-terrain-button');
-    var indicator = document.getElementById('save-terrain-indicator');
-    var text = document.getElementById('save-terrain-text');
-    var result = document.getElementById('terrain-result');
 
     // Collect all table configurations
     var tables = [];
@@ -440,10 +425,8 @@ document.getElementById('terrain-form').addEventListener('submit', function(e) {
     });
 
     // Show loading state
-    button.disabled = true;
-    indicator.style.display = 'inline';
-    text.style.display = 'none';
-    result.innerHTML = '';
+    setButtonLoading('save-terrain-button', 'save-terrain-indicator', 'save-terrain-text', true);
+    document.getElementById('terrain-result').innerHTML = '';
 
     fetch('/api/tournaments/<?= $tournament->id ?>/tables', {
         method: 'PUT',
@@ -458,30 +441,19 @@ document.getElementById('terrain-form').addEventListener('submit', function(e) {
         });
     })
     .then(function(response) {
-        button.disabled = false;
-        indicator.style.display = 'none';
-        text.style.display = 'inline';
+        setButtonLoading('save-terrain-button', 'save-terrain-indicator', 'save-terrain-text', false);
 
         if (response.status >= 200 && response.status < 300) {
-            result.innerHTML = '<div class="alert alert-success">' +
-                'Terrain configuration saved successfully!' +
-                '</div>';
-
-            // Clear success message after 3 seconds
-            setTimeout(function() {
-                result.innerHTML = '';
-            }, 3000);
+            showAlert('terrain-result', 'success', 'Terrain configuration saved successfully!', 3000);
         } else {
-            result.innerHTML = '<div class="alert alert-error">' +
-                'Error: ' + escapeHtml(response.data.message || 'Failed to save terrain configuration') +
-                '</div>';
+            showAlert('terrain-result', 'error',
+                'Error: ' + escapeHtml(response.data.message || 'Failed to save terrain configuration')
+            );
         }
     })
     .catch(function(error) {
-        button.disabled = false;
-        indicator.style.display = 'none';
-        text.style.display = 'inline';
-        result.innerHTML = '<div class="alert alert-error">Network error: ' + escapeHtml(error.message) + '</div>';
+        setButtonLoading('save-terrain-button', 'save-terrain-indicator', 'save-terrain-text', false);
+        showAlert('terrain-result', 'error', 'Network error: ' + escapeHtml(error.message));
     });
 });
 
@@ -510,32 +482,23 @@ document.getElementById('apply-all-button').addEventListener('click', function()
             // Visual feedback: briefly highlight changed rows
             var row = select.closest('tr');
             if (row) {
-                row.style.backgroundColor = 'var(--pico-primary-focus, rgba(16, 149, 193, 0.15))';
-                setTimeout(function() {
-                    row.style.backgroundColor = '';
-                }, 800);
+                highlightRow(row, 'primary', 800);
             }
         }
     });
 
     // Show feedback
-    var result = document.getElementById('terrain-result');
     if (changedCount > 0) {
-        result.innerHTML = '<div class="alert alert-info" style="background: var(--pico-primary-focus, rgba(16, 149, 193, 0.15)); border: 1px solid var(--pico-primary, #1095c1); padding: 0.75rem; border-radius: 0.25rem;">' +
-            'Applied terrain to ' + changedCount + ' table' + (changedCount !== 1 ? 's' : '') + '. Click "Save Terrain Configuration" to save changes.' +
-            '</div>';
+        showAlert('terrain-result', 'info-primary',
+            'Applied terrain to ' + changedCount + ' table' + (changedCount !== 1 ? 's' : '') + '. Click "Save Terrain Configuration" to save changes.',
+            4000
+        );
     } else {
-        result.innerHTML = '<div class="alert alert-info" style="background: var(--pico-primary-focus, rgba(16, 149, 193, 0.15)); border: 1px solid var(--pico-primary, #1095c1); padding: 0.75rem; border-radius: 0.25rem;">' +
-            'All tables already have this terrain type selected.' +
-            '</div>';
+        showAlert('terrain-result', 'info-primary',
+            'All tables already have this terrain type selected.',
+            4000
+        );
     }
-
-    // Clear info message after 4 seconds
-    setTimeout(function() {
-        if (result.querySelector('.alert-info')) {
-            result.innerHTML = '';
-        }
-    }, 4000);
 });
 
 // Clear all terrain types
@@ -550,10 +513,7 @@ document.getElementById('clear-all-button').addEventListener('click', function()
             // Visual feedback: briefly highlight changed rows
             var row = select.closest('tr');
             if (row) {
-                row.style.backgroundColor = 'var(--pico-secondary-focus, rgba(98, 119, 140, 0.15))';
-                setTimeout(function() {
-                    row.style.backgroundColor = '';
-                }, 800);
+                highlightRow(row, 'secondary', 800);
             }
         }
     });
@@ -562,22 +522,16 @@ document.getElementById('clear-all-button').addEventListener('click', function()
     document.getElementById('set-all-terrain').value = '';
 
     // Show feedback
-    var result = document.getElementById('terrain-result');
     if (changedCount > 0) {
-        result.innerHTML = '<div class="alert alert-info" style="background: var(--pico-secondary-focus, rgba(98, 119, 140, 0.15)); border: 1px solid var(--pico-secondary, #62778c); padding: 0.75rem; border-radius: 0.25rem;">' +
-            'Cleared terrain from ' + changedCount + ' table' + (changedCount !== 1 ? 's' : '') + '. Click "Save Terrain Configuration" to save changes.' +
-            '</div>';
+        showAlert('terrain-result', 'info-secondary',
+            'Cleared terrain from ' + changedCount + ' table' + (changedCount !== 1 ? 's' : '') + '. Click "Save Terrain Configuration" to save changes.',
+            4000
+        );
     } else {
-        result.innerHTML = '<div class="alert alert-info" style="background: var(--pico-secondary-focus, rgba(98, 119, 140, 0.15)); border: 1px solid var(--pico-secondary, #62778c); padding: 0.75rem; border-radius: 0.25rem;">' +
-            'All tables already have no terrain assigned.' +
-            '</div>';
+        showAlert('terrain-result', 'info-secondary',
+            'All tables already have no terrain assigned.',
+            4000
+        );
     }
-
-    // Clear info message after 4 seconds
-    setTimeout(function() {
-        if (result.querySelector('.alert-info')) {
-            result.innerHTML = '';
-        }
-    }, 4000);
 });
 </script>

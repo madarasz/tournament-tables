@@ -49,18 +49,6 @@ ob_start();
 </article>
 
 <script>
-// Helper to safely create an article with header and content
-function createAlertArticle(className, title) {
-    const article = document.createElement('article');
-    article.className = className;
-    const header = document.createElement('header');
-    const h3 = document.createElement('h3');
-    h3.textContent = title;
-    header.appendChild(h3);
-    article.appendChild(header);
-    return article;
-}
-
 // Handle successful authentication
 document.body.addEventListener('htmx:afterRequest', function(event) {
     if (event.detail.pathInfo.requestPath === '/api/auth' && event.detail.successful) {

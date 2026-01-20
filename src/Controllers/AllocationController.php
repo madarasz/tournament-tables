@@ -7,7 +7,6 @@ namespace TournamentTables\Controllers;
 use TournamentTables\Models\Allocation;
 use TournamentTables\Models\Round;
 use TournamentTables\Models\Table;
-use TournamentTables\Middleware\AdminAuthMiddleware;
 use TournamentTables\Database\Connection;
 use TournamentTables\Services\AllocationEditService;
 use TournamentTables\Services\CostCalculator;
@@ -49,9 +48,7 @@ class AllocationController extends BaseController
         }
 
         // Verify authenticated tournament matches the allocation's tournament
-        $authTournament = AdminAuthMiddleware::getTournament();
-        if ($authTournament === null || $authTournament->id !== $round->tournamentId) {
-            $this->unauthorized('Token does not match this tournament');
+        if (!$this->verifyTournamentAuth($round->tournamentId)) {
             return;
         }
 
@@ -139,9 +136,7 @@ class AllocationController extends BaseController
         }
 
         // Verify authenticated tournament matches
-        $authTournament = AdminAuthMiddleware::getTournament();
-        if ($authTournament === null || $authTournament->id !== $round->tournamentId) {
-            $this->unauthorized('Token does not match this tournament');
+        if (!$this->verifyTournamentAuth($round->tournamentId)) {
             return;
         }
 

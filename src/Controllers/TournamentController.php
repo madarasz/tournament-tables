@@ -5,15 +5,9 @@ declare(strict_types=1);
 namespace TournamentTables\Controllers;
 
 use TournamentTables\Services\TournamentService;
+use TournamentTables\Services\TournamentImportService;
 use TournamentTables\Services\BCPApiService;
-use TournamentTables\Services\Pairing;
 use TournamentTables\Models\Tournament;
-use TournamentTables\Models\Round;
-use TournamentTables\Models\Table;
-use TournamentTables\Models\Player;
-use TournamentTables\Models\Allocation;
-use TournamentTables\Middleware\AdminAuthMiddleware;
-use TournamentTables\Database\Connection;
 
 /**
  * Tournament management controller.
@@ -23,10 +17,12 @@ use TournamentTables\Database\Connection;
 class TournamentController extends BaseController
 {
     private TournamentService $service;
+    private TournamentImportService $importService;
 
     public function __construct()
     {
         $this->service = new TournamentService();
+        $this->importService = new TournamentImportService();
     }
 
     /**
@@ -81,7 +77,7 @@ class TournamentController extends BaseController
             );
 
             // Attempt to auto-import Round 1 and create tables
-            $autoImportResult = $this->attemptAutoImportRound1($result['tournament']);
+            $autoImportResult = $this->importService->autoImportRound1($result['tournament']);
 
             // Check if this is an API request (JSON) or browser form submission
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
@@ -139,196 +135,21 @@ class TournamentController extends BaseController
     }
 
     /**
-     * Attempt to auto-import Round 1 and create tables from pairings.
-     *
-     * @param Tournament $tournament The newly created tournament
-     * @return array{success: bool, tableCount?: int, pairingsImported?: int, error?: string}
-     */
-    private function attemptAutoImportRound1(Tournament $tournament): array
-    {
-        try {
-            // Extract event ID from BCP URL
-            $scraper = new BCPApiService();
-            $eventId = $scraper->extractEventId($tournament->bcpUrl);
-
-            // Fetch pairings from BCP for Round 1
-            $pairings = $scraper->fetchPairings($eventId, 1);
-
-            if (empty($pairings)) {
-                return [
-                    'success' => false,
-                    'error' => 'Round 1 not yet published on BCP',
-                ];
-            }
-
-            // Derive table count from max BCP table number
-            $tableCount = count($pairings);
-            foreach ($pairings as $pairing) {
-                if ($pairing->bcpTableNumber !== null && $pairing->bcpTableNumber > $tableCount) {
-                    $tableCount = $pairing->bcpTableNumber;
-                }
-            }
-
-            // Fetch total scores from BCP placings API
-            $totalScores = [];
-            try {
-                $totalScores = $scraper->fetchPlayerTotalScores($eventId);
-            } catch (\Exception $e) {
-                // Continue without total scores - not critical for round 1
-            }
-
-            // Import pairings in a transaction
-            Connection::beginTransaction();
-
-            try {
-                // Create tables only if none exist
-                $existingTables = Table::findByTournament($tournament->id);
-                if (empty($existingTables)) {
-                    Table::createForTournament($tournament->id, $tableCount);
-                }
-
-                // Create round
-                $round = Round::findOrCreate($tournament->id, 1);
-
-                // Clear existing allocations (shouldn't be any, but for safety)
-                $round->clearAllocations();
-
-                // Import players and create allocations
-                $pairingsImported = 0;
-
-                foreach ($pairings as $pairing) {
-                    // Get total scores for each player (default to 0 if not found)
-                    $player1TotalScore = $totalScores[$pairing->player1BcpId] ?? 0;
-                    $player2TotalScore = $totalScores[$pairing->player2BcpId] ?? 0;
-
-                    // Find or create players with total scores
-                    $player1 = Player::findOrCreate(
-                        $tournament->id,
-                        $pairing->player1BcpId,
-                        $pairing->player1Name,
-                        $player1TotalScore
-                    );
-                    $player2 = Player::findOrCreate(
-                        $tournament->id,
-                        $pairing->player2BcpId,
-                        $pairing->player2Name,
-                        $player2TotalScore
-                    );
-
-                    // Round 1: Use BCP's table assignment
-                    $table = null;
-                    if ($pairing->bcpTableNumber !== null) {
-                        $table = Table::findByTournamentAndNumber($tournament->id, $pairing->bcpTableNumber);
-                    }
-
-                    // Create allocation if we have a valid table
-                    if ($table !== null) {
-                        $reason = [
-                            'timestamp' => date('c'),
-                            'totalCost' => 0,
-                            'costBreakdown' => ['tableReuse' => 0, 'terrainReuse' => 0, 'tableNumber' => 0],
-                            'reasons' => ['Round 1 - BCP original assignment (auto-imported)'],
-                            'alternativesConsidered' => [],
-                            'isRound1' => true,
-                            'conflicts' => [],
-                        ];
-
-                        $allocation = new Allocation(
-                            null,
-                            $round->id,
-                            $table->id,
-                            $player1->id,
-                            $player2->id,
-                            $pairing->player1Score,
-                            $pairing->player2Score,
-                            $reason
-                        );
-                        $allocation->save();
-                        $pairingsImported++;
-                    }
-                }
-
-                Connection::commit();
-
-                return [
-                    'success' => true,
-                    'tableCount' => $tableCount,
-                    'pairingsImported' => $pairingsImported,
-                ];
-            } catch (\Exception $e) {
-                Connection::rollBack();
-                throw $e;
-            }
-        } catch (\RuntimeException $e) {
-            // BCP scraping failed
-            return [
-                'success' => false,
-                'error' => 'BCP API unavailable or Round 1 not published yet',
-            ];
-        } catch (\InvalidArgumentException $e) {
-            // Invalid BCP URL (shouldn't happen as we validated earlier)
-            return [
-                'success' => false,
-                'error' => 'Invalid BCP URL',
-            ];
-        } catch (\Exception $e) {
-            // Other errors
-            return [
-                'success' => false,
-                'error' => 'Failed to import Round 1',
-            ];
-        }
-    }
-
-    /**
-     * Ensure session is started.
-     */
-    private function ensureSession(): void
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-    }
-
-    /**
-     * Redirect to a URL.
-     *
-     * @param string $url URL to redirect to
-     */
-    private function redirect(string $url): void
-    {
-        header('Location: ' . $url);
-        exit;
-    }
-
-    /**
      * GET /api/tournaments/{id} - Get tournament details.
      */
     public function show(array $params, ?array $body): void
     {
         $tournamentId = (int) ($params['id'] ?? 0);
 
-        // Verify authenticated tournament matches requested tournament
-        $authTournament = AdminAuthMiddleware::getTournament();
-        if ($authTournament === null || $authTournament->id !== $tournamentId) {
-            $this->unauthorized('Token does not match this tournament');
-            return;
-        }
-
-        $tournament = Tournament::find($tournamentId);
+        $tournament = $this->getTournamentOrFail($tournamentId);
         if ($tournament === null) {
-            $this->notFound('Tournament');
             return;
         }
 
         // Build full tournament response with tables and rounds
         $response = $tournament->toArray();
-        $response['tables'] = array_map(function ($t) {
-            return $t->toArray();
-        }, $tournament->getTables());
-        $response['rounds'] = array_map(function ($r) {
-            return $r->toArray();
-        }, $tournament->getRounds());
+        $response['tables'] = $this->toArrayMap($tournament->getTables());
+        $response['rounds'] = $this->toArrayMap($tournament->getRounds());
 
         $this->success($response);
     }
@@ -344,9 +165,7 @@ class TournamentController extends BaseController
         $tournamentId = (int) ($params['id'] ?? 0);
 
         // Verify authenticated tournament matches requested tournament
-        $authTournament = AdminAuthMiddleware::getTournament();
-        if ($authTournament === null || $authTournament->id !== $tournamentId) {
-            $this->unauthorized('Token does not match this tournament');
+        if (!$this->verifyTournamentAuth($tournamentId)) {
             return;
         }
 
@@ -370,9 +189,7 @@ class TournamentController extends BaseController
         $tournamentId = (int) ($params['id'] ?? 0);
 
         // Verify authenticated tournament matches requested tournament
-        $authTournament = AdminAuthMiddleware::getTournament();
-        if ($authTournament === null || $authTournament->id !== $tournamentId) {
-            $this->unauthorized('Token does not match this tournament');
+        if (!$this->verifyTournamentAuth($tournamentId)) {
             return;
         }
 
@@ -385,9 +202,7 @@ class TournamentController extends BaseController
             $tables = $this->service->updateTables($tournamentId, $body['tables']);
 
             $this->success([
-                'tables' => array_map(function ($t) {
-                    return $t->toArray();
-                }, $tables),
+                'tables' => $this->toArrayMap($tables),
             ]);
         } catch (\InvalidArgumentException $e) {
             $this->notFound('Tournament');

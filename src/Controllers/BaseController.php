@@ -103,7 +103,7 @@ abstract class BaseController
         ];
 
         // Set secure flag if using HTTPS
-        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        if ($this->isHttps()) {
             $options['secure'] = true;
         }
 
@@ -136,7 +136,7 @@ abstract class BaseController
         ];
 
         // Set secure flag if using HTTPS
-        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        if ($this->isHttps()) {
             $options['secure'] = true;
         }
 
@@ -280,5 +280,132 @@ abstract class BaseController
     {
         global $authenticatedTournament;
         return $authenticatedTournament ?? null;
+    }
+
+    /**
+     * Verify that the authenticated tournament matches the requested tournament ID.
+     *
+     * Sends an unauthorized response and returns false if validation fails.
+     *
+     * @param int $tournamentId Tournament ID to verify against
+     * @param string $message Optional custom error message
+     * @return bool True if authorized, false if not (response already sent)
+     */
+    protected function verifyTournamentAuth(int $tournamentId, string $message = 'Token does not match this tournament'): bool
+    {
+        $authTournament = \TournamentTables\Middleware\AdminAuthMiddleware::getTournament();
+        if ($authTournament === null || $authTournament->id !== $tournamentId) {
+            $this->unauthorized($message);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Verify auth and get tournament, sending appropriate error responses if failed.
+     *
+     * @param int $tournamentId Tournament ID to look up
+     * @return \TournamentTables\Models\Tournament|null Tournament if found and authorized, null otherwise (response already sent)
+     */
+    protected function getTournamentOrFail(int $tournamentId): ?\TournamentTables\Models\Tournament
+    {
+        if (!$this->verifyTournamentAuth($tournamentId)) {
+            return null;
+        }
+
+        $tournament = \TournamentTables\Models\Tournament::find($tournamentId);
+        if ($tournament === null) {
+            $this->notFound('Tournament');
+            return null;
+        }
+
+        return $tournament;
+    }
+
+    /**
+     * Verify auth and get round, sending appropriate error responses if failed.
+     *
+     * @param int $tournamentId Tournament ID
+     * @param int $roundNumber Round number to look up
+     * @return \TournamentTables\Models\Round|null Round if found and authorized, null otherwise (response already sent)
+     */
+    protected function getRoundOrFail(int $tournamentId, int $roundNumber): ?\TournamentTables\Models\Round
+    {
+        if (!$this->verifyTournamentAuth($tournamentId)) {
+            return null;
+        }
+
+        $round = \TournamentTables\Models\Round::findByTournamentAndNumber($tournamentId, $roundNumber);
+        if ($round === null) {
+            $this->notFound('Round');
+            return null;
+        }
+
+        return $round;
+    }
+
+    /**
+     * Ensure session is started.
+     */
+    protected function ensureSession(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+    }
+
+    /**
+     * Redirect to a URL.
+     *
+     * @param string $url URL to redirect to
+     */
+    protected function redirect(string $url): void
+    {
+        header('Location: ' . $url);
+        exit;
+    }
+
+    /**
+     * Render a view template directly to output.
+     *
+     * @param string $view View name (relative to Views directory)
+     * @param array $data Data to pass to view
+     */
+    protected function renderView(string $view, array $data = []): void
+    {
+        // Sanitize view name to prevent path traversal
+        $view = str_replace(['..', '/', '\\'], '', basename($view));
+        extract($data);
+
+        $viewPath = __DIR__ . '/../Views/' . $view . '.php';
+        if (file_exists($viewPath)) {
+            require $viewPath;
+        } else {
+            http_response_code(500);
+            echo "View not found: {$view}";
+        }
+    }
+
+    /**
+     * Convert an array of model objects to arrays using toArray().
+     *
+     * @param array $items Array of objects with toArray() method
+     * @return array Array of arrays
+     */
+    protected function toArrayMap(array $items): array
+    {
+        return array_map(function ($item) {
+            return $item->toArray();
+        }, $items);
+    }
+
+    /**
+     * Check if the current request is using HTTPS.
+     *
+     * @return bool True if HTTPS, false otherwise
+     */
+    protected function isHttps(): bool
+    {
+        return isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
     }
 }

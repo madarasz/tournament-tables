@@ -12,11 +12,8 @@ use TournamentTables\Database\Connection;
  * Represents a tournament event managed through BCP.
  * Reference: specs/001-table-allocation/data-model.md#tournament
  */
-class Tournament
+class Tournament extends BaseModel
 {
-    /** @var int|null */
-    public $id;
-
     /** @var string */
     public $name;
 
@@ -48,6 +45,11 @@ class Tournament
         $this->adminToken = $adminToken;
     }
 
+    protected static function getTableName(): string
+    {
+        return 'tournaments';
+    }
+
     /**
      * Create instance from database row.
      */
@@ -61,19 +63,6 @@ class Tournament
             (int) $row['table_count'],
             $row['admin_token']
         );
-    }
-
-    /**
-     * Find tournament by ID.
-     */
-    public static function find(int $id): ?self
-    {
-        $row = Connection::fetchOne(
-            'SELECT * FROM tournaments WHERE id = ?',
-            [$id]
-        );
-
-        return $row ? self::fromRow($row) : null;
     }
 
     /**
@@ -103,20 +92,9 @@ class Tournament
     }
 
     /**
-     * Save the tournament (insert or update).
-     */
-    public function save(): bool
-    {
-        if ($this->id === null) {
-            return $this->insert();
-        }
-        return $this->update();
-    }
-
-    /**
      * Insert a new tournament.
      */
-    private function insert(): bool
+    protected function insert(): bool
     {
         Connection::execute(
             'INSERT INTO tournaments (name, bcp_event_id, bcp_url, table_count, admin_token)
@@ -137,7 +115,7 @@ class Tournament
     /**
      * Update an existing tournament.
      */
-    private function update(): bool
+    protected function update(): bool
     {
         Connection::execute(
             'UPDATE tournaments SET name = ?, table_count = ? WHERE id = ?',
@@ -148,19 +126,6 @@ class Tournament
             ]
         );
 
-        return true;
-    }
-
-    /**
-     * Delete the tournament.
-     */
-    public function delete(): bool
-    {
-        if ($this->id === null) {
-            return false;
-        }
-
-        Connection::execute('DELETE FROM tournaments WHERE id = ?', [$this->id]);
         return true;
     }
 

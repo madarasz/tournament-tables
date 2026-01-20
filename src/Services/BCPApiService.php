@@ -81,10 +81,7 @@ class BCPApiService
      */
     public function buildEventUrl(string $eventId): string
     {
-        if ($this->mockApiBaseUrl !== null) {
-            return rtrim($this->mockApiBaseUrl, '/') . "/{$eventId}";
-        }
-        return self::BCP_API_BASE_URL . "/{$eventId}";
+        return $this->buildUrl("/{$eventId}");
     }
 
     /**
@@ -110,26 +107,28 @@ class BCPApiService
     public function buildPairingsUrl(string $eventId, int $round): string
     {
         if ($this->mockApiBaseUrl !== null) {
-            // Use mock API endpoint for testing
-            return rtrim($this->mockApiBaseUrl, '/') . "/{$eventId}/pairings?round={$round}";
+            // Use mock API endpoint for testing (simpler query string)
+            return $this->buildUrl("/{$eventId}/pairings?round={$round}");
         }
-        return self::BCP_API_BASE_URL . "/{$eventId}/pairings?eventId={$eventId}&round={$round}&pairingType=Pairing";
+        return $this->buildUrl("/{$eventId}/pairings?eventId={$eventId}&round={$round}&pairingType=Pairing");
     }
 
     /**
      * Extract event ID from a BCP URL.
      *
+     * Delegates to BcpUrlValidator for centralized URL parsing.
+     *
      * @throws \InvalidArgumentException If URL is not a valid BCP event URL
      */
     public function extractEventId(string $url): string
     {
-        $pattern = '#^https://www\.bestcoastpairings\.com/event/([A-Za-z0-9]+)(?:[/?]|$)#';
+        $eventId = BcpUrlValidator::extractEventId($url);
 
-        if (preg_match($pattern, $url, $matches)) {
-            return $matches[1];
+        if ($eventId === null) {
+            throw new \InvalidArgumentException('Invalid BCP event URL: ' . $url);
         }
 
-        throw new \InvalidArgumentException('Invalid BCP event URL: ' . $url);
+        return $eventId;
     }
 
     /**
@@ -309,10 +308,22 @@ class BCPApiService
      */
     public function buildPlacingsUrl(string $eventId): string
     {
-        if ($this->mockApiBaseUrl !== null) {
-            return rtrim($this->mockApiBaseUrl, '/') . "/{$eventId}/players?placings=true";
-        }
-        return self::BCP_API_BASE_URL . "/{$eventId}/players?placings=true";
+        return $this->buildUrl("/{$eventId}/players?placings=true");
+    }
+
+    /**
+     * Build a URL using either mock or production base URL.
+     *
+     * @param string $path Path to append (should start with /)
+     * @return string Complete URL
+     */
+    private function buildUrl(string $path): string
+    {
+        $baseUrl = $this->mockApiBaseUrl !== null
+            ? rtrim($this->mockApiBaseUrl, '/')
+            : self::BCP_API_BASE_URL;
+
+        return $baseUrl . $path;
     }
 
     /**

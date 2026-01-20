@@ -115,8 +115,10 @@ $hasTableCollisions = !empty($tableCollisions);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?></title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link rel="stylesheet" href="/css/app.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="/js/utils.js"></script>
+    <script src="/js/form-utils.js"></script>
     <script>
         // Current tournament ID for token retrieval
         var currentTournamentId = <?= $tournament->id ?>;
@@ -532,7 +534,7 @@ $hasTableCollisions = !empty($tableCollisions);
 
         <?php if ($isPublished): ?>
         <!-- Warning when editing published round (FR-013, T076) -->
-        <article style="background-color: #fff3e0; border-left: 4px solid #ff9800;">
+        <article class="warning-article">
             <h4>⚠️ Published Round</h4>
             <p>This round has been published and is visible to players. Any changes you make will be immediately visible to all players viewing the allocations.</p>
         </article>

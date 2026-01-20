@@ -22,7 +22,7 @@ class HomeController extends BaseController
         $tournaments = $this->getMultiTokenCookie();
 
         if (empty($tournaments)) {
-            $this->render('home', [
+            $this->renderView('home', [
                 'tournaments' => [],
                 'isEmpty' => true
             ]);
@@ -62,30 +62,9 @@ class HomeController extends BaseController
             return $b['lastAccessed'] - $a['lastAccessed'];
         });
 
-        $this->render('home', [
+        $this->renderView('home', [
             'tournaments' => $tournamentData,
             'isEmpty' => empty($tournamentData)
         ]);
-    }
-
-    /**
-     * Render a view template.
-     *
-     * @param string $view View name
-     * @param array $data Data to pass to view
-     */
-    protected function render(string $view, array $data = []): void
-    {
-        // Extract data to variables
-        extract($data);
-
-        // Include view file
-        $viewPath = __DIR__ . '/../Views/' . $view . '.php';
-        if (file_exists($viewPath)) {
-            require $viewPath;
-        } else {
-            http_response_code(500);
-            echo "View not found: {$view}";
-        }
     }
 }

@@ -132,48 +132,12 @@ class TournamentHistory
      */
     protected function queryPlayerTableHistory($playerId): array
     {
-        // If round 1, there's no history
-        if ($this->currentRound <= 1) {
-            return [];
-        }
-
-        // Handle both BCP IDs (strings) and database IDs (integers)
-        if (is_string($playerId) && !ctype_digit($playerId)) {
-            // BCP ID - join with players table
-            $sql = "
-                SELECT t.table_number, tt.name as terrain_type, r.round_number
-                FROM allocations a
-                JOIN tables t ON a.table_id = t.id
-                LEFT JOIN terrain_types tt ON t.terrain_type_id = tt.id
-                JOIN rounds r ON a.round_id = r.id
-                JOIN players p1 ON a.player1_id = p1.id
-                JOIN players p2 ON a.player2_id = p2.id
-                WHERE r.tournament_id = ?
-                  AND (p1.bcp_player_id = ? OR p2.bcp_player_id = ?)
-                  AND r.round_number < ?
-                ORDER BY r.round_number
-            ";
-        } else {
-            // Database ID
-            $sql = "
-                SELECT t.table_number, tt.name as terrain_type, r.round_number
-                FROM allocations a
-                JOIN tables t ON a.table_id = t.id
-                LEFT JOIN terrain_types tt ON t.terrain_type_id = tt.id
-                JOIN rounds r ON a.round_id = r.id
-                WHERE r.tournament_id = ?
-                  AND (a.player1_id = ? OR a.player2_id = ?)
-                  AND r.round_number < ?
-                ORDER BY r.round_number
-            ";
-        }
-
-        return Connection::fetchAll($sql, [
-            $this->tournamentId,
+        return $this->queryPlayerHistory(
             $playerId,
-            $playerId,
-            $this->currentRound,
-        ]);
+            't.table_number, tt.name as terrain_type, r.round_number',
+            'LEFT JOIN terrain_types tt ON t.terrain_type_id = tt.id',
+            'ORDER BY r.round_number'
+        );
     }
 
     /**
@@ -183,37 +147,63 @@ class TournamentHistory
      */
     protected function queryPlayerTerrainHistory($playerId): array
     {
+        return $this->queryPlayerHistory(
+            $playerId,
+            'DISTINCT tt.id, tt.name',
+            'JOIN terrain_types tt ON t.terrain_type_id = tt.id',
+            ''
+        );
+    }
+
+    /**
+     * Unified query method for player history.
+     *
+     * Handles both BCP IDs (strings) and database IDs (integers).
+     * Reduces duplication between table and terrain history queries.
+     *
+     * @param int|string $playerId Player ID (int for DB ID, string for BCP ID)
+     * @param string $selectColumns Columns to select
+     * @param string $terrainJoin JOIN clause for terrain_types table
+     * @param string $orderBy ORDER BY clause (or empty string)
+     * @return array Query results
+     */
+    private function queryPlayerHistory($playerId, string $selectColumns, string $terrainJoin, string $orderBy): array
+    {
         // If round 1, there's no history
         if ($this->currentRound <= 1) {
             return [];
         }
 
         // Handle both BCP IDs (strings) and database IDs (integers)
-        if (is_string($playerId) && !ctype_digit($playerId)) {
+        $isBcpId = is_string($playerId) && !ctype_digit($playerId);
+
+        if ($isBcpId) {
             // BCP ID - join with players table
             $sql = "
-                SELECT DISTINCT tt.id, tt.name
+                SELECT {$selectColumns}
                 FROM allocations a
                 JOIN tables t ON a.table_id = t.id
-                JOIN terrain_types tt ON t.terrain_type_id = tt.id
+                {$terrainJoin}
                 JOIN rounds r ON a.round_id = r.id
                 JOIN players p1 ON a.player1_id = p1.id
                 JOIN players p2 ON a.player2_id = p2.id
                 WHERE r.tournament_id = ?
                   AND (p1.bcp_player_id = ? OR p2.bcp_player_id = ?)
                   AND r.round_number < ?
+                {$orderBy}
             ";
         } else {
             // Database ID
             $sql = "
-                SELECT DISTINCT tt.id, tt.name
+                SELECT {$selectColumns}
                 FROM allocations a
                 JOIN tables t ON a.table_id = t.id
-                JOIN terrain_types tt ON t.terrain_type_id = tt.id
+                {$terrainJoin}
                 JOIN rounds r ON a.round_id = r.id
                 WHERE r.tournament_id = ?
                   AND (a.player1_id = ? OR a.player2_id = ?)
                   AND r.round_number < ?
+                {$orderBy}
             ";
         }
 

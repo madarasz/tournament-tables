@@ -12,11 +12,8 @@ use TournamentTables\Database\Connection;
  * Represents predefined terrain configurations available at the venue.
  * Reference: specs/001-table-allocation/data-model.md#terraintype
  */
-class TerrainType
+class TerrainType extends BaseModel
 {
-    /** @var int|null */
-    public $id;
-
     /** @var string */
     public $name;
 
@@ -43,6 +40,11 @@ class TerrainType
         $this->sortOrder = $sortOrder;
     }
 
+    protected static function getTableName(): string
+    {
+        return 'terrain_types';
+    }
+
     /**
      * Create instance from database row.
      */
@@ -55,19 +57,6 @@ class TerrainType
             $row['emoji'] ?? null,
             (int) $row['sort_order']
         );
-    }
-
-    /**
-     * Find terrain type by ID.
-     */
-    public static function find(int $id): ?self
-    {
-        $row = Connection::fetchOne(
-            'SELECT * FROM terrain_types WHERE id = ?',
-            [$id]
-        );
-
-        return $row ? self::fromRow($row) : null;
     }
 
     /**
@@ -95,6 +84,45 @@ class TerrainType
         );
 
         return array_map([self::class, 'fromRow'], $rows);
+    }
+
+    /**
+     * Insert a new terrain type.
+     */
+    protected function insert(): bool
+    {
+        Connection::execute(
+            'INSERT INTO terrain_types (name, description, emoji, sort_order)
+             VALUES (?, ?, ?, ?)',
+            [
+                $this->name,
+                $this->description,
+                $this->emoji,
+                $this->sortOrder,
+            ]
+        );
+
+        $this->id = Connection::lastInsertId();
+        return true;
+    }
+
+    /**
+     * Update an existing terrain type.
+     */
+    protected function update(): bool
+    {
+        Connection::execute(
+            'UPDATE terrain_types SET name = ?, description = ?, emoji = ?, sort_order = ? WHERE id = ?',
+            [
+                $this->name,
+                $this->description,
+                $this->emoji,
+                $this->sortOrder,
+                $this->id,
+            ]
+        );
+
+        return true;
     }
 
     /**
