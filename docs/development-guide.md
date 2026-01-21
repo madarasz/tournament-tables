@@ -91,26 +91,5 @@ setButtonLoading('submit-btn', 'submit-indicator', 'submit-text', true);
 - Use constructor injection for dependencies
 - Transaction management belongs in services, not controllers
 
-## Local Development (without Docker)
-
-```bash
-# Install dependencies
-composer install
-
-# Configure database (copy and edit)
-cp config/database.example.php config/database.php
-
-# Create database
-mysql -u root -p -e "CREATE DATABASE tournament_tables CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-# Run migrations
-php bin/migrate.php
-
-# Seed terrain types
-php bin/seed-terrain-types.php
-
-# Start development server
-php -S localhost:8080 -t public public/index.php
-```
-
-**Note**: The `public/index.php` argument is required for URL routing.
+### Verify by tests
+- After finishing development based on a plan file, verify development by running unit and e2e tests

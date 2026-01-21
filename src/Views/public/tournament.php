@@ -22,6 +22,8 @@ $hasPublishedRounds = !empty($publishedRounds);
 
     <!-- Pico CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <!-- App CSS -->
+    <link rel="stylesheet" href="/css/app.css">
 
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -188,21 +190,16 @@ $hasPublishedRounds = !empty($publishedRounds);
 </head>
 <body>
     <header class="public-header">
+        <nav class="public-back-nav">
+            <a href="/public" data-testid="back-to-list">&larr; All Tournaments</a>
+        </nav>
         <h1><?= $pageTitle ?></h1>
-        <p class="subtitle">Table Allocations</p>
+        <p class="subtitle" data-testid="tables-count">
+            <?= count($tables) ?> Tables
+        </p>
     </header>
 
     <main class="container">
-        <div class="tournament-info">
-            <span class="tournament-info-item">
-                <span class="tournament-info-label">Tables:</span> <?= $tournament->tableCount ?>
-            </span>
-            <?php if ($hasPublishedRounds): ?>
-            <span class="tournament-info-item">
-                <span class="tournament-info-label">Published Rounds:</span> <?= count($publishedRounds) ?>
-            </span>
-            <?php endif; ?>
-        </div>
 
         <section class="round-selector">
             <h2>Select Round</h2>
@@ -210,7 +207,7 @@ $hasPublishedRounds = !empty($publishedRounds);
             <?php if ($hasPublishedRounds): ?>
             <div class="round-buttons">
                 <?php foreach ($publishedRounds as $round): ?>
-                <a href="/public/<?= $tournament->id ?>/round/<?= $round->roundNumber ?>" class="round-button">
+                <a href="/public/<?= $tournament->id ?>/round/<?= $round->roundNumber ?>" class="round-button" data-testid="round-button-<?= $round->roundNumber ?>">
                     Round <?= $round->roundNumber ?>
                 </a>
                 <?php endforeach; ?>

@@ -567,7 +567,6 @@ $hasTableCollisions = !empty($tableCollisions);
                     <span class="conflict-badge"><?= count($conflicts) ?> Conflict(s)</span>
                 <?php endif; ?>
             </h1>
-            <p><?= htmlspecialchars($tournament->name) ?></p>
         </header>
 
         <?php if ($justImported): ?>
@@ -580,8 +579,8 @@ $hasTableCollisions = !empty($tableCollisions);
         <?php if ($isPublished): ?>
         <!-- Warning when editing published round (FR-013, T076) -->
         <article class="warning-article">
-            <h4>⚠️ Published Round</h4>
-            <p>This round has been published and is visible to players. Any changes you make will be immediately visible to all players viewing the allocations.</p>
+            <h4 style="color: #666;">⚠️ Published Round</h4>
+            <p style="color: #666;">This round has been published and is visible to players. Any changes you make will be immediately visible to all players viewing the allocations.</p>
         </article>
         <?php endif; ?>
 
@@ -628,8 +627,6 @@ $hasTableCollisions = !empty($tableCollisions);
                 <?php if ($hasTableCollisions): ?>
                 <small style="color: #d32f2f; line-height: 2.5;">Fix table collisions before publishing</small>
                 <?php endif; ?>
-                <?php else: ?>
-                <span class="publish-status published-badge">Already Published</span>
                 <?php endif; ?>
 
                 <span class="publish-status"></span>

@@ -57,6 +57,7 @@ $routes = [
     'GET /tournament/create' => ['ViewController', 'createTournament'],
     'GET /tournament/{id}' => ['ViewController', 'showTournament', 'admin'],
     'GET /tournament/{id}/round/{n}' => ['ViewController', 'showRound', 'admin'],
+    'GET /public' => ['ViewController', 'publicIndex'],
     'GET /public/{id}' => ['ViewController', 'publicTournament'],
     'GET /public/{id}/round/{n}' => ['ViewController', 'publicRound'],
     'GET /login' => ['ViewController', 'login'],
