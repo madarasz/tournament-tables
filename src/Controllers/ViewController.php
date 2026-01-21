@@ -9,6 +9,7 @@ use TournamentTables\Models\Round;
 use TournamentTables\Models\Allocation;
 use TournamentTables\Models\Table;
 use TournamentTables\Models\TerrainType;
+use TournamentTables\Database\Connection;
 
 /**
  * View controller for HTML page rendering.
@@ -130,8 +131,28 @@ class ViewController extends BaseController
         // Get only published rounds
         $publishedRounds = Round::findPublishedByTournament($tournamentId);
 
+        // Get tables for table count display
+        $tables = Table::findByTournament($tournamentId);
+
         // Render the public tournament view
         include __DIR__ . '/../Views/public/tournament.php';
+    }
+
+    /**
+     * GET /public - Public tournaments list (unauthenticated).
+     */
+    public function publicIndex(array $params, ?array $body): void
+    {
+        // Query tournaments with at least one published round
+        $sql = 'SELECT DISTINCT t.*,
+                (SELECT COUNT(*) FROM players WHERE tournament_id = t.id) as player_count
+                FROM tournaments t
+                INNER JOIN rounds r ON r.tournament_id = t.id AND r.is_published = TRUE
+                ORDER BY t.id DESC';
+
+        $tournaments = Connection::fetchAll($sql);
+
+        include __DIR__ . '/../Views/public/index.php';
     }
 
     /**

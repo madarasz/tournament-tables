@@ -17,6 +17,18 @@
 $pageTitle = htmlspecialchars($tournament->name) . " - Round {$round->roundNumber}";
 $hasAllocations = !empty($allocations);
 
+// Calculate prev/next rounds for navigation
+$prevRound = null;
+$nextRound = null;
+foreach ($publishedRounds as $r) {
+    if ($r->roundNumber === $round->roundNumber - 1) {
+        $prevRound = $r;
+    }
+    if ($r->roundNumber === $round->roundNumber + 1) {
+        $nextRound = $r;
+    }
+}
+
 /**
  * Abbreviate player name for mobile display (UX Improvement #8).
  * "Tamas Horvath" -> "T. Horvath"
@@ -42,6 +54,8 @@ function abbreviatePlayerName($fullName) {
 
     <!-- Pico CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <!-- App CSS -->
+    <link rel="stylesheet" href="/css/app.css">
 
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -329,24 +343,29 @@ function abbreviatePlayerName($fullName) {
 </head>
 <body>
     <header class="public-header">
-        <h1><?= htmlspecialchars($tournament->name) ?></h1>
-        <p class="subtitle">Round <?= $round->roundNumber ?> - Table Allocations</p>
-
-        <nav class="round-nav">
-            <a href="/public/<?= $tournament->id ?>" class="back-link">&larr; All Rounds</a>
-
-            <div class="round-nav-buttons">
-                <?php foreach ($publishedRounds as $r): ?>
-                <a href="/public/<?= $tournament->id ?>/round/<?= $r->roundNumber ?>"
-                   class="<?= $r->roundNumber === $round->roundNumber ? 'active' : '' ?>">
-                    Round <?= $r->roundNumber ?>
-                </a>
-                <?php endforeach; ?>
-            </div>
+        <nav class="public-back-nav">
+            <a href="/public">&larr; All Tournaments</a>
         </nav>
+        <h1><?= htmlspecialchars($tournament->name) ?></h1>
+        <p class="subtitle">Table Allocations</p>
     </header>
 
     <main class="container">
+        <!-- Round navigation -->
+        <nav class="public-round-navigation">
+            <?php if ($prevRound): ?>
+            <a href="/public/<?= $tournament->id ?>/round/<?= $prevRound->roundNumber ?>" class="public-round-nav-btn">&laquo; Round <?= $prevRound->roundNumber ?></a>
+            <?php else: ?>
+            <span class="public-round-nav-spacer"></span>
+            <?php endif; ?>
+            <span class="public-round-current">Round <?= $round->roundNumber ?></span>
+            <?php if ($nextRound): ?>
+            <a href="/public/<?= $tournament->id ?>/round/<?= $nextRound->roundNumber ?>" class="public-round-nav-btn">Round <?= $nextRound->roundNumber ?> &raquo;</a>
+            <?php else: ?>
+            <span class="public-round-nav-spacer"></span>
+            <?php endif; ?>
+        </nav>
+
         <?php if ($hasAllocations): ?>
         <table class="allocation-table" role="grid">
             <thead>
@@ -366,6 +385,7 @@ function abbreviatePlayerName($fullName) {
                     $player1 = $allocation->getPlayer1();
                     $player2 = $allocation->getPlayer2();
                     $terrainType = $table ? $table->getTerrainType() : null;
+                    $emoji = $terrainType ? $terrainType->emoji : '';
 
                     // Prepare names (UX Improvement #8)
                     $p1Name = $player1 ? htmlspecialchars($player1->name) : 'Unknown';
@@ -374,7 +394,7 @@ function abbreviatePlayerName($fullName) {
                     $p2Short = abbreviatePlayerName($p2Name);
                 ?>
                 <tr>
-                    <td class="table-number"><?= $table ? $table->tableNumber : 'N/A' ?></td>
+                    <td class="table-number"><?= $table ? $table->tableNumber : 'N/A' ?><?= $emoji ? ' ' . $emoji : '' ?></td>
                     <td class="terrain-type"><?= $terrainType ? htmlspecialchars($terrainType->name) : '-' ?></td>
                     <td class="player-name">
                         <span class="player-name-full"><?= $p1Name ?></span>
