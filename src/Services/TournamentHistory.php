@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TournamentTables\Services;
 
+use PDO;
 use TournamentTables\Database\Connection;
 
 /**
@@ -19,16 +20,25 @@ class TournamentHistory
     /** @var int */
     private $currentRound;
 
+    /** @var PDO|null */
+    private $db;
+
     /** @var array */
     private $playerTableHistoryCache = [];
 
     /** @var array */
     private $playerTerrainHistoryCache = [];
 
-    public function __construct(int $tournamentId, int $currentRound)
+    /**
+     * @param int $tournamentId Tournament ID
+     * @param int $currentRound Current round number
+     * @param PDO|null $db Optional PDO instance (defaults to Connection singleton)
+     */
+    public function __construct(int $tournamentId, int $currentRound, ?PDO $db = null)
     {
         $this->tournamentId = $tournamentId;
         $this->currentRound = $currentRound;
+        $this->db = $db;
     }
 
     /**
@@ -207,12 +217,21 @@ class TournamentHistory
             ";
         }
 
-        return Connection::fetchAll($sql, [
+        $params = [
             $this->tournamentId,
             $playerId,
             $playerId,
             $this->currentRound,
-        ]);
+        ];
+
+        // Use injected PDO if available, otherwise fall back to Connection singleton
+        if ($this->db !== null) {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return Connection::fetchAll($sql, $params);
     }
 
     /**
