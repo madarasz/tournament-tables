@@ -55,7 +55,7 @@ class AllocationEditServiceTest extends TestCase
             'terrain_type_id' => null,
         ];
 
-        // Sequence of fetch calls: allocation, table, round, existing allocation check, table again for conflicts, history checks
+        // fetch() is used by fetchById(), fetchOneWhere(), and getRound()
         $stmt->method('fetch')->willReturnOnConsecutiveCalls(
             // 1. getAllocation
             [
@@ -76,11 +76,12 @@ class AllocationEditServiceTest extends TestCase
             // 4. getAllocationByRoundAndTable - null (no existing allocation)
             false,
             // 5. getTable again for calculateConflicts
-            $tableRow,
-            // 6-7. hasPlayerUsedTable checks (count queries)
-            ['count' => 0],
-            ['count' => 0]
+            $tableRow
         );
+
+        // fetchAll() is used by TournamentHistory::queryPlayerHistory()
+        // Returns empty arrays (no previous table usage) for each player
+        $stmt->method('fetchAll')->willReturn([]);
 
         $this->mockDb->method('prepare')->willReturn($stmt);
         $stmt->method('execute')->willReturn(true);
@@ -124,7 +125,14 @@ class AllocationEditServiceTest extends TestCase
         // Create statement mock for different calls
         $stmt = $this->createMock(PDOStatement::class);
 
-        // Sequence of fetch calls - now includes additional calls for conflict calculation
+        $tableRow = [
+            'id' => $newTableId,
+            'tournament_id' => 1,
+            'table_number' => 5,
+            'terrain_type_id' => null,
+        ];
+
+        // fetch() is used by fetchById(), fetchOneWhere(), and getRound()
         $stmt->method('fetch')->willReturnOnConsecutiveCalls(
             // 1. getAllocation
             [
@@ -135,12 +143,7 @@ class AllocationEditServiceTest extends TestCase
                 'player2_id' => 11,
             ],
             // 2. getTable
-            [
-                'id' => $newTableId,
-                'tournament_id' => 1,
-                'table_number' => 5,
-                'terrain_type_id' => null,
-            ],
+            $tableRow,
             // 3. getRound
             [
                 'id' => 1,
@@ -154,16 +157,12 @@ class AllocationEditServiceTest extends TestCase
                 'table_id' => $newTableId,
             ],
             // 5. getTable for calculateConflicts
-            [
-                'id' => $newTableId,
-                'tournament_id' => 1,
-                'table_number' => 5,
-                'terrain_type_id' => null,
-            ],
-            // 6-7. hasPlayerUsedTable queries return count 0
-            ['count' => 0],
-            ['count' => 0]
+            $tableRow
         );
+
+        // fetchAll() is used by TournamentHistory::queryPlayerHistory()
+        // Returns empty arrays (no previous table usage) for each player
+        $stmt->method('fetchAll')->willReturn([]);
 
         $this->mockDb->method('prepare')->willReturn($stmt);
         $stmt->method('execute')->willReturn(true);
@@ -197,6 +196,8 @@ class AllocationEditServiceTest extends TestCase
 
         // Mock both allocations exist and are in same round
         $stmt = $this->createMock(PDOStatement::class);
+
+        // fetch() is used by fetchById() and getRound()
         $stmt->method('fetch')->willReturnOnConsecutiveCalls(
             // 1. getAllocation - allocation 1
             [
@@ -220,19 +221,15 @@ class AllocationEditServiceTest extends TestCase
                 'tournament_id' => 1,
                 'round_number' => 2,
             ],
-            // 4-7. getTable calls for conflict calculations
+            // 4. getTable(5) for first calculateConflicts
             ['id' => 5, 'tournament_id' => 1, 'table_number' => 5, 'terrain_type_id' => null],
-            ['count' => 0], // player table history check
-            ['count' => 0],
-            ['id' => 3, 'tournament_id' => 1, 'table_number' => 3, 'terrain_type_id' => null],
-            ['count' => 0],
-            ['count' => 0],
-            // 8-9. getPlayer calls for conflict messages
-            ['id' => 10, 'name' => 'Player 10'],
-            ['id' => 11, 'name' => 'Player 11'],
-            ['id' => 12, 'name' => 'Player 12'],
-            ['id' => 13, 'name' => 'Player 13']
+            // 5. getTable(3) for second calculateConflicts
+            ['id' => 3, 'tournament_id' => 1, 'table_number' => 3, 'terrain_type_id' => null]
         );
+
+        // fetchAll() is used by TournamentHistory::queryPlayerHistory()
+        // Returns empty arrays (no previous table usage) for each player
+        $stmt->method('fetchAll')->willReturn([]);
 
         $this->mockDb->method('prepare')->willReturn($stmt);
         $stmt->method('execute')->willReturn(true);

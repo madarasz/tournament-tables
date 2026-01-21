@@ -247,10 +247,11 @@ class AllocationEditService
      * Get TournamentHistory instance for conflict checking.
      *
      * Delegates to TournamentHistory to avoid duplicate query logic.
+     * Passes the injected PDO to enable unit testing.
      */
     private function getTournamentHistory(int $tournamentId, int $currentRound): TournamentHistory
     {
-        return new TournamentHistory($tournamentId, $currentRound);
+        return new TournamentHistory($tournamentId, $currentRound, $this->db);
     }
 
     /**
