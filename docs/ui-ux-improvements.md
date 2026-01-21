@@ -677,6 +677,421 @@ Switch to card-based layout below 768px, maintain table above.
 
 ---
 
+### #4: Consolidate Round Import into Rounds Table
+
+**Status**: ✅ Implemented
+**Date Proposed**: 2026-01-20
+**Date Implemented**: 2026-01-20
+**Priority**: Medium (reduces page complexity, improves discoverability)
+
+#### Problem
+
+Currently, the tournament dashboard has:
+1. A "Rounds" table showing existing rounds with "Manage" buttons
+2. A separate "Import New Round" section below with a round number input field
+
+This creates several UX issues:
+- **Redundant UI**: Two separate areas for round-related actions
+- **Unnecessary input**: Round number field is pointless—it should always be the next unimported round
+- **Discoverability**: Users may miss the import section or be confused about what number to enter
+- **Cognitive load**: User must determine which round number comes next
+
+#### Research Findings
+
+**UX Principle**: Progressive Disclosure + Contextual Actions
+
+This improvement aligns with research already documented:
+- Per [Nielsen Norman Group](https://www.nngroup.com/articles/progressive-disclosure/): Place actions in context where they're needed
+- Per [Zuko](https://www.zuko.io/blog/how-to-use-defaults-to-optimize-your-form-ux): "Eliminate redundant information collection"—don't ask for data that can be derived
+
+**Pattern Examples**:
+- **GitHub**: "Add file" button appears within the file list, not in a separate section
+- **Notion**: "New page" appears as the last row in database views
+- **Linear**: "Create issue" appears inline within the project list
+
+#### Proposed Solution
+
+1. **Remove** the separate "Import New Round" section entirely
+2. **Add** an "Import Round {N}" button as the last row of the Rounds table
+   - Spans all columns (merged cells)
+   - N = next unimported round number (auto-calculated)
+   - Styled as secondary/outline button to differentiate from data rows
+3. **Auto-calculate** round number: `MAX(round_number) + 1` or `1` if no rounds exist
+
+**Visual Mockup**:
+```
+┌────────┬────────────┬─────────────┬──────────┐
+│ Round  │ Status     │ Allocations │ Actions  │
+├────────┼────────────┼─────────────┼──────────┤
+│ 1      │ Published  │ 16/16       │ [Manage] │
+│ 2      │ Draft      │ 14/16       │ [Manage] │
+├────────┴────────────┴─────────────┴──────────┤
+│           [+ Import Round 3]                 │
+└──────────────────────────────────────────────┘
+```
+
+#### Implementation Notes
+
+**Files to Modify**:
+- `src/Views/tournament/dashboard.php`:
+  - Remove "Import New Round" section
+  - Add merged row at end of rounds table with import button
+  - Calculate next round number: `$nextRound = count($rounds) + 1`
+- `src/Controllers/RoundController.php`:
+  - Remove round number from request validation (derive it server-side)
+  - Update import endpoint to auto-determine round number if not provided
+
+**Edge Cases**:
+- No rounds yet → Show "Import Round 1" button
+- Gap in round numbers (unlikely but possible) → Use `MAX + 1` not `COUNT + 1`
+- All rounds imported → Hide import button or show disabled state with tooltip
+
+#### Testing Considerations
+
+**E2E Tests to Update**:
+- `tests/E2E/specs/round-import.spec.ts`: Remove round number input interaction
+- Verify import button appears in rounds table
+- Verify correct round number is auto-calculated
+- Test import with 0, 1, and multiple existing rounds
+
+#### Generalized Learning
+
+**Pattern**: Contextual Action Placement
+- **When to use**: When an action logically relates to a list/table of items
+- **Key principle**: Place creation/import actions where users look for related items
+- **Application elsewhere**: Could apply to table creation, player management if added
+
+---
+
+### #5: Auto-Redirect After Round Import
+
+**Status**: ✅ Implemented
+**Date Proposed**: 2026-01-20
+**Date Implemented**: 2026-01-20
+**Priority**: High (affects every round import flow)
+
+#### Problem
+
+After importing a round:
+1. User sees success message on dashboard
+2. User must find and click "Manage" button to view/edit allocations
+3. This creates an extra click in every round import flow
+
+The user's intent is clear—after importing pairings, they want to manage table allocations for that round.
+
+#### Research Findings
+
+This improvement directly applies the **Post-Creation Auto-Forward** pattern documented in Improvement #1:
+
+- Per [Pencil & Paper](https://www.pencilandpaper.io/articles/success-ux): "For smaller scale task completions... opt for a more subtle success UI like a banner or toast"
+- Per [UserOnboard](https://www.useronboard.com/onboarding-ux-patterns/success-states/): Success states should provide **Context** (what's next?)
+
+**Pattern Examples**:
+- **GitHub**: Creating a branch redirects to the branch view
+- **Stripe**: Creating a subscription redirects to subscription details
+- **Linear**: Creating a project redirects to the project board
+
+#### Proposed Solution
+
+1. After successful round import, redirect to `/tournament/{id}/rounds/{n}/manage`
+2. Show success toast/banner on the manage page: "Round {n} imported successfully"
+3. If import fails, stay on dashboard and show error message
+
+**Flow**:
+```
+User clicks "Import Round 3" → API imports pairings →
+  Success: Redirect to /tournament/{id}/rounds/3/manage with success message
+  Failure: Stay on dashboard with error message
+```
+
+#### Implementation Notes
+
+**Files to Modify**:
+- `src/Controllers/RoundController.php`:
+  - Change import response from JSON to redirect (for form submissions)
+  - Set flash message for success notification
+- `src/Views/round/manage.php`:
+  - Display flash message if present
+- Session: Use flash message pattern for cross-request notifications
+
+**HTMX Considerations**:
+- If using HTMX for import, use `HX-Redirect` header to trigger client-side redirect
+- Alternative: Full page form submission with server-side redirect
+
+#### Testing Considerations
+
+**E2E Tests to Update**:
+- `tests/E2E/specs/round-import.spec.ts`:
+  - Expect redirect to manage page after import
+  - Verify success message appears on manage page
+  - Test error case stays on dashboard
+
+#### Generalized Learning
+
+Extends **Post-Creation Auto-Forward** pattern to import operations—any data import should redirect to the view/manage page for that data.
+
+---
+
+### #6: Remove Swap Confirmation Popup
+
+**Status**: ✅ Implemented
+**Date Proposed**: 2026-01-20
+**Date Implemented**: 2026-01-20
+**Priority**: Medium (reduces friction in common action)
+
+#### Problem
+
+The "Swap Selected" button currently shows a confirmation popup before executing the swap. This creates friction for a reversible, low-risk action.
+
+Issues:
+- **Unnecessary confirmation**: Swapping allocations is easily reversible (swap again)
+- **Slows workflow**: Admins may swap multiple times while optimizing allocations
+- **Modal fatigue**: Too many confirmations train users to click through without reading
+
+#### Research Findings
+
+**UX Principle**: Confirmation Dialogs for Destructive Actions Only
+
+- Per [Nielsen Norman Group](https://www.nngroup.com/articles/confirmation-dialog/): "Confirmation dialogs should be reserved for actions that are destructive and irreversible"
+- Per [Material Design](https://material.io/components/dialogs#confirmation-dialog): "Use confirmation dialogs for important actions that cannot be undone"
+
+**Swap is NOT destructive because**:
+- Action is instantly reversible (select same rows, swap again)
+- No data is deleted
+- User can see the result immediately and undo
+
+**Pattern Examples**:
+- **Trello**: Dragging cards between lists has no confirmation—instant action
+- **Gmail**: Moving emails to folders has no confirmation—shows undo toast instead
+- **Notion**: Reordering items has no confirmation—direct manipulation
+
+#### Proposed Solution
+
+1. **Remove** confirmation popup for swap action
+2. **Execute immediately** when "Swap Selected" is clicked
+3. **Show feedback**: Brief success message or visual indication of the swap
+4. **Consider undo** (future improvement): Toast with "Undo" button for 5 seconds
+
+#### Implementation Notes
+
+**Files to Modify**:
+- `src/Views/round/manage.php`: Remove confirmation dialog markup and JavaScript
+- JavaScript: Remove `confirm()` call or modal trigger, execute swap directly
+
+**Current Flow**:
+```
+Click "Swap" → Show "Are you sure?" → User clicks "OK" → Execute swap
+```
+
+**New Flow**:
+```
+Click "Swap" → Execute swap → Show success feedback
+```
+
+#### Testing Considerations
+
+**E2E Tests to Update**:
+- Remove any assertions expecting confirmation dialog
+- Verify swap executes immediately on button click
+- Verify success feedback appears
+
+#### Generalized Learning
+
+**Pattern**: Confirmation for Destructive Actions Only
+- **Confirm**: Delete, publish to production, irreversible changes
+- **Don't confirm**: Reordering, moving, swapping, any reversible action
+- **Alternative to confirmation**: Undo capability (Gmail pattern)
+
+---
+
+### #7: Compact Round Navigation Buttons on Mobile
+
+**Status**: ✅ Implemented
+**Date Proposed**: 2026-01-20
+**Date Implemented**: 2026-01-20
+**Priority**: Low (visual polish)
+
+#### Problem
+
+On mobile, the Previous/Next round navigation buttons are 100% width, stacked vertically. This:
+- Takes up excessive vertical space
+- Doesn't match standard navigation patterns (left/right positioning)
+- Looks unbalanced when only one button is present (first/last round)
+
+#### Research Findings
+
+**UX Principle**: Spatial Consistency + Fitts's Law
+
+- Per [Luke Wroblewski](https://www.lukew.com/ff/entry.asp?1927): Navigation elements should be positioned consistently to build muscle memory
+- Standard pattern: "Previous" on left, "Next" on right—matches reading direction
+
+**Pattern Examples**:
+- **Pagination controls**: Typically show `< Prev` on left, `Next >` on right
+- **iOS**: Back button always on left, forward actions on right
+- **Carousel controls**: Left/right arrows on respective sides
+
+#### Proposed Solution
+
+1. **Limit width**: Max-width 40% for each button on mobile
+2. **Position**: Previous button aligned left, Next button aligned right
+3. **Layout**: Use flexbox with `justify-content: space-between`
+4. **Single button**: When only one exists, maintain its position (Prev on left, Next on right)
+
+**Visual Mockup**:
+```
+Current (mobile):
+┌──────────────────────────────────────┐
+│         [← Previous Round]           │
+├──────────────────────────────────────┤
+│           [Next Round →]             │
+└──────────────────────────────────────┘
+
+Proposed (mobile):
+┌──────────────────────────────────────┐
+│ [← Previous]              [Next →]   │
+└──────────────────────────────────────┘
+
+First round (no previous):
+┌──────────────────────────────────────┐
+│                           [Next →]   │
+└──────────────────────────────────────┘
+```
+
+#### Implementation Notes
+
+**Files to Modify**:
+- `src/Views/round/manage.php` (or shared round navigation partial):
+  - Update navigation button container with flexbox layout
+  - Add CSS for mobile breakpoint
+
+**CSS**:
+```css
+.round-navigation {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+@media (max-width: 767px) {
+  .round-navigation a {
+    max-width: 40%;
+  }
+}
+```
+
+#### Testing Considerations
+
+**Visual/Manual Testing**:
+- Test at mobile breakpoints (320px, 375px, 414px)
+- Verify buttons don't overlap with long round names
+- Test with only Previous, only Next, and both buttons
+
+#### Generalized Learning
+
+**Pattern**: Directional Navigation Positioning
+- **Previous/Back**: Always on left
+- **Next/Forward**: Always on right
+- **Width**: Don't stretch navigation buttons full-width on mobile
+
+---
+
+### #8: Mobile Optimization for Public Round View
+
+**Status**: ✅ Implemented
+**Date Proposed**: 2026-01-20
+**Date Implemented**: 2026-01-20
+**Priority**: Medium (improves player experience on mobile)
+
+#### Problem
+
+The public round view (`/public/tournaments/{id}/rounds/{n}`) displays allocation data but isn't optimized for mobile:
+1. **Full player names**: Takes too much horizontal space
+2. **"vs" column**: Wastes a column that could be eliminated
+3. **Inconsistent with admin view**: Admin table uses name shortening, public doesn't
+
+Players checking their table assignments are likely on mobile devices at tournament venues.
+
+#### Research Findings
+
+This improvement applies the same research from Improvement #3 (Compact & Responsive Allocation Table):
+
+- Per [Nielsen Norman Group](https://www.nngroup.com/articles/mobile-tables/): "Items need to be legible without requiring the user to zoom in"
+- Per [CSS-Tricks](https://css-tricks.com/responsive-data-tables/): Combine related data to reduce columns
+
+**Consistency Principle**: The same data (player matchups) should be displayed consistently across views. If admin view uses abbreviated names, public view should too.
+
+#### Proposed Solution
+
+1. **Apply name shortening on mobile**: Use same `abbreviateName()` function from admin view
+   - Full name on desktop: "Tamas Horvath"
+   - Abbreviated on mobile: "T. Horvath"
+
+2. **Remove "vs" column**: Integrate visual separator without dedicated column
+   - Option A: Use "vs" as text between names in same cell
+   - Option B: Use visual divider (border, spacing) instead of text
+
+**Visual Mockup**:
+```
+Current public view (mobile):
+┌───────┬─────────────────┬────┬─────────────────┐
+│ Table │ Player 1        │ vs │ Player 2        │
+├───────┼─────────────────┼────┼─────────────────┤
+│ 1     │ Tamas Horvath   │ vs │ Istvan Madarasz │
+└───────┴─────────────────┴────┴─────────────────┘
+
+Proposed public view (mobile):
+┌───────┬──────────────────────────────┐
+│ Table │ Matchup                      │
+├───────┼──────────────────────────────┤
+│ 1     │ T. Horvath vs I. Madarasz    │
+└───────┴──────────────────────────────┘
+```
+
+#### Implementation Notes
+
+**Files to Modify**:
+- `src/Views/public/round.php`:
+  - Add responsive CSS for mobile breakpoint
+  - Implement name abbreviation (reuse from admin view or extract to shared helper)
+  - Merge player columns on mobile with "vs" inline
+- Consider extracting `abbreviateName()` to shared JavaScript or PHP helper
+
+**PHP Helper** (if server-side abbreviation):
+```php
+function abbreviateName(string $fullName): string {
+    $parts = explode(' ', $fullName);
+    if (count($parts) < 2) return $fullName;
+    $firstName = $parts[0];
+    $lastInitial = substr($parts[count($parts) - 1], 0, 1);
+    return $firstName[0] . '. ' . $parts[count($parts) - 1];
+}
+```
+
+**Responsive Strategy**:
+- Desktop (≥768px): Full names, separate columns with "vs"
+- Mobile (<768px): Abbreviated names, merged matchup column
+
+#### Testing Considerations
+
+**E2E Tests**:
+- Test public view at mobile viewport sizes
+- Verify name abbreviation displays correctly
+- Verify no horizontal scrolling on mobile
+- Test with long player names
+
+**Manual Testing**:
+- Test on real mobile devices at tournament venue lighting
+- Verify text is readable at arm's length
+
+#### Generalized Learning
+
+**Pattern**: Consistent Data Presentation Across Views
+- **When to use**: Same data displayed in multiple contexts (admin vs public, list vs detail)
+- **Key principle**: Apply same formatting/abbreviation rules for consistency
+- **Benefit**: Users learn patterns once, apply everywhere
+
+---
+
 ### Candidate Improvements (Not Yet Researched)
 
 1. **Inline Editing**: Edit allocations directly in the table view without modal/separate page
@@ -687,8 +1102,7 @@ Switch to card-based layout below 768px, maintain table above.
 6. **Conflict Highlighting**: Visual indicators for allocation conflicts (same player, double-booked table)
 7. **Drag-and-Drop**: Drag players between tables to reassign
 8. **Real-time Collaboration**: Multiple admins can edit simultaneously with conflict resolution
-9. **Mobile Optimization**: Improve touch targets and layout for tablet/phone admin interface
-10. **Accessibility**: Ensure screen reader compatibility, keyboard navigation, WCAG 2.1 AA compliance
+9. **Accessibility**: Ensure screen reader compatibility, keyboard navigation, WCAG 2.1 AA compliance
 
 ---
 
@@ -756,6 +1170,10 @@ What pattern can be extracted? Where else could this apply?
 
 ## Changelog
 
+- **2026-01-20**: Implemented improvements #6, #7, #8: Removed swap confirmation popup (reversible action doesn't need confirmation), made round navigation buttons compact side-by-side on mobile (abbreviated "R1/R2" labels), added mobile optimization for public round view (abbreviated names with inline scores, hidden score/vs columns on mobile)
+- **2026-01-20**: Refined improvement #5 (Auto-Redirect After Round Import): Removed 1.5s delay, now redirects immediately to manage page with success flash message displayed via query parameters; added E2E test coverage
+- **2026-01-20**: Implemented improvements #4 and #5: Consolidated round import into rounds table (removed separate section, added "Import Round N" button as last row with auto-calculated round number) and auto-redirect to manage page after successful import
+- **2026-01-20**: Added improvements #4-#8: Consolidate round import into rounds table, auto-redirect after import, remove swap confirmation, compact mobile navigation, public view mobile optimization
 - **2026-01-19**: Implemented improvement #3 (Compact & Responsive Allocation Table): reduced columns from 9 to 6, added mobile breakpoints, sticky swap controls, modal for mobile table editing
 - **2026-01-19**: Added improvement #3 (Compact & Responsive Allocation Table) with mobile-first design research and interaction patterns
 - **2026-01-19**: Added research section #4 (Responsive Tables & Mobile Data Display) with sources from NNG, CSS-Tricks, Smashing Magazine, Luke Wroblewski

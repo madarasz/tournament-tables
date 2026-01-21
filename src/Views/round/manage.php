@@ -46,6 +46,10 @@ foreach ($rounds as $r) {
     }
 }
 
+// Check for flash message from import redirect
+$justImported = isset($_GET['imported']) && $_GET['imported'] === '1';
+$importedPairings = $justImported && isset($_GET['pairings']) ? (int)$_GET['pairings'] : 0;
+
 /**
  * Abbreviate player name for mobile display.
  * "Tamas Horvath" -> "T. Horvath"
@@ -416,6 +420,31 @@ $hasTableCollisions = !empty($tableCollisions);
             margin-left: 8px;
         }
 
+        /* Round navigation (UX Improvement #7) */
+        .round-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1em;
+        }
+        .round-nav-spacer {
+            flex: 1;
+        }
+        .round-nav-btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            border-radius: 4px;
+            white-space: nowrap;
+            background: var(--secondary-focus, #f0f0f0);
+            border: 1px solid var(--muted-border-color, #ccc);
+        }
+        .round-nav-btn:hover {
+            background: var(--secondary-hover, #e0e0e0);
+            text-decoration: none;
+        }
+
         /* Mobile styles (< 768px) */
         @media (max-width: 767px) {
             .allocation-table {
@@ -438,6 +467,15 @@ $hasTableCollisions = !empty($tableCollisions);
             /* Abbreviate headers */
             .header-full { display: none; }
             .header-short { display: inline; }
+
+            /* Round navigation - compact side-by-side (UX Improvement #7) */
+            .round-nav-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+                max-width: 45%;
+            }
+            .nav-short { display: inline; }
+            .nav-full { display: none; }
 
             /* Show mobile edit button, hide dropdown */
             .change-table-dropdown { display: none; }
@@ -532,6 +570,13 @@ $hasTableCollisions = !empty($tableCollisions);
             <p><?= htmlspecialchars($tournament->name) ?></p>
         </header>
 
+        <?php if ($justImported): ?>
+        <!-- Success message for round import (FR-015, UX Improvement #5) -->
+        <article class="success-article" id="import-success-message">
+            <p><strong>Round <?= $round->roundNumber ?> imported successfully</strong> — <?= $importedPairings ?> pairing<?= $importedPairings !== 1 ? 's' : '' ?> loaded from BCP.</p>
+        </article>
+        <?php endif; ?>
+
         <?php if ($isPublished): ?>
         <!-- Warning when editing published round (FR-013, T076) -->
         <article class="warning-article">
@@ -614,18 +659,16 @@ $hasTableCollisions = !empty($tableCollisions);
         </section>
         <?php endif; ?>
 
-        <!-- Round navigation -->
-        <nav style="display: flex; justify-content: space-between; margin-bottom: 1em;">
-            <div>
-                <?php if ($prevRound): ?>
-                <a href="/tournament/<?= $tournament->id ?>/round/<?= $prevRound->roundNumber ?>">&laquo; Round <?= $prevRound->roundNumber ?></a>
-                <?php endif; ?>
-            </div>
-            <div>
-                <?php if ($nextRound): ?>
-                <a href="/tournament/<?= $tournament->id ?>/round/<?= $nextRound->roundNumber ?>">Round <?= $nextRound->roundNumber ?> &raquo;</a>
-                <?php endif; ?>
-            </div>
+        <!-- Round navigation (UX Improvement #7: side-by-side on mobile) -->
+        <nav class="round-navigation">
+            <?php if ($prevRound): ?>
+            <a href="/tournament/<?= $tournament->id ?>/round/<?= $prevRound->roundNumber ?>" class="round-nav-btn round-nav-prev">&laquo; Round <?= $prevRound->roundNumber ?></a>
+            <?php else: ?>
+            <span class="round-nav-spacer"></span>
+            <?php endif; ?>
+            <?php if ($nextRound): ?>
+            <a href="/tournament/<?= $tournament->id ?>/round/<?= $nextRound->roundNumber ?>" class="round-nav-btn round-nav-next">Round <?= $nextRound->roundNumber ?> &raquo;</a>
+            <?php endif; ?>
         </nav>
 
         <section id="allocation-results">
@@ -865,6 +908,7 @@ $hasTableCollisions = !empty($tableCollisions);
         }
 
         // Swap selected tables (T074)
+        // Note: No confirmation dialog - swapping is reversible (UX Improvement #6)
         function swapSelectedTables() {
             var checkboxes = document.querySelectorAll('.swap-checkbox:checked');
 
@@ -876,30 +920,29 @@ $hasTableCollisions = !empty($tableCollisions);
             var allocationId1 = parseInt(checkboxes[0].dataset.allocationId);
             var allocationId2 = parseInt(checkboxes[1].dataset.allocationId);
 
-            if (confirm('Swap tables for these two pairings?')) {
-                fetch('/api/allocations/swap', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Admin-Token': getAdminToken(currentTournamentId)
-                    },
-                    body: JSON.stringify({
-                        allocationId1: allocationId1,
-                        allocationId2: allocationId2
-                    })
+            // Execute swap immediately - action is reversible (swap again to undo)
+            fetch('/api/allocations/swap', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Admin-Token': getAdminToken(currentTournamentId)
+                },
+                body: JSON.stringify({
+                    allocationId1: allocationId1,
+                    allocationId2: allocationId2
                 })
-                .then(function(response) { return response.json(); })
-                .then(function(data) {
-                    if (data.error) {
-                        alert('Error: ' + data.message);
-                    } else {
-                        location.reload();
-                    }
-                })
-                .catch(function(error) {
-                    alert('Failed to swap tables: ' + error.message);
-                });
-            }
+            })
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                if (data.error) {
+                    alert('Error: ' + data.message);
+                } else {
+                    location.reload();
+                }
+            })
+            .catch(function(error) {
+                alert('Failed to swap tables: ' + error.message);
+            });
         }
 
         // Change table assignment (T073)

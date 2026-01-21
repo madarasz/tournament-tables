@@ -16,6 +16,22 @@
 
 $pageTitle = htmlspecialchars($tournament->name) . " - Round {$round->roundNumber}";
 $hasAllocations = !empty($allocations);
+
+/**
+ * Abbreviate player name for mobile display (UX Improvement #8).
+ * "Tamas Horvath" -> "T. Horvath"
+ * "John" -> "John" (single name, no change)
+ */
+function abbreviatePlayerName($fullName) {
+    $parts = explode(' ', trim($fullName));
+    if (count($parts) < 2) {
+        return $fullName;
+    }
+    // First initial + last name(s)
+    $firstInitial = mb_substr($parts[0], 0, 1) . '.';
+    array_shift($parts);
+    return $firstInitial . ' ' . implode(' ', $parts);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
@@ -221,6 +237,10 @@ $hasAllocations = !empty($allocations);
             color: #666;
         }
 
+        /* Mobile name display (UX Improvement #8) */
+        .player-name-full { display: inline; }
+        .player-name-short { display: none; }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .public-header h1 {
@@ -246,9 +266,25 @@ $hasAllocations = !empty($allocations);
                 width: 50px;
             }
 
-            /* Stack player info on mobile */
-            .allocation-table .terrain-type {
+            /* Hide terrain, vs separator, and score columns on mobile */
+            .allocation-table .terrain-type,
+            .allocation-table .vs-separator,
+            .allocation-table .player-score {
                 display: none;
+            }
+            .allocation-table th.terrain-type,
+            .allocation-table th.vs-separator,
+            .allocation-table th.player-score {
+                display: none;
+            }
+
+            /* Show abbreviated names on mobile (UX Improvement #8) */
+            .player-name-full { display: none; }
+            .player-name-short { display: inline; }
+
+            /* Compact player cells on mobile */
+            .player-name {
+                font-size: 0.95rem;
             }
         }
 
@@ -330,15 +366,27 @@ $hasAllocations = !empty($allocations);
                     $player1 = $allocation->getPlayer1();
                     $player2 = $allocation->getPlayer2();
                     $terrainType = $table ? $table->getTerrainType() : null;
+
+                    // Prepare names (UX Improvement #8)
+                    $p1Name = $player1 ? htmlspecialchars($player1->name) : 'Unknown';
+                    $p2Name = $player2 ? htmlspecialchars($player2->name) : 'Unknown';
+                    $p1Short = abbreviatePlayerName($p1Name);
+                    $p2Short = abbreviatePlayerName($p2Name);
                 ?>
                 <tr>
                     <td class="table-number"><?= $table ? $table->tableNumber : 'N/A' ?></td>
                     <td class="terrain-type"><?= $terrainType ? htmlspecialchars($terrainType->name) : '-' ?></td>
-                    <td class="player-name"><?= $player1 ? htmlspecialchars($player1->name) : 'Unknown' ?></td>
+                    <td class="player-name">
+                        <span class="player-name-full"><?= $p1Name ?></span>
+                        <span class="player-name-short"><?= $p1Short ?> (<?= $player1 ? $player1->totalScore : 0 ?>)</span>
+                    </td>
                     <td class="player-score"><?= $player1 ? $player1->totalScore : 0 ?></td>
                     <td class="vs-separator">vs</td>
                     <td class="player-score"><?= $player2 ? $player2->totalScore : 0 ?></td>
-                    <td class="player-name"><?= $player2 ? htmlspecialchars($player2->name) : 'Unknown' ?></td>
+                    <td class="player-name">
+                        <span class="player-name-full"><?= $p2Name ?></span>
+                        <span class="player-name-short"><?= $p2Short ?> (<?= $player2 ? $player2->totalScore : 0 ?>)</span>
+                    </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
