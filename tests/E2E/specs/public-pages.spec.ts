@@ -18,12 +18,12 @@ test.describe('Public Pages', () => {
     await page.waitForLoadState('networkidle');
 
     // Verify tournaments list is visible
-    await expect(page.locator('h1')).toContainText('Tournaments');
+    await expect(page.getByTestId('tournaments-heading')).toHaveText('Tournaments');
 
     // Verify our test tournament is listed with player count
-    const tournamentLink = page.locator('a', { hasText: 'Public Page Test' });
+    const tournamentLink = page.getByTestId('tournament-link-Public Page Test');
     await expect(tournamentLink).toBeVisible();
-    await expect(page.locator('text=16 players')).toBeVisible();
+    await expect(page.getByTestId('player-count-Public Page Test')).toBeVisible();
 
     // Step 2: Click tournament to go to tournament page
     await tournamentLink.click();
@@ -33,18 +33,18 @@ test.describe('Public Pages', () => {
     await expect(page.locator('h1')).toContainText('Public Page Test');
 
     // Verify table count is displayed correctly
-    await expect(page.locator('text=Tables: 8')).toBeVisible();
+    await expect(page.getByTestId('tables-count')).toContainText('8 Tables');
 
     // Verify "All Tournaments" back link exists
-    const backToList = page.locator('a', { hasText: 'All Tournaments' });
+    const backToList = page.getByTestId('back-to-list');
     await expect(backToList).toBeVisible();
 
     // Verify Round 1 button is visible (published)
-    const round1Button = page.locator('a.round-button', { hasText: 'Round 1' });
+    const round1Button = page.getByTestId('round-button-1');
     await expect(round1Button).toBeVisible();
 
     // Verify Round 2 is NOT visible (not published)
-    const round2Button = page.locator('a.round-button', { hasText: 'Round 2' });
+    const round2Button = page.getByTestId('round-button-2');
     await expect(round2Button).not.toBeVisible();
 
     // Step 3: Click Round 1 to view allocations
@@ -60,7 +60,7 @@ test.describe('Public Pages', () => {
     await expect(allocationRows).toHaveCount(8);
 
     // Verify "All Tournaments" back link exists on round page
-    const backFromRound = page.locator('a', { hasText: 'All Tournaments' });
+    const backFromRound = page.getByTestId('back-to-list');
     await expect(backFromRound).toBeVisible();
 
     // Step 4: Navigate back to tournaments list
@@ -68,6 +68,6 @@ test.describe('Public Pages', () => {
     await page.waitForLoadState('networkidle');
 
     // Verify we're back on the main public list
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Tournaments');
+    await expect(page.getByTestId('tournaments-heading')).toHaveText('Tournaments');
   });
 });

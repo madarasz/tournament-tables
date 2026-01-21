@@ -344,7 +344,7 @@ function abbreviatePlayerName($fullName) {
 <body>
     <header class="public-header">
         <nav class="public-back-nav">
-            <a href="/public">&larr; All Tournaments</a>
+            <a href="/public" data-testid="back-to-list">&larr; All Tournaments</a>
         </nav>
         <h1><?= htmlspecialchars($tournament->name) ?></h1>
         <p class="subtitle">Table Allocations</p>

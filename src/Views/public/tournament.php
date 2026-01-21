@@ -191,10 +191,10 @@ $hasPublishedRounds = !empty($publishedRounds);
 <body>
     <header class="public-header">
         <nav class="public-back-nav">
-            <a href="/public">&larr; All Tournaments</a>
+            <a href="/public" data-testid="back-to-list">&larr; All Tournaments</a>
         </nav>
         <h1><?= $pageTitle ?></h1>
-        <p class="subtitle">
+        <p class="subtitle" data-testid="tables-count">
             <?= count($tables) ?> Tables
         </p>
     </header>
@@ -207,7 +207,7 @@ $hasPublishedRounds = !empty($publishedRounds);
             <?php if ($hasPublishedRounds): ?>
             <div class="round-buttons">
                 <?php foreach ($publishedRounds as $round): ?>
-                <a href="/public/<?= $tournament->id ?>/round/<?= $round->roundNumber ?>" class="round-button">
+                <a href="/public/<?= $tournament->id ?>/round/<?= $round->roundNumber ?>" class="round-button" data-testid="round-button-<?= $round->roundNumber ?>">
                     Round <?= $round->roundNumber ?>
                 </a>
                 <?php endforeach; ?>

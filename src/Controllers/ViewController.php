@@ -144,7 +144,8 @@ class ViewController extends BaseController
     public function publicIndex(array $params, ?array $body): void
     {
         // Query tournaments with at least one published round
-        $sql = 'SELECT DISTINCT t.*,
+        // Only select safe columns (exclude admin_token)
+        $sql = 'SELECT DISTINCT t.id, t.name, t.bcp_event_id, t.bcp_url, t.table_count,
                 (SELECT COUNT(*) FROM players WHERE tournament_id = t.id) as player_count
                 FROM tournaments t
                 INNER JOIN rounds r ON r.tournament_id = t.id AND r.is_published = TRUE
