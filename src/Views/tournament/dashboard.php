@@ -58,19 +58,8 @@ $autoImport = $autoImport ?? null;
 <?php endif; ?>
 
 <header>
-    <h1><?= htmlspecialchars($tournament->name) ?></h1>
-    <p>
-        <a href="<?= htmlspecialchars($tournament->bcpUrl) ?>" target="_blank" rel="noopener">
-            View on Best Coast Pairings
-        </a>
-        |
-        <a href="/public/<?= $tournament->id ?>">Public View</a>
-    </p>
-</header>
-
-<section>
-    <h2>Tournament Info</h2>
-    <article>
+    <h1 style="margin-bottom: 0;"><?= htmlspecialchars($tournament->name) ?></h1>
+    <article style="margin-top: 0;">
         <div class="grid">
             <div>
                 <strong>Tables:</strong> <?= $tableCount ?>
@@ -81,9 +70,17 @@ $autoImport = $autoImport ?? null;
             <div>
                 <strong>BCP Event ID:</strong> <?= htmlspecialchars($tournament->bcpEventId) ?>
             </div>
+            <div>
+                <a href="<?= htmlspecialchars($tournament->bcpUrl) ?>" target="_blank" rel="noopener">
+                    View on Best Coast Pairings
+                </a>
+            </div>
+            <div>
+                <a href="/<?= $tournament->id ?>">Public View</a>
+            </div>
         </div>
     </article>
-</section>
+</header>
 
 <?php
 // Calculate next round number (MAX + 1 or 1 if no rounds)
@@ -113,7 +110,7 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
                         <?php endif; ?>
                     </td>
                     <td class="text-center">
-                        <a href="/tournament/<?= $tournament->id ?>/round/<?= $round->roundNumber ?>" role="button" class="secondary">
+                        <a href="/admin/tournament/<?= $tournament->id ?>/round/<?= $round->roundNumber ?>" role="button" class="secondary">
                             Manage
                         </a>
                     </td>
@@ -376,42 +373,16 @@ function copyAdminToken() {
 
 // Import round button handler
 document.getElementById('import-round-button').addEventListener('click', function() {
-    var button = this;
-    var roundNumber = button.getAttribute('data-round-number');
-    var tournamentId = button.getAttribute('data-tournament-id');
+    var roundNumber = this.getAttribute('data-round-number');
+    var tournamentId = this.getAttribute('data-tournament-id');
 
-    // Show loading state
-    setButtonLoading('import-round-button', 'import-indicator', 'import-text', true);
-    document.getElementById('import-result').innerHTML = '';
-
-    fetch('/api/tournaments/' + tournamentId + '/rounds/' + roundNumber + '/import', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(function(response) {
-        return response.json().then(function(data) {
-            return { status: response.status, data: data };
-        });
-    })
-    .then(function(response) {
-        setButtonLoading('import-round-button', 'import-indicator', 'import-text', false);
-
-        if (response.status >= 200 && response.status < 300) {
-            // Redirect immediately to manage page with success info in query params
-            var pairingsCount = response.data.pairingsImported || 0;
-            window.location.href = '/tournament/' + tournamentId + '/round/' + roundNumber +
-                '?imported=1&pairings=' + encodeURIComponent(pairingsCount);
-        } else {
-            showAlert('import-result', 'error',
-                'Error: ' + escapeHtml(response.data.message || 'Failed to import round')
-            );
-        }
-    })
-    .catch(function(error) {
-        setButtonLoading('import-round-button', 'import-indicator', 'import-text', false);
-        showAlert('import-result', 'error', 'Network error: ' + escapeHtml(error.message));
+    importRound({
+        tournamentId: tournamentId,
+        roundNumber: roundNumber,
+        button: 'import-round-button',
+        indicator: 'import-indicator',
+        text: 'import-text',
+        resultContainer: 'import-result'
     });
 });
 

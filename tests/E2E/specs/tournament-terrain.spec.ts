@@ -54,7 +54,7 @@ test.describe('Terrain Type Configuration (US2)', () => {
     );
 
     // Navigate to tournament dashboard
-    await page.goto(`/tournament/${tournamentId}`);
+    await page.goto(`/admin/tournament/${tournamentId}`);
 
     // Verify we're on the dashboard (tournament name from BCP mock starts with "Test Tournament")
     await expect(page.locator('h1')).toContainText('Test Tournament');

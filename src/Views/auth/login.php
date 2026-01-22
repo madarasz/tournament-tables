@@ -44,7 +44,7 @@ ob_start();
     <details>
         <summary>Don't have a token?</summary>
         <p>Admin tokens are generated when you create a new tournament. If you've lost your token, there is currently no way to recover it.</p>
-        <p><a href="/tournament/create">Create a new tournament</a></p>
+        <p><a href="/admin/tournament/create">Create a new tournament</a></p>
     </details>
 </article>
 
@@ -73,9 +73,9 @@ document.body.addEventListener('htmx:afterRequest', function(event) {
                 // Validate tournamentId is numeric to prevent URL injection
                 const tournamentId = parseInt(response.tournamentId, 10);
                 if (!isNaN(tournamentId) && tournamentId > 0) {
-                    link.href = '/tournament/' + tournamentId;
+                    link.href = '/admin/tournament/' + tournamentId;
                 } else {
-                    link.href = '/';
+                    link.href = '/admin';
                 }
                 link.setAttribute('role', 'button');
                 link.textContent = 'Go to Tournament';

@@ -235,3 +235,81 @@ function submitWithLoading(options) {
             }
         });
 }
+
+/**
+ * Import a round from BCP for a tournament.
+ *
+ * This function handles the import process, showing loading state,
+ * and redirecting on success or displaying errors on failure.
+ *
+ * @param {Object} options - Configuration options
+ * @param {number|string} options.tournamentId - Tournament ID
+ * @param {number|string} options.roundNumber - Round number to import
+ * @param {string|HTMLElement} options.button - Button element or ID
+ * @param {string|HTMLElement} options.indicator - Loading indicator element or ID
+ * @param {string|HTMLElement} options.text - Button text element or ID
+ * @param {string|HTMLElement} options.resultContainer - Result container element or ID
+ * @param {Object} [options.headers] - Additional headers (e.g., X-Admin-Token)
+ */
+function importRound(options) {
+    var tournamentId = options.tournamentId;
+    var roundNumber = options.roundNumber;
+    var button = options.button;
+    var indicator = options.indicator;
+    var text = options.text;
+    var resultContainer = options.resultContainer;
+    var additionalHeaders = options.headers || {};
+
+    // Show loading state
+    setButtonLoading(button, indicator, text, true);
+
+    var container = typeof resultContainer === 'string'
+        ? document.getElementById(resultContainer)
+        : resultContainer;
+    if (container) {
+        container.innerHTML = '';
+    }
+
+    var fetchHeaders = {
+        'Content-Type': 'application/json'
+    };
+
+    // Merge additional headers
+    for (var key in additionalHeaders) {
+        if (additionalHeaders.hasOwnProperty(key)) {
+            fetchHeaders[key] = additionalHeaders[key];
+        }
+    }
+
+    fetch('/api/tournaments/' + tournamentId + '/rounds/' + roundNumber + '/import', {
+        method: 'POST',
+        headers: fetchHeaders
+    })
+    .then(function(response) {
+        return response.json().then(function(data) {
+            return { status: response.status, data: data };
+        });
+    })
+    .then(function(response) {
+        setButtonLoading(button, indicator, text, false);
+
+        if (response.status >= 200 && response.status < 300) {
+            // Redirect to manage page with success info in query params
+            var pairingsCount = response.data.pairingsImported || 0;
+            window.location.href = '/admin/tournament/' + tournamentId + '/round/' + roundNumber +
+                '?imported=1&pairings=' + encodeURIComponent(pairingsCount);
+        } else {
+            if (container) {
+                showAlert(container, 'error',
+                    'Error: ' + escapeHtml(response.data.message || 'Failed to import round')
+                );
+            }
+        }
+    })
+    .catch(function(error) {
+        setButtonLoading(button, indicator, text, false);
+        if (container) {
+            showAlert(container, 'error', 'Network error: ' + escapeHtml(error.message));
+        }
+    });
+}

@@ -41,7 +41,7 @@ test.describe('Allocation Editing', () => {
     );
 
     // Navigate directly to round 2 management page
-    await page.goto(`/tournament/${TEST_TOURNAMENT_ID}/round/2`);
+    await page.goto(`/admin/tournament/${TEST_TOURNAMENT_ID}/round/2`);
     await page.waitForLoadState('networkidle');
 
     // STEP 1: Verify initial state - 8 tables, no conflicts, terrain warnings exist

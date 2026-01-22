@@ -14,7 +14,7 @@ test.describe('Public Pages', () => {
 
   test('Navigate public pages: list -> tournament -> round -> back', async ({ page }) => {
     // Step 1: Visit main public page
-    await page.goto('/public');
+    await page.goto('/');
     await page.waitForLoadState('networkidle');
 
     // Verify tournaments list is visible

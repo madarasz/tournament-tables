@@ -85,7 +85,7 @@ export async function loginViaUI(
   page: Page,
   adminToken: string
 ): Promise<void> {
-  await page.goto('/login');
+  await page.goto('/admin/login');
 
   // Fill in the token input
   await page.locator('input[name="token"]').fill(adminToken);
@@ -94,7 +94,7 @@ export async function loginViaUI(
   await page.locator('button[type="submit"]').click();
 
   // Wait for redirect to dashboard
-  await page.waitForURL(/\/tournament\/\d+/);
+  await page.waitForURL(/\/admin\/tournament\/\d+/);
 }
 
 /**
@@ -103,7 +103,7 @@ export async function loginViaUI(
 export async function verifyAuthenticated(page: Page): Promise<boolean> {
   // Check if we're on a protected page (tournament dashboard)
   const url = page.url();
-  if (url.includes('/tournament/') && !url.includes('/public/')) {
+  if (url.includes('/admin/tournament/')) {
     return true;
   }
 
@@ -118,12 +118,12 @@ export async function verifyAuthenticated(page: Page): Promise<boolean> {
 export async function verifyNotAuthenticated(page: Page): Promise<boolean> {
   // Check if redirected to login page
   const url = page.url();
-  if (url.includes('/login')) {
+  if (url.includes('/admin/login')) {
     return true;
   }
 
   // Check we're not on a protected page
-  if (url.includes('/tournament/') && !url.includes('/public/')) {
+  if (url.includes('/admin/tournament/')) {
     return false;
   }
 
@@ -137,7 +137,7 @@ export async function goToTournamentDashboard(
   page: Page,
   tournamentId: number
 ): Promise<void> {
-  await page.goto(`/tournament/${tournamentId}`);
+  await page.goto(`/admin/tournament/${tournamentId}`);
   await page.waitForLoadState('networkidle');
 }
 
@@ -149,7 +149,7 @@ export async function goToRoundManagement(
   tournamentId: number,
   roundNumber: number
 ): Promise<void> {
-  await page.goto(`/tournament/${tournamentId}/round/${roundNumber}`);
+  await page.goto(`/admin/tournament/${tournamentId}/round/${roundNumber}`);
   await page.waitForLoadState('networkidle');
 }
 
@@ -165,7 +165,7 @@ export async function createTournamentAndAuthenticate(
   }
 ): Promise<{ tournamentId: number; adminToken: string }> {
   // Navigate to create tournament page
-  await page.goto('/tournament/create');
+  await page.goto('/admin/tournament/create');
 
   // Fill in the form (name is auto-imported from BCP)
   await page.locator('input[name="bcpUrl"]').fill(tournamentData.bcpUrl);
@@ -174,11 +174,11 @@ export async function createTournamentAndAuthenticate(
   await page.locator('button[type="submit"]').click();
 
   // Wait for redirect to dashboard
-  await page.waitForURL(/\/tournament\/\d+/);
+  await page.waitForURL(/\/admin\/tournament\/\d+/);
 
   // Extract tournament ID from URL
   const url = page.url();
-  const match = url.match(/\/tournament\/(\d+)/);
+  const match = url.match(/\/admin\/tournament\/(\d+)/);
   if (!match) {
     throw new Error('Failed to extract tournament ID from URL');
   }
