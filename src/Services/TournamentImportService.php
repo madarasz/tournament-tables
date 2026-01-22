@@ -147,18 +147,20 @@ class TournamentImportService
                 $player1TotalScore = $totalScores[$pairing->player1BcpId] ?? 0;
                 $player2TotalScore = $totalScores[$pairing->player2BcpId] ?? 0;
 
-                // Find or create players with total scores
+                // Find or create players with total scores and factions
                 $player1 = Player::findOrCreate(
                     $tournament->id,
                     $pairing->player1BcpId,
                     $pairing->player1Name,
-                    $player1TotalScore
+                    $player1TotalScore,
+                    $pairing->player1Faction
                 );
                 $player2 = Player::findOrCreate(
                     $tournament->id,
                     $pairing->player2BcpId,
                     $pairing->player2Name,
-                    $player2TotalScore
+                    $player2TotalScore,
+                    $pairing->player2Faction
                 );
 
                 // Round 1: Use BCP's table assignment

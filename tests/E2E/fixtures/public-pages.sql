@@ -25,23 +25,23 @@ INSERT INTO tables (id, tournament_id, table_number, terrain_type_id) VALUES
 (2005, 1001, 5, 2), (2006, 1001, 6, 2), (2007, 1001, 7, 2), (2008, 1001, 8, 2);
 
 -- 16 Players
-INSERT INTO players (id, tournament_id, bcp_player_id, name, total_score) VALUES
-(2001, 1001, 'pp1', 'Alice Test', 20),
-(2002, 1001, 'pp2', 'Bob Test', 18),
-(2003, 1001, 'pp3', 'Charlie Test', 16),
-(2004, 1001, 'pp4', 'Diana Test', 14),
-(2005, 1001, 'pp5', 'Edward Test', 12),
-(2006, 1001, 'pp6', 'Fiona Test', 10),
-(2007, 1001, 'pp7', 'George Test', 8),
-(2008, 1001, 'pp8', 'Hannah Test', 6),
-(2009, 1001, 'pp9', 'Ivan Test', 5),
-(2010, 1001, 'pp10', 'Julia Test', 4),
-(2011, 1001, 'pp11', 'Kevin Test', 3),
-(2012, 1001, 'pp12', 'Laura Test', 2),
-(2013, 1001, 'pp13', 'Mike Test', 1),
-(2014, 1001, 'pp14', 'Nancy Test', 1),
-(2015, 1001, 'pp15', 'Oscar Test', 0),
-(2016, 1001, 'pp16', 'Paula Test', 0);
+INSERT INTO players (id, tournament_id, bcp_player_id, name, total_score, faction) VALUES
+(2001, 1001, 'pp1', 'Alice Test', 20, 'Corsair Voidscarred'),
+(2002, 1001, 'pp2', 'Bob Test', 18, 'Nemesis Claw'),
+(2003, 1001, 'pp3', 'Charlie Test', 16, 'Blades of Khaine'),
+(2004, 1001, 'pp4', 'Diana Test', 14, 'Warpcoven'),
+(2005, 1001, 'pp5', 'Edward Test', 12, 'Pathfinders'),
+(2006, 1001, 'pp6', 'Fiona Test', 10, 'Legionaries'),
+(2007, 1001, 'pp7', 'George Test', 8, 'Kommandos'),
+(2008, 1001, 'pp8', 'Hannah Test', 6, 'Intercession Squad'),
+(2009, 1001, 'pp9', 'Ivan Test', 5, 'Hand of the Archon'),
+(2010, 1001, 'pp10', 'Julia Test', 4, 'Kasrkin'),
+(2011, 1001, 'pp11', 'Kevin Test', 3, 'Hierotek Circle'),
+(2012, 1001, 'pp12', 'Laura Test', 2, 'Void-Dancer Troupe'),
+(2013, 1001, 'pp13', 'Mike Test', 1, 'Hunter Clade'),
+(2014, 1001, 'pp14', 'Nancy Test', 1, 'Wyrmblade'),
+(2015, 1001, 'pp15', 'Oscar Test', 0, 'Farstalker Kinband'),
+(2016, 1001, 'pp16', 'Paula Test', 0, 'Phobos Strike Team');
 
 -- Round 1 (Published) & Round 2 (Not Published)
 INSERT INTO rounds (id, tournament_id, round_number, is_published) VALUES

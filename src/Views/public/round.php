@@ -230,6 +230,19 @@ function abbreviatePlayerName($fullName) {
             width: 60px;
         }
 
+        /* Player faction styling */
+        .player-faction {
+            display: block;
+            font-size: 0.75em;
+            color: #888;
+            font-style: italic;
+            margin-top: 2px;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         /* No allocations message */
         .no-allocations {
             background: #fff3cd;
@@ -399,6 +412,9 @@ function abbreviatePlayerName($fullName) {
                     <td class="player-name">
                         <span class="player-name-full"><?= $p1Name ?></span>
                         <span class="player-name-short"><?= $p1Short ?> (<?= $player1 ? $player1->totalScore : 0 ?>)</span>
+                        <?php if ($player1 && $player1->faction): ?>
+                        <span class="player-faction"><?= htmlspecialchars($player1->faction) ?></span>
+                        <?php endif; ?>
                     </td>
                     <td class="player-score"><?= $player1 ? $player1->totalScore : 0 ?></td>
                     <td class="vs-separator">vs</td>
@@ -406,6 +422,9 @@ function abbreviatePlayerName($fullName) {
                     <td class="player-name">
                         <span class="player-name-full"><?= $p2Name ?></span>
                         <span class="player-name-short"><?= $p2Short ?> (<?= $player2 ? $player2->totalScore : 0 ?>)</span>
+                        <?php if ($player2 && $player2->faction): ?>
+                        <span class="player-faction"><?= htmlspecialchars($player2->faction) ?></span>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>

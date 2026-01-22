@@ -149,6 +149,11 @@ SQL;
             'column' => 'bcp_table_number',
             'sql' => 'ALTER TABLE allocations ADD COLUMN bcp_table_number INT DEFAULT NULL'
         ],
+        [
+            'table' => 'players',
+            'column' => 'faction',
+            'sql' => 'ALTER TABLE players ADD COLUMN faction VARCHAR(100) DEFAULT NULL AFTER name'
+        ],
     ];
 
     foreach ($alterStatements as $alter) {

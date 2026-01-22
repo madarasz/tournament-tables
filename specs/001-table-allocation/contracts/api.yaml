@@ -634,6 +634,10 @@ components:
           type: string
         score:
           type: integer
+        faction:
+          type: string
+          nullable: true
+          description: Player faction/army name
 
     Conflict:
       type: object

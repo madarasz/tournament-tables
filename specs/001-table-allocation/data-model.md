@@ -154,6 +154,8 @@ A tournament participant imported from BCP.
 | tournament_id | INT | FK → Tournament.id, NOT NULL | Parent tournament |
 | bcp_player_id | VARCHAR(50) | NOT NULL | BCP unique identifier |
 | name | VARCHAR(255) | NOT NULL | Player display name |
+| total_score | INT | NOT NULL, DEFAULT 0 | Cumulative tournament score |
+| faction | VARCHAR(100) | NULL | Player faction/army (e.g., "Corsair Voidscarred") |
 
 **Validation Rules**:
 - `bcp_player_id` must be unique within a tournament
@@ -164,7 +166,8 @@ A tournament participant imported from BCP.
 - UNIQUE INDEX (tournament_id, bcp_player_id)
 
 **Notes**:
-- Player scores are stored per-allocation, not on the player entity (scores change per round)
+- `total_score` is the cumulative tournament score from BCP
+- `faction` is the player's army/team from BCP (nullable for events without faction data)
 
 ---
 
@@ -270,6 +273,8 @@ CREATE TABLE players (
     tournament_id INT NOT NULL,
     bcp_player_id VARCHAR(50) NOT NULL,
     name VARCHAR(255) NOT NULL,
+    total_score INT NOT NULL DEFAULT 0,
+    faction VARCHAR(100) DEFAULT NULL,
     UNIQUE INDEX idx_tournament_bcp_player (tournament_id, bcp_player_id),
     FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

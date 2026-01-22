@@ -54,6 +54,10 @@
                             "description": "Player last name"
                         }
                     }
+                },
+                "faction": {
+                    "type": ["string", "null"],
+                    "description": "Player faction/army (e.g., 'Corsair Voidscarred')"
                 }
             }
         },

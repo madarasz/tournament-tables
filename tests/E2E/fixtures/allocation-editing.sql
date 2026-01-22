@@ -33,23 +33,23 @@ INSERT INTO tables (id, tournament_id, table_number, terrain_type_id) VALUES
 (1005, 1000, 5, 2), (1006, 1000, 6, 2), (1007, 1000, 7, 2), (1008, 1000, 8, 2);
 
 -- 16 Players
-INSERT INTO players (id, tournament_id, bcp_player_id, name, total_score) VALUES
-(1001, 1000, 'p1', 'Alice Smith', 20),
-(1002, 1000, 'p2', 'Bob Jones', 18),
-(1003, 1000, 'p3', 'Charlie Brown', 16),
-(1004, 1000, 'p4', 'Diana Prince', 14),
-(1005, 1000, 'p5', 'Edward Stone', 12),
-(1006, 1000, 'p6', 'Fiona Green', 10),
-(1007, 1000, 'p7', 'George White', 8),
-(1008, 1000, 'p8', 'Hannah Black', 6),
-(1009, 1000, 'p9', 'Ivan Red', 5),
-(1010, 1000, 'p10', 'Julia Blue', 4),
-(1011, 1000, 'p11', 'Kevin Yellow', 3),
-(1012, 1000, 'p12', 'Laura Purple', 2),
-(1013, 1000, 'p13', 'Mike Orange', 1),
-(1014, 1000, 'p14', 'Nancy Pink', 1),
-(1015, 1000, 'p15', 'Oscar Grey', 0),
-(1016, 1000, 'p16', 'Paula Silver', 0);
+INSERT INTO players (id, tournament_id, bcp_player_id, name, total_score, faction) VALUES
+(1001, 1000, 'p1', 'Alice Smith', 20, 'Corsair Voidscarred'),
+(1002, 1000, 'p2', 'Bob Jones', 18, 'Nemesis Claw'),
+(1003, 1000, 'p3', 'Charlie Brown', 16, 'Blades of Khaine'),
+(1004, 1000, 'p4', 'Diana Prince', 14, 'Warpcoven'),
+(1005, 1000, 'p5', 'Edward Stone', 12, 'Pathfinders'),
+(1006, 1000, 'p6', 'Fiona Green', 10, 'Legionaries'),
+(1007, 1000, 'p7', 'George White', 8, 'Kommandos'),
+(1008, 1000, 'p8', 'Hannah Black', 6, 'Intercession Squad'),
+(1009, 1000, 'p9', 'Ivan Red', 5, 'Hand of the Archon'),
+(1010, 1000, 'p10', 'Julia Blue', 4, 'Kasrkin'),
+(1011, 1000, 'p11', 'Kevin Yellow', 3, 'Hierotek Circle'),
+(1012, 1000, 'p12', 'Laura Purple', 2, 'Void-Dancer Troupe'),
+(1013, 1000, 'p13', 'Mike Orange', 1, 'Hunter Clade'),
+(1014, 1000, 'p14', 'Nancy Pink', 1, 'Wyrmblade'),
+(1015, 1000, 'p15', 'Oscar Grey', 0, 'Farstalker Kinband'),
+(1016, 1000, 'p16', 'Paula Silver', 0, 'Phobos Strike Team');
 
 -- Round 1 & Round 2
 INSERT INTO rounds (id, tournament_id, round_number, is_published) VALUES

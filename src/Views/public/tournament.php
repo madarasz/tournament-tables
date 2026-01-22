@@ -143,6 +143,85 @@ $hasPublishedRounds = !empty($publishedRounds);
             color: #856404;
         }
 
+        /* Leaderboard section */
+        .leaderboard-section {
+            margin: 2rem 0;
+        }
+
+        .leaderboard-section h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.25rem;
+            margin: 1rem 0;
+        }
+
+        .leaderboard-table thead {
+            background: #333;
+            color: white;
+        }
+
+        .leaderboard-table th {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .leaderboard-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e0e0e0;
+            vertical-align: middle;
+        }
+
+        .leaderboard-table tbody tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .leaderboard-table tbody tr:hover {
+            background: #eef7ff;
+        }
+
+        .leaderboard-table .player-rank {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-align: center;
+            width: 80px;
+        }
+
+        .leaderboard-table .player-name {
+            font-weight: 500;
+        }
+
+        .leaderboard-table .player-faction {
+            display: block;
+            font-size: 0.75em;
+            color: #888;
+            font-style: italic;
+            margin-top: 2px;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .leaderboard-table .score-col {
+            text-align: center;
+        }
+
+        .leaderboard-table .player-score {
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: #1976d2;
+            text-align: center;
+            width: 80px;
+        }
+
         /* Footer */
         .public-footer {
             margin-top: 3rem;
@@ -168,6 +247,30 @@ $hasPublishedRounds = !empty($publishedRounds);
             .tournament-info-item {
                 display: block;
                 margin-bottom: 0.5rem;
+            }
+
+            /* Leaderboard mobile adjustments */
+            .leaderboard-table {
+                font-size: 1rem;
+            }
+
+            .leaderboard-table th,
+            .leaderboard-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .leaderboard-table .player-rank {
+                font-size: 1.25rem;
+                width: 50px;
+            }
+
+            .leaderboard-table .player-score {
+                font-size: 1.1rem;
+                width: 60px;
+            }
+            .leaderboard-note {
+                font-size: 0.9rem;
+                font-style: italic;
             }
         }
 
@@ -219,6 +322,37 @@ $hasPublishedRounds = !empty($publishedRounds);
             </div>
             <?php endif; ?>
         </section>
+
+        <?php if (!empty($rankedPlayers)): ?>
+        <section class="leaderboard-section">
+            <h2>Leaderboard</h2>
+            <table class="leaderboard-table" data-testid="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th class="rank-col">Rank</th>
+                        <th>Player</th>
+                        <th class="score-col">Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($rankedPlayers as $entry): ?>
+                    <?php $player = $entry['player']; ?>
+                    <tr data-testid="leaderboard-row">
+                        <td class="player-rank"><?= $entry['rank'] ?></td>
+                        <td>
+                            <span class="player-name"><?= htmlspecialchars($player->name) ?></span>
+                            <?php if ($player->faction): ?>
+                            <span class="player-faction"><?= htmlspecialchars($player->faction) ?></span>
+                            <?php endif; ?>
+                        </td>
+                        <td class="player-score"><?= $player->totalScore ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            <p class="leaderboard-note">For breaking ties, check <a href="<?= htmlspecialchars($tournament->bcpUrl) ?>" target="_blank" rel="noopener">BCP</a></p>
+        </section>
+        <?php endif; ?>
     </main>
 
     <footer class="public-footer">

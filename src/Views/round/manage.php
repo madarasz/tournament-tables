@@ -230,6 +230,19 @@ $hasTableCollisions = !empty($tableCollisions);
             gap: 4px;
         }
 
+        /* Player faction styling */
+        .player-faction {
+            display: block;
+            font-size: 0.75em;
+            color: #888;
+            font-style: italic;
+            margin-top: 2px;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         /* Checkbox - touch-friendly on mobile */
         .select-cell {
             width: 44px;
@@ -811,23 +824,29 @@ $hasTableCollisions = !empty($tableCollisions);
                             <?php endif; ?>
                         </td>
 
-                        <!-- Player 1 with total score -->
+                        <!-- Player 1 with total score and faction -->
                         <?php $p1TerrainReuse = playerHasTerrainReuse($player1Name, $allocationConflicts); ?>
-                        <td title="<?= $player1Name ?> (<?= $player1 ? $player1->totalScore : 0 ?>)<?= $p1TerrainReuse ? ' - Already experienced this terrain' : '' ?>">
+                        <td title="<?= $player1Name ?><?= $player1 && $player1->faction ? ' (' . htmlspecialchars($player1->faction) . ')' : '' ?> - Score: <?= $player1 ? $player1->totalScore : 0 ?><?= $p1TerrainReuse ? ' - Already experienced this terrain' : '' ?>">
                             <span class="player-name">
                                 <span class="player-name-full"><?= $player1Name ?><?= $p1TerrainReuse ? ' <span title="Already experienced this terrain">😑</span>' : '' ?></span>
                                 <span class="player-name-short"><?= $player1Short ?><?= $p1TerrainReuse ? ' 😑' : '' ?></span>
                             </span>
                             <span class="player-score">(<?= $player1 ? $player1->totalScore : 0 ?>)</span>
+                            <?php if ($player1 && $player1->faction): ?>
+                            <span class="player-faction"><?= htmlspecialchars($player1->faction) ?></span>
+                            <?php endif; ?>
                         </td>
-                        <!-- Player 2 with total score -->
+                        <!-- Player 2 with total score and faction -->
                         <?php $p2TerrainReuse = playerHasTerrainReuse($player2Name, $allocationConflicts); ?>
-                        <td title="<?= $player2Name ?> (<?= $player2 ? $player2->totalScore : 0 ?>)<?= $p2TerrainReuse ? ' - Already experienced this terrain' : '' ?>">
+                        <td title="<?= $player2Name ?><?= $player2 && $player2->faction ? ' (' . htmlspecialchars($player2->faction) . ')' : '' ?> - Score: <?= $player2 ? $player2->totalScore : 0 ?><?= $p2TerrainReuse ? ' - Already experienced this terrain' : '' ?>">
                             <span class="player-name">
                                 <span class="player-name-full"><?= $player2Name ?><?= $p2TerrainReuse ? ' <span title="Already experienced this terrain">😑</span>' : '' ?></span>
                                 <span class="player-name-short"><?= $player2Short ?><?= $p2TerrainReuse ? ' 😑' : '' ?></span>
                             </span>
                             <span class="player-score">(<?= $player2 ? $player2->totalScore : 0 ?>)</span>
+                            <?php if ($player2 && $player2->faction): ?>
+                            <span class="player-faction"><?= htmlspecialchars($player2->faction) ?></span>
+                            <?php endif; ?>
                         </td>
 
                         <!-- Change table - dropdown on desktop, button on mobile -->

@@ -322,6 +322,40 @@ class BCPContractTest extends TestCase
     }
 
     /**
+     * Test that pairings have faction data when available.
+     */
+    public function testParsedPairingsHaveFactionData(): void
+    {
+        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
+
+        // At least one pairing should have faction data (BCP typically includes this)
+        $hasFaction = false;
+        foreach ($pairings as $pairing) {
+            if ($pairing->player1Faction !== null || $pairing->player2Faction !== null) {
+                $hasFaction = true;
+                break;
+            }
+        }
+
+        $this->assertTrue(
+            $hasFaction,
+            'At least one pairing should have faction data from BCP API'
+        );
+
+        // Verify faction is string or null for all pairings
+        foreach ($pairings as $index => $pairing) {
+            $this->assertTrue(
+                $pairing->player1Faction === null || is_string($pairing->player1Faction),
+                "Pairing $index player1Faction should be string or null"
+            );
+            $this->assertTrue(
+                $pairing->player2Faction === null || is_string($pairing->player2Faction),
+                "Pairing $index player2Faction should be string or null"
+            );
+        }
+    }
+
+    /**
      * Test that we can parse total scores from the cached placings response.
      */
     public function testCanParseTotalScores(): void
