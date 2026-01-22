@@ -38,6 +38,12 @@ class Pairing
     /** @var int */
     public $player2TotalScore;
 
+    /** @var string|null */
+    public $player1Faction;
+
+    /** @var string|null */
+    public $player2Faction;
+
     public function __construct(
         string $player1BcpId,
         string $player1Name,
@@ -47,7 +53,9 @@ class Pairing
         int $player2Score,
         ?int $bcpTableNumber,
         int $player1TotalScore = 0,
-        int $player2TotalScore = 0
+        int $player2TotalScore = 0,
+        ?string $player1Faction = null,
+        ?string $player2Faction = null
     ) {
         $this->player1BcpId = $player1BcpId;
         $this->player1Name = $player1Name;
@@ -58,6 +66,8 @@ class Pairing
         $this->bcpTableNumber = $bcpTableNumber;
         $this->player1TotalScore = $player1TotalScore;
         $this->player2TotalScore = $player2TotalScore;
+        $this->player1Faction = $player1Faction;
+        $this->player2Faction = $player2Faction;
     }
 
     /**

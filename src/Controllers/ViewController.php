@@ -134,6 +134,24 @@ class ViewController extends BaseController
         // Get tables for table count display
         $tables = Table::findByTournament($tournamentId);
 
+        // Get players sorted by score for leaderboard
+        $players = $tournament->getPlayers();
+        usort($players, function ($a, $b) {
+            return $b->totalScore <=> $a->totalScore;
+        });
+
+        // Calculate ranks with tie handling (standard competition ranking: 1,1,3,4,4,6...)
+        $rankedPlayers = [];
+        $rank = 1;
+        $previousScore = null;
+        foreach ($players as $index => $player) {
+            if ($previousScore !== null && $player->totalScore < $previousScore) {
+                $rank = $index + 1; // Skip to position-based rank
+            }
+            $rankedPlayers[] = ['rank' => $rank, 'player' => $player];
+            $previousScore = $player->totalScore;
+        }
+
         // Render the public tournament view
         include __DIR__ . '/../Views/public/tournament.php';
     }

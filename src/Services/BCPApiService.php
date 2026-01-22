@@ -263,10 +263,12 @@ class BCPApiService
         $player1BcpId = $item['player1']['id'] ?? '';
         $player1Name = $this->formatPlayerName($item['player1']['user'] ?? []);
         $player1Score = (int)($item['player1Game']['points'] ?? 0);
+        $player1Faction = $this->extractFaction($item['player1']);
 
         $player2BcpId = $item['player2']['id'] ?? '';
         $player2Name = $this->formatPlayerName($item['player2']['user'] ?? []);
         $player2Score = (int)($item['player2Game']['points'] ?? 0);
+        $player2Faction = $this->extractFaction($item['player2']);
 
         // Table number (nullable)
         $bcpTableNumber = isset($item['table']) ? (int)$item['table'] : null;
@@ -283,8 +285,31 @@ class BCPApiService
             $player2BcpId,
             $player2Name,
             $player2Score,
-            $bcpTableNumber
+            $bcpTableNumber,
+            0, // player1TotalScore
+            0, // player2TotalScore
+            $player1Faction,
+            $player2Faction
         );
+    }
+
+    /**
+     * Extract faction from player data.
+     *
+     * @param array $player Player data from API
+     * @return string|null Faction name or null if not available
+     */
+    private function extractFaction(array $player): ?string
+    {
+        $faction = $player['faction'] ?? null;
+
+        if ($faction === null) {
+            return null;
+        }
+
+        $faction = trim((string)$faction);
+
+        return $faction === '' ? null : $faction;
     }
 
     /**

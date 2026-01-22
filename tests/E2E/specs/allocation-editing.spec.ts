@@ -51,6 +51,11 @@ test.describe('Allocation Editing', () => {
     const allocationRows = page.locator('table.allocation-table tbody tr');
     await expect(allocationRows).toHaveCount(8);
 
+    // Verify player factions are displayed in allocation rows
+    await expect(page.locator('.player-faction').first()).toBeVisible();
+    await expect(page.getByText('Blades of Khaine')).toBeVisible();
+    await expect(page.getByText('Warpcoven')).toBeVisible();
+
     // Verify no conflict badges initially (table collisions or table reuse)
     await expect(page.locator('.conflict-badge')).not.toBeVisible();
 

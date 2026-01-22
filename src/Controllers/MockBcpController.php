@@ -67,14 +67,14 @@ class MockBcpController extends BaseController
     private function generateMockPairings(int $round): array
     {
         $players = [
-            ['id' => 'mock_player_1', 'firstName' => 'Alice', 'lastName' => 'Smith'],
-            ['id' => 'mock_player_2', 'firstName' => 'Bob', 'lastName' => 'Jones'],
-            ['id' => 'mock_player_3', 'firstName' => 'Charlie', 'lastName' => 'Brown'],
-            ['id' => 'mock_player_4', 'firstName' => 'Diana', 'lastName' => 'Prince'],
-            ['id' => 'mock_player_5', 'firstName' => 'Eve', 'lastName' => 'Wilson'],
-            ['id' => 'mock_player_6', 'firstName' => 'Frank', 'lastName' => 'Miller'],
-            ['id' => 'mock_player_7', 'firstName' => 'Grace', 'lastName' => 'Lee'],
-            ['id' => 'mock_player_8', 'firstName' => 'Henry', 'lastName' => 'Ford'],
+            ['id' => 'mock_player_1', 'firstName' => 'Alice', 'lastName' => 'Smith', 'faction' => 'Corsair Voidscarred'],
+            ['id' => 'mock_player_2', 'firstName' => 'Bob', 'lastName' => 'Jones', 'faction' => 'Nemesis Claw'],
+            ['id' => 'mock_player_3', 'firstName' => 'Charlie', 'lastName' => 'Brown', 'faction' => 'Blades of Khaine'],
+            ['id' => 'mock_player_4', 'firstName' => 'Diana', 'lastName' => 'Prince', 'faction' => 'Warpcoven'],
+            ['id' => 'mock_player_5', 'firstName' => 'Eve', 'lastName' => 'Wilson', 'faction' => 'Pathfinders'],
+            ['id' => 'mock_player_6', 'firstName' => 'Frank', 'lastName' => 'Miller', 'faction' => 'Legionaries'],
+            ['id' => 'mock_player_7', 'firstName' => 'Grace', 'lastName' => 'Lee', 'faction' => 'Kommandos'],
+            ['id' => 'mock_player_8', 'firstName' => 'Henry', 'lastName' => 'Ford', 'faction' => 'Intercession Squad'],
         ];
 
         $pairings = [];
@@ -98,6 +98,7 @@ class MockBcpController extends BaseController
                         'firstName' => $player1['firstName'],
                         'lastName' => $player1['lastName'],
                     ],
+                    'faction' => $player1['faction'],
                 ],
                 'player2' => [
                     'id' => $player2['id'],
@@ -105,6 +106,7 @@ class MockBcpController extends BaseController
                         'firstName' => $player2['firstName'],
                         'lastName' => $player2['lastName'],
                     ],
+                    'faction' => $player2['faction'],
                 ],
                 'player1Game' => ['points' => $baseScore],
                 'player2Game' => ['points' => $baseScore],

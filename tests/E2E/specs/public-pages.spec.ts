@@ -59,6 +59,11 @@ test.describe('Public Pages', () => {
     const allocationRows = page.locator('table tbody tr');
     await expect(allocationRows).toHaveCount(8);
 
+    // Verify player factions are displayed
+    await expect(page.locator('.player-faction').first()).toBeVisible();
+    await expect(page.getByText('Corsair Voidscarred')).toBeVisible();
+    await expect(page.getByText('Nemesis Claw')).toBeVisible();
+
     // Verify "All Tournaments" back link exists on round page
     const backFromRound = page.getByTestId('back-to-list');
     await expect(backFromRound).toBeVisible();
