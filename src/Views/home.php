@@ -71,8 +71,8 @@ ob_start();
                             </a>
                         </strong>
                     </td>
-                    <td><?= $tournament['tableCount'] ?></td>
-                    <td><?= $tournament['roundCount'] ?></td>
+                    <td class="text-center"><?= $tournament['tableCount'] ?></td>
+                    <td class="text-center"><?= $tournament['roundCount'] ?></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>

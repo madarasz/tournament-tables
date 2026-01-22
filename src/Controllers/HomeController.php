@@ -44,10 +44,16 @@ class HomeController extends BaseController
                     [$id]
                 );
 
+                // Get actual table count from database (not stored tableCount which may be stale)
+                $tableCount = Connection::fetchColumn(
+                    'SELECT COUNT(*) FROM tables WHERE tournament_id = ?',
+                    [$id]
+                );
+
                 $tournamentData[] = [
                     'id' => $tournament->id,
                     'name' => $tournament->name,
-                    'tableCount' => $tournament->tableCount,
+                    'tableCount' => $tableCount,
                     'roundCount' => $roundCount,
                     'lastAccessed' => $data['lastAccessed']
                 ];

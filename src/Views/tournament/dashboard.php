@@ -220,6 +220,37 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
     </article>
 </section>
 
+<section class="danger-zone">
+    <h2>Danger Zone</h2>
+    <p>Deleting a tournament will permanently remove all rounds, tables, players, and allocations. This action cannot be undone.</p>
+
+    <div style="margin-top: 1rem;">
+        <label for="delete-confirm-input">
+            Type "<strong><?= htmlspecialchars($tournament->name) ?></strong>" to confirm:
+        </label>
+        <input
+            type="text"
+            id="delete-confirm-input"
+            placeholder="Enter tournament name"
+            autocomplete="off"
+        >
+    </div>
+
+    <div style="margin-top: 1rem;">
+        <button
+            type="button"
+            id="delete-tournament-button"
+            class="delete-button"
+            disabled
+        >
+            <span id="delete-indicator" style="display: none;">Deleting...</span>
+            <span id="delete-text">Delete Tournament</span>
+        </button>
+    </div>
+
+    <div id="delete-result" style="margin-top: 1rem;"></div>
+</section>
+
 <style>
 /* Utility classes */
 .text-center {
@@ -324,6 +355,34 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
 
 .table-row-highlight {
     animation: highlightFade 0.8s ease-out;
+}
+
+/* Danger Zone Styles */
+.danger-zone {
+    border: 1px solid var(--pico-del-color, #c62828);
+    border-radius: var(--pico-border-radius, 0.25rem);
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.danger-zone h2 {
+    color: var(--pico-del-color, #c62828);
+    margin-top: 0;
+}
+
+.delete-button {
+    background-color: var(--pico-del-color, #c62828);
+    border-color: var(--pico-del-color, #c62828);
+}
+
+.delete-button:hover:not(:disabled) {
+    background-color: #b71c1c;
+    border-color: #b71c1c;
+}
+
+.delete-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 </style>
 
@@ -514,4 +573,53 @@ document.getElementById('clear-all-button').addEventListener('click', function()
         );
     }
 });
+
+// Delete tournament functionality
+(function() {
+    var tournamentName = <?= json_encode($tournament->name) ?>;
+    var tournamentId = <?= $tournament->id ?>;
+    var confirmInput = document.getElementById('delete-confirm-input');
+    var deleteButton = document.getElementById('delete-tournament-button');
+
+    // Enable/disable button based on input match
+    confirmInput.addEventListener('input', function() {
+        deleteButton.disabled = (this.value !== tournamentName);
+    });
+
+    // Handle delete
+    deleteButton.addEventListener('click', function() {
+        if (confirmInput.value !== tournamentName) return;
+
+        setButtonLoading('delete-tournament-button', 'delete-indicator', 'delete-text', true);
+        document.getElementById('delete-result').innerHTML = '';
+
+        fetch('/api/tournaments/' + tournamentId, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(function(response) {
+            return response.json().then(function(data) {
+                return { status: response.status, data: data, ok: response.ok };
+            });
+        })
+        .then(function(response) {
+            setButtonLoading('delete-tournament-button', 'delete-indicator', 'delete-text', false);
+
+            if (response.ok) {
+                showAlert('delete-result', 'success', 'Tournament deleted. Redirecting...', 0);
+                setTimeout(function() {
+                    window.location.href = '/admin/';
+                }, 1500);
+            } else {
+                showAlert('delete-result', 'error',
+                    'Error: ' + escapeHtml(response.data.message || 'Failed to delete tournament')
+                );
+            }
+        })
+        .catch(function(error) {
+            setButtonLoading('delete-tournament-button', 'delete-indicator', 'delete-text', false);
+            showAlert('delete-result', 'error', 'Network error: ' + escapeHtml(error.message));
+        });
+    });
+})();
 </script>
