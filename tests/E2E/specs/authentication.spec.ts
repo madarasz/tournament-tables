@@ -41,7 +41,7 @@ test.describe('Admin Authentication (US5)', () => {
     await clearAdminTokenCookie(page.context(), baseURL!);
 
     // Navigate to login page
-    await page.goto('/login');
+    await page.goto('/admin/login');
 
     // Fill in the token
     await page.locator('input[name="token"]').fill(adminToken);
@@ -56,10 +56,10 @@ test.describe('Admin Authentication (US5)', () => {
     await page.getByRole('button', { name: 'Go to Tournament' }).click();
 
     // Should navigate to tournament dashboard
-    await page.waitForURL(/\/tournament\/\d+/, { timeout: 10000 });
+    await page.waitForURL(/\/admin\/tournament\/\d+/, { timeout: 10000 });
 
     // Verify we're on the correct tournament
-    expect(page.url()).toContain(`/tournament/${tournamentId}`);
+    expect(page.url()).toContain(`/admin/tournament/${tournamentId}`);
 
     // Verify cookie is set (JSON format with tournament tokens)
     const cookieValue = await getAdminTokenFromCookies(page.context(), baseURL!);
@@ -74,7 +74,7 @@ test.describe('Admin Authentication (US5)', () => {
     expect(cookieData.tournaments[tournamentId].token).toBe(adminToken);
 
     // Verify tournament appears on home page
-    await page.goto('/');
+    await page.goto('/admin');
     await expect(page.locator('h1')).toContainText('My Tournaments');
 
     // Find the tournament in the list (table row containing tournament name)

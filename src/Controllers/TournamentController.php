@@ -123,7 +123,7 @@ class TournamentController extends BaseController
                     $result['tournament']->name
                 );
 
-                $this->redirect('/tournament/' . $result['tournament']->id);
+                $this->redirect('/admin/tournament/' . $result['tournament']->id);
             }
         } catch (\InvalidArgumentException $e) {
             $this->validationError(['_general' => [$e->getMessage()]]);

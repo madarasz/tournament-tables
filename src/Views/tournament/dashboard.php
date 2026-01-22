@@ -64,7 +64,7 @@ $autoImport = $autoImport ?? null;
             View on Best Coast Pairings
         </a>
         |
-        <a href="/public/<?= $tournament->id ?>">Public View</a>
+        <a href="/<?= $tournament->id ?>">Public View</a>
     </p>
 </header>
 
@@ -113,7 +113,7 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
                         <?php endif; ?>
                     </td>
                     <td class="text-center">
-                        <a href="/tournament/<?= $tournament->id ?>/round/<?= $round->roundNumber ?>" role="button" class="secondary">
+                        <a href="/admin/tournament/<?= $tournament->id ?>/round/<?= $round->roundNumber ?>" role="button" class="secondary">
                             Manage
                         </a>
                     </td>
@@ -401,7 +401,7 @@ document.getElementById('import-round-button').addEventListener('click', functio
         if (response.status >= 200 && response.status < 300) {
             // Redirect immediately to manage page with success info in query params
             var pairingsCount = response.data.pairingsImported || 0;
-            window.location.href = '/tournament/' + tournamentId + '/round/' + roundNumber +
+            window.location.href = '/admin/tournament/' + tournamentId + '/round/' + roundNumber +
                 '?imported=1&pairings=' + encodeURIComponent(pairingsCount);
         } else {
             showAlert('import-result', 'error',

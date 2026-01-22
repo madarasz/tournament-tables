@@ -36,7 +36,7 @@ test.describe('Tournament Creation (US2)', () => {
     page,
   }) => {
     // Navigate to tournament creation page
-    await page.goto('/tournament/create');
+    await page.goto('/admin/tournament/create');
 
     // Verify we're on the creation page
     await expect(page.locator('h1, h2').first()).toBeVisible();
@@ -50,11 +50,11 @@ test.describe('Tournament Creation (US2)', () => {
     await page.locator('button[type="submit"]').click();
 
     // Wait for automatic redirect to dashboard
-    await page.waitForURL(/\/tournament\/\d+/, { timeout: 10000 });
+    await page.waitForURL(/\/admin\/tournament\/\d+/, { timeout: 10000 });
 
     // Extract tournament ID from URL
     const url = page.url();
-    const tournamentIdMatch = url.match(/\/tournament\/(\d+)/);
+    const tournamentIdMatch = url.match(/\/admin\/tournament\/(\d+)/);
     expect(tournamentIdMatch).toBeTruthy();
 
     const tournamentId = parseInt(tournamentIdMatch![1], 10);
@@ -96,7 +96,7 @@ test.describe('Tournament Creation (US2)', () => {
     await expect(round1Row).toContainText('Draft');
 
     // Navigate to home page
-    await page.goto('/');
+    await page.goto('/admin');
 
     // Verify tournament is listed on home page
     await expect(page.locator('h1')).toContainText('My Tournaments');
@@ -111,8 +111,8 @@ test.describe('Tournament Creation (US2)', () => {
 
     // Verify tournament name link (styled as button) works
     await tournamentRow.getByRole('button').click();
-    await page.waitForURL(/\/tournament\/\d+/);
-    expect(page.url()).toContain(`/tournament/${tournamentId}`);
+    await page.waitForURL(/\/admin\/tournament\/\d+/);
+    expect(page.url()).toContain(`/admin/tournament/${tournamentId}`);
   });
 
   /**
@@ -128,17 +128,17 @@ test.describe('Tournament Creation (US2)', () => {
     page,
   }) => {
     // Step 1: Create a tournament (which auto-imports Round 1)
-    await page.goto('/tournament/create');
+    await page.goto('/admin/tournament/create');
     const tournamentData = generateUniqueTournament('RoundImport');
     await page.locator('input[name="bcpUrl"]').fill(tournamentData.bcpUrl);
     await page.locator('button[type="submit"]').click();
 
     // Wait for redirect to dashboard
-    await page.waitForURL(/\/tournament\/\d+/, { timeout: 10000 });
+    await page.waitForURL(/\/admin\/tournament\/\d+/, { timeout: 10000 });
 
     // Extract tournament ID from URL and register for cleanup
     const url = page.url();
-    const tournamentIdMatch = url.match(/\/tournament\/(\d+)/);
+    const tournamentIdMatch = url.match(/\/admin\/tournament\/(\d+)/);
     expect(tournamentIdMatch).toBeTruthy();
     const tournamentId = parseInt(tournamentIdMatch![1], 10);
 

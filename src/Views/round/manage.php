@@ -548,10 +548,10 @@ $hasTableCollisions = !empty($tableCollisions);
     <main class="container">
         <nav>
             <ul>
-                <li><strong><a href="/" style="text-decoration: none;">Tournament Tables</a></strong></li>
+                <li><strong><a href="/admin" style="text-decoration: none;">Tournament Tables</a></strong></li>
             </ul>
             <ul>
-                <li><a href="/tournament/<?= $tournament->id ?>"><?= htmlspecialchars($tournament->name) ?></a></li>
+                <li><a href="/admin/tournament/<?= $tournament->id ?>"><?= htmlspecialchars($tournament->name) ?></a></li>
             </ul>
         </nav>
 
@@ -659,12 +659,12 @@ $hasTableCollisions = !empty($tableCollisions);
         <!-- Round navigation (UX Improvement #7: side-by-side on mobile) -->
         <nav class="round-navigation">
             <?php if ($prevRound): ?>
-            <a href="/tournament/<?= $tournament->id ?>/round/<?= $prevRound->roundNumber ?>" class="round-nav-btn round-nav-prev">&laquo; Round <?= $prevRound->roundNumber ?></a>
+            <a href="/admin/tournament/<?= $tournament->id ?>/round/<?= $prevRound->roundNumber ?>" class="round-nav-btn round-nav-prev">&laquo; Round <?= $prevRound->roundNumber ?></a>
             <?php else: ?>
             <span class="round-nav-spacer"></span>
             <?php endif; ?>
             <?php if ($nextRound): ?>
-            <a href="/tournament/<?= $tournament->id ?>/round/<?= $nextRound->roundNumber ?>" class="round-nav-btn round-nav-next">Round <?= $nextRound->roundNumber ?> &raquo;</a>
+            <a href="/admin/tournament/<?= $tournament->id ?>/round/<?= $nextRound->roundNumber ?>" class="round-nav-btn round-nav-next">Round <?= $nextRound->roundNumber ?> &raquo;</a>
             <?php endif; ?>
         </nav>
 

@@ -47,11 +47,11 @@ ob_start();
         </header>
         <p>You haven't created or accessed any tournaments yet. Get started by creating a new tournament!</p>
         <footer>
-            <a href="/tournament/create" role="button">Create New Tournament</a>
+            <a href="/admin/tournament/create" role="button">Create New Tournament</a>
         </footer>
     </article>
 <?php else: ?>
-    <p><a href="/tournament/create" role="button">Create New Tournament</a></p>
+    <p><a href="/admin/tournament/create" role="button">Create New Tournament</a></p>
 
     <table>
         <thead>
@@ -66,7 +66,7 @@ ob_start();
                 <tr>
                     <td>
                         <strong>
-                            <a href="/tournament/<?= $tournament['id'] ?>" role="button" class="secondary">
+                            <a href="/admin/tournament/<?= $tournament['id'] ?>" role="button" class="secondary">
                                 <?= htmlspecialchars($tournament['name']) ?>
                             </a>
                         </strong>

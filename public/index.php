@@ -52,15 +52,17 @@ $routes = [
     'GET /api/public/tournaments/{id}' => ['PublicController', 'showTournament'],
     'GET /api/public/tournaments/{id}/rounds/{n}' => ['PublicController', 'showRound'],
 
-    // View Routes (HTML)
-    'GET /' => ['HomeController', 'index'],
-    'GET /tournament/create' => ['ViewController', 'createTournament'],
-    'GET /tournament/{id}' => ['ViewController', 'showTournament', 'admin'],
-    'GET /tournament/{id}/round/{n}' => ['ViewController', 'showRound', 'admin'],
-    'GET /public' => ['ViewController', 'publicIndex'],
-    'GET /public/{id}' => ['ViewController', 'publicTournament'],
-    'GET /public/{id}/round/{n}' => ['ViewController', 'publicRound'],
-    'GET /login' => ['ViewController', 'login'],
+    // Admin View Routes (HTML) - must come before public catch-all routes
+    'GET /admin' => ['HomeController', 'index'],
+    'GET /admin/login' => ['ViewController', 'login'],
+    'GET /admin/tournament/create' => ['ViewController', 'createTournament'],
+    'GET /admin/tournament/{id}' => ['ViewController', 'showTournament', 'admin'],
+    'GET /admin/tournament/{id}/round/{n}' => ['ViewController', 'showRound', 'admin'],
+
+    // Public View Routes (HTML) - catch-all routes last
+    'GET /' => ['ViewController', 'publicIndex'],
+    'GET /{id}' => ['ViewController', 'publicTournament'],
+    'GET /{id}/round/{n}' => ['ViewController', 'publicRound'],
 ];
 
 if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_API_URL')) {
@@ -116,7 +118,7 @@ if ($requiresAuth) {
         if (strpos($uri, '/api/') === 0) {
             echo json_encode(['error' => 'unauthorized', 'message' => $authResult]);
         } else {
-            header('Location: /login');
+            header('Location: /admin/login');
         }
         exit;
     }

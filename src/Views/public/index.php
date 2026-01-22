@@ -141,7 +141,7 @@ ob_start();
 <?php if ($hasTournaments): ?>
 <div class="tournament-list">
     <?php foreach ($tournaments as $tournament): ?>
-    <a href="/public/<?= (int) $tournament['id'] ?>" class="tournament-card" data-testid="tournament-link-<?= htmlspecialchars($tournament['name']) ?>">
+    <a href="/<?= (int) $tournament['id'] ?>" class="tournament-card" data-testid="tournament-link-<?= htmlspecialchars($tournament['name']) ?>">
         <h2><?= htmlspecialchars($tournament['name']) ?></h2>
         <div class="tournament-meta" data-testid="player-count-<?= htmlspecialchars($tournament['name']) ?>">
             <?= (int) $tournament['player_count'] ?> players

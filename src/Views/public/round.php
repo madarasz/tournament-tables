@@ -344,7 +344,7 @@ function abbreviatePlayerName($fullName) {
 <body>
     <header class="public-header">
         <nav class="public-back-nav">
-            <a href="/public" data-testid="back-to-list">&larr; All Tournaments</a>
+            <a href="/" data-testid="back-to-list">&larr; All Tournaments</a>
         </nav>
         <h1><?= htmlspecialchars($tournament->name) ?></h1>
         <p class="subtitle">Table Allocations</p>
@@ -354,13 +354,13 @@ function abbreviatePlayerName($fullName) {
         <!-- Round navigation -->
         <nav class="public-round-navigation">
             <?php if ($prevRound): ?>
-            <a href="/public/<?= $tournament->id ?>/round/<?= $prevRound->roundNumber ?>" class="public-round-nav-btn">&laquo; Round <?= $prevRound->roundNumber ?></a>
+            <a href="/<?= $tournament->id ?>/round/<?= $prevRound->roundNumber ?>" class="public-round-nav-btn">&laquo; Round <?= $prevRound->roundNumber ?></a>
             <?php else: ?>
             <span class="public-round-nav-spacer"></span>
             <?php endif; ?>
             <span class="public-round-current">Round <?= $round->roundNumber ?></span>
             <?php if ($nextRound): ?>
-            <a href="/public/<?= $tournament->id ?>/round/<?= $nextRound->roundNumber ?>" class="public-round-nav-btn">Round <?= $nextRound->roundNumber ?> &raquo;</a>
+            <a href="/<?= $tournament->id ?>/round/<?= $nextRound->roundNumber ?>" class="public-round-nav-btn">Round <?= $nextRound->roundNumber ?> &raquo;</a>
             <?php else: ?>
             <span class="public-round-nav-spacer"></span>
             <?php endif; ?>
