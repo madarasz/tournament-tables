@@ -157,8 +157,8 @@ test.describe('Tournament Creation (US2)', () => {
     await importButton.click();
 
     // Step 3: Verify redirect to manage page (with query parameters)
-    await page.waitForURL(/\/tournament\/\d+\/round\/2/, { timeout: 10000 });
-    expect(page.url()).toMatch(/\/tournament\/\d+\/round\/2\?imported=1/);
+    await page.waitForURL(/\/admin\/tournament\/\d+\/round\/2/, { timeout: 10000 });
+    expect(page.url()).toMatch(/\/admin\/tournament\/\d+\/round\/2\?imported=1/);
 
     // Step 4: Verify success message is displayed on manage page
     const successMessage = page.locator('#import-success-message');

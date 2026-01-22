@@ -445,6 +445,40 @@ $hasTableCollisions = !empty($tableCollisions);
             text-decoration: none;
         }
 
+        /* Import Next button - same as nav buttons but white background with blue text */
+        .import-next-btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            border-radius: 4px;
+            white-space: nowrap;
+            background: #fff;
+            border: 1px solid var(--muted-border-color, #ccc);
+            color: var(--pico-primary, #1095c1);
+            cursor: pointer;
+            font-size: inherit;
+            font-family: inherit;
+            line-height: inherit;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        .import-next-btn:hover {
+            background: var(--pico-primary-focus, #e3f2fd);
+        }
+        .import-next-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Import result container in navigation area */
+        .import-next-result {
+            margin-top: 0.5rem;
+            text-align: right;
+        }
+        .import-next-result:empty {
+            display: none;
+        }
+
         /* Mobile styles (< 768px) */
         @media (max-width: 767px) {
             .allocation-table {
@@ -476,6 +510,13 @@ $hasTableCollisions = !empty($tableCollisions);
             }
             .nav-short { display: inline; }
             .nav-full { display: none; }
+
+            /* Import Next button - compact on mobile, same as nav buttons */
+            .import-next-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+                max-width: 45%;
+            }
 
             /* Show mobile edit button, hide dropdown */
             .change-table-dropdown { display: none; }
@@ -657,6 +698,7 @@ $hasTableCollisions = !empty($tableCollisions);
         <?php endif; ?>
 
         <!-- Round navigation (UX Improvement #7: side-by-side on mobile) -->
+        <?php $nextRoundNumber = $round->roundNumber + 1; ?>
         <nav class="round-navigation">
             <?php if ($prevRound): ?>
             <a href="/admin/tournament/<?= $tournament->id ?>/round/<?= $prevRound->roundNumber ?>" class="round-nav-btn round-nav-prev">&laquo; Round <?= $prevRound->roundNumber ?></a>
@@ -665,8 +707,22 @@ $hasTableCollisions = !empty($tableCollisions);
             <?php endif; ?>
             <?php if ($nextRound): ?>
             <a href="/admin/tournament/<?= $tournament->id ?>/round/<?= $nextRound->roundNumber ?>" class="round-nav-btn round-nav-next">Round <?= $nextRound->roundNumber ?> &raquo;</a>
+            <?php else: ?>
+            <!-- Import Next button when on last round -->
+            <button
+                type="button"
+                id="import-next-button"
+                class="import-next-btn"
+                data-round-number="<?= $nextRoundNumber ?>"
+                data-tournament-id="<?= $tournament->id ?>"
+            >
+                <span id="import-next-indicator" style="display: none;">Importing...</span>
+                <span id="import-next-text">Import Round <?= $nextRoundNumber ?> &raquo;</span>
+            </button>
             <?php endif; ?>
         </nav>
+        <!-- Error container for import next button -->
+        <div id="import-next-result" class="import-next-result"></div>
 
         <section id="allocation-results">
             <?php if (empty($allocations)): ?>
@@ -1047,6 +1103,54 @@ $hasTableCollisions = !empty($tableCollisions);
                 closeTableModal();
             }
         });
+
+        // Import Next button handler (when on last round)
+        var importNextBtn = document.getElementById('import-next-button');
+        if (importNextBtn) {
+            importNextBtn.addEventListener('click', function() {
+                var button = this;
+                var roundNumber = button.getAttribute('data-round-number');
+                var tournamentId = button.getAttribute('data-tournament-id');
+                var token = getAdminToken(currentTournamentId);
+
+                // Show loading state
+                setButtonLoading('import-next-button', 'import-next-indicator', 'import-next-text', true);
+                document.getElementById('import-next-result').innerHTML = '';
+
+                var headers = { 'Content-Type': 'application/json' };
+                if (token) {
+                    headers['X-Admin-Token'] = token;
+                }
+
+                fetch('/api/tournaments/' + tournamentId + '/rounds/' + roundNumber + '/import', {
+                    method: 'POST',
+                    headers: headers
+                })
+                .then(function(response) {
+                    return response.json().then(function(data) {
+                        return { status: response.status, data: data };
+                    });
+                })
+                .then(function(response) {
+                    setButtonLoading('import-next-button', 'import-next-indicator', 'import-next-text', false);
+
+                    if (response.status >= 200 && response.status < 300) {
+                        // Redirect to new round page with success info
+                        var pairingsCount = response.data.pairingsImported || 0;
+                        window.location.href = '/admin/tournament/' + tournamentId + '/round/' + roundNumber +
+                            '?imported=1&pairings=' + encodeURIComponent(pairingsCount);
+                    } else {
+                        showAlert('import-next-result', 'error',
+                            'Error: ' + escapeHtml(response.data.message || 'Failed to import round')
+                        );
+                    }
+                })
+                .catch(function(error) {
+                    setButtonLoading('import-next-button', 'import-next-indicator', 'import-next-text', false);
+                    showAlert('import-next-result', 'error', 'Network error: ' + escapeHtml(error.message));
+                });
+            });
+        }
     </script>
 </body>
 </html>
