@@ -95,19 +95,14 @@ abstract class BaseController
      */
     protected function setCookie(string $name, string $value, int $maxAge = 2592000, bool $httpOnly = true): void
     {
-        $options = [
-            'expires' => time() + $maxAge,
-            'path' => '/',
-            'httponly' => $httpOnly,
-            'samesite' => 'Lax',
-        ];
+        $expires = time() + $maxAge;
+        $path = '/';
+        $domain = '';
+        $secure = $this->isHttps();
 
-        // Set secure flag if using HTTPS
-        if ($this->isHttps()) {
-            $options['secure'] = true;
-        }
-
-        setcookie($name, $value, $options);
+        // PHP 7.1 compatible setcookie call
+        // SameSite is added via path workaround for PHP < 7.3
+        setcookie($name, $value, $expires, $path . '; SameSite=Lax', $domain, $secure, $httpOnly);
     }
 
     /**
@@ -128,19 +123,15 @@ abstract class BaseController
      */
     protected function clearCookie(string $name): void
     {
-        $options = [
-            'expires' => time() - 3600,
-            'path' => '/',
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ];
+        $expires = time() - 3600;
+        $path = '/';
+        $domain = '';
+        $secure = $this->isHttps();
+        $httpOnly = true;
 
-        // Set secure flag if using HTTPS
-        if ($this->isHttps()) {
-            $options['secure'] = true;
-        }
-
-        setcookie($name, '', $options);
+        // PHP 7.1 compatible setcookie call
+        // SameSite is added via path workaround for PHP < 7.3
+        setcookie($name, '', $expires, $path . '; SameSite=Lax', $domain, $secure, $httpOnly);
     }
 
     /**
