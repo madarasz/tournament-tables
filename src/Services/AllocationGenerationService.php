@@ -17,9 +17,10 @@ use TournamentTables\Database\Connection;
  */
 class AllocationGenerationService
 {
-    private AllocationService $allocationService;
+    /** @var AllocationService */
+    private $allocationService;
 
-    public function __construct(?AllocationService $allocationService = null)
+    public function __construct(AllocationService $allocationService = null)
     {
         $this->allocationService = $allocationService ?? new AllocationService(new CostCalculator());
     }

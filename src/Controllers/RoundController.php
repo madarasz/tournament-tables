@@ -20,7 +20,8 @@ use TournamentTables\Services\AllocationGenerationService;
  */
 class RoundController extends BaseController
 {
-    private AllocationGenerationService $generationService;
+    /** @var AllocationGenerationService */
+    private $generationService;
 
     public function __construct()
     {

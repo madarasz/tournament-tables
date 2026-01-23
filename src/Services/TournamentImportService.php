@@ -18,9 +18,10 @@ use TournamentTables\Database\Connection;
  */
 class TournamentImportService
 {
-    private BCPApiService $bcpService;
+    /** @var BCPApiService */
+    private $bcpService;
 
-    public function __construct(?BCPApiService $bcpService = null)
+    public function __construct(BCPApiService $bcpService = null)
     {
         $this->bcpService = $bcpService ?? new BCPApiService();
     }
