@@ -68,7 +68,7 @@ class Allocation extends BaseModel
     /**
      * Create instance from database row.
      */
-    public static function fromRow(array $row): self
+    public static function fromRow(array $row)
     {
         $reason = null;
         if (!empty($row['allocation_reason'])) {
