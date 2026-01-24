@@ -113,13 +113,15 @@ class RoundController extends BaseController
                         $tournamentId,
                         $pairing->player1BcpId,
                         $pairing->player1Name,
-                        $player1TotalScore
+                        $player1TotalScore,
+                        $pairing->player1Faction
                     );
                     $player2 = Player::findOrCreate(
                         $tournamentId,
                         $pairing->player2BcpId,
                         $pairing->player2Name,
-                        $player2TotalScore
+                        $player2TotalScore,
+                        $pairing->player2Faction
                     );
 
                     // Determine table assignment
