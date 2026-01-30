@@ -48,6 +48,9 @@ class AllocationEditService
             throw new RuntimeException('Allocation not found');
         }
 
+        // Store old table ID to check for collision resolution
+        $oldTableId = (int) $allocation['table_id'];
+
         // Verify new table exists and belongs to same tournament
         $newTable = $this->getTable($newTableId);
         if (!$newTable) {
@@ -91,6 +94,17 @@ class AllocationEditService
             'UPDATE allocations SET table_id = ?, allocation_reason = ? WHERE id = ?'
         );
         $stmt->execute([$newTableId, $this->encodeAllocationReason($conflicts), $allocationId]);
+
+        // If we moved away from a table, recalculate conflicts for any allocation
+        // that remains on the old table (to clear resolved TABLE_COLLISION conflicts)
+        if ($oldTableId !== $newTableId) {
+            $this->recalculateConflictsForTable(
+                (int) $allocation['round_id'],
+                $oldTableId,
+                (int) $round['tournament_id'],
+                (int) $round['round_number']
+            );
+        }
 
         return [
             'success' => true,
@@ -241,6 +255,57 @@ class AllocationEditService
         }
 
         return $conflicts;
+    }
+
+    /**
+     * Recalculate conflicts for all allocations on a specific table.
+     *
+     * Called when an allocation moves away from a table to clear any
+     * TABLE_COLLISION conflicts that may have been resolved.
+     *
+     * @param int $roundId Round ID
+     * @param int $tableId Table ID to check
+     * @param int $tournamentId Tournament ID
+     * @param int $roundNumber Round number
+     */
+    private function recalculateConflictsForTable(int $roundId, int $tableId, int $tournamentId, int $roundNumber): void
+    {
+        // Get all allocations still on this table
+        $stmt = $this->db->prepare(
+            'SELECT id, player1_id, player2_id FROM allocations WHERE round_id = ? AND table_id = ?'
+        );
+        $stmt->execute([$roundId, $tableId]);
+        $allocations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // If there's only one allocation on this table, no collision possible
+        $hasCollision = count($allocations) > 1;
+
+        $table = $this->getTable($tableId);
+
+        foreach ($allocations as $alloc) {
+            // Recalculate base conflicts (TABLE_REUSE, TERRAIN_REUSE)
+            $newConflicts = $this->calculateConflicts(
+                (int) $alloc['player1_id'],
+                (int) $alloc['player2_id'],
+                $tableId,
+                $tournamentId,
+                $roundNumber
+            );
+
+            // Add TABLE_COLLISION only if there's still a collision
+            if ($hasCollision) {
+                $newConflicts[] = [
+                    'type' => 'TABLE_COLLISION',
+                    'message' => 'Table ' . $table['table_number'] . ' is also assigned to another pairing in this round',
+                ];
+            }
+
+            // Update the allocation's conflicts
+            $updateStmt = $this->db->prepare(
+                'UPDATE allocations SET allocation_reason = ? WHERE id = ?'
+            );
+            $updateStmt->execute([$this->encodeAllocationReason($newConflicts), $alloc['id']]);
+        }
     }
 
     /**
