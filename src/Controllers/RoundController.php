@@ -97,7 +97,10 @@ class RoundController extends BaseController
 
                 // If no tables exist (first import), create them from pairing count
                 if (empty($tables)) {
-                    $tableCount = count($pairings);
+                    $regularPairings = array_filter($pairings, function ($pairing) {
+                        return !$pairing->isBye();
+                    });
+                    $tableCount = count($regularPairings);
                     $tables = Table::createForTournament($tournamentId, $tableCount);
                 }
 

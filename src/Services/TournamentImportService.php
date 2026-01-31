@@ -93,7 +93,7 @@ class TournamentImportService
         });
         $tableCount = count($regularPairings);
 
-        foreach ($pairings as $pairing) {
+        foreach ($regularPairings as $pairing) {
             if ($pairing->bcpTableNumber !== null && $pairing->bcpTableNumber > $tableCount) {
                 $tableCount = $pairing->bcpTableNumber;
             }

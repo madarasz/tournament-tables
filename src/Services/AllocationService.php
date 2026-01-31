@@ -61,7 +61,7 @@ class AllocationService
             $result = $this->generateRound1Allocations($regularPairings, $tables);
             // Append bye allocations
             foreach ($byePairings as $byePairing) {
-                $result->allocations[] = $this->createByeAllocation($byePairing);
+                $result->allocations[] = $this->createByeAllocation($byePairing, true);
             }
             return $result;
         }
@@ -87,7 +87,7 @@ class AllocationService
 
         // Append bye allocations (no table assignment needed)
         foreach ($byePairings as $byePairing) {
-            $allocations[] = $this->createByeAllocation($byePairing);
+            $allocations[] = $this->createByeAllocation($byePairing, false);
         }
 
         // Generate summary
@@ -100,9 +100,10 @@ class AllocationService
      * Create a bye allocation (no table, no opponent).
      *
      * @param Pairing $pairing Bye pairing
+     * @param bool $isRound1 Whether this is round 1
      * @return array Allocation data
      */
-    private function createByeAllocation(Pairing $pairing): array
+    private function createByeAllocation(Pairing $pairing, bool $isRound1): array
     {
         return [
             'tableNumber' => null,
@@ -123,7 +124,7 @@ class AllocationService
                 ],
                 'reasons' => ['Bye - no opponent this round'],
                 'alternativesConsidered' => [],
-                'isRound1' => false,
+                'isRound1' => $isRound1,
                 'isBye' => true,
                 'conflicts' => [],
             ],
