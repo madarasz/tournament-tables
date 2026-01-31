@@ -8,7 +8,7 @@ services:
   # Override php service for testing environment
   php:
     environment:
-      APP_ENV: development
+      APP_ENV: testing
       # Mock BCP URLs point to the mock endpoints within this container
       BCP_MOCK_BASE_URL: http://localhost/mock-bcp
       BCP_MOCK_API_URL: http://localhost/mock-bcp-api
