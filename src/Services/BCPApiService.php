@@ -254,29 +254,55 @@ class BCPApiService
      */
     private function parsePairingItem(array $item): ?Pairing
     {
-        // Validate required fields
-        if (!isset($item['player1'], $item['player2'], $item['player1Game'], $item['player2Game'])) {
+        // Validate player1 is present (required)
+        if (!isset($item['player1'], $item['player1Game'])) {
             return null;
         }
 
-        // Extract player data
+        // Extract player1 data
         $player1BcpId = $item['player1']['id'] ?? '';
         $player1Name = $this->formatPlayerName($item['player1']['user'] ?? []);
         $player1Score = (int)($item['player1Game']['points'] ?? 0);
         $player1Faction = $this->extractFaction($item['player1']);
 
-        $player2BcpId = $item['player2']['id'] ?? '';
-        $player2Name = $this->formatPlayerName($item['player2']['user'] ?? []);
-        $player2Score = (int)($item['player2Game']['points'] ?? 0);
-        $player2Faction = $this->extractFaction($item['player2']);
+        // Skip if missing player1 ID
+        if (empty($player1BcpId)) {
+            return null;
+        }
 
         // Table number (nullable)
         $bcpTableNumber = isset($item['table']) ? (int)$item['table'] : null;
 
-        // Skip if missing player IDs
-        if (empty($player1BcpId) || empty($player2BcpId)) {
+        // Check if this is a bye pairing (player2 is missing or has no ID)
+        $isBye = !isset($item['player2']) || empty($item['player2']['id'] ?? '');
+
+        if ($isBye) {
+            // Bye pairing - player2 fields are null
+            return new Pairing(
+                $player1BcpId,
+                $player1Name,
+                $player1Score,
+                null, // player2BcpId
+                null, // player2Name
+                0,    // player2Score
+                $bcpTableNumber,
+                0, // player1TotalScore
+                0, // player2TotalScore
+                $player1Faction,
+                null  // player2Faction
+            );
+        }
+
+        // Regular pairing - validate player2 game data exists
+        if (!isset($item['player2Game'])) {
             return null;
         }
+
+        // Extract player2 data
+        $player2BcpId = $item['player2']['id'] ?? '';
+        $player2Name = $this->formatPlayerName($item['player2']['user'] ?? []);
+        $player2Score = (int)($item['player2Game']['points'] ?? 0);
+        $player2Faction = $this->extractFaction($item['player2']);
 
         return new Pairing(
             $player1BcpId,

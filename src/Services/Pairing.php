@@ -20,10 +20,10 @@ class Pairing
     /** @var int */
     public $player1Score;
 
-    /** @var string */
+    /** @var string|null */
     public $player2BcpId;
 
-    /** @var string */
+    /** @var string|null */
     public $player2Name;
 
     /** @var int */
@@ -48,8 +48,8 @@ class Pairing
         string $player1BcpId,
         string $player1Name,
         int $player1Score,
-        string $player2BcpId,
-        string $player2Name,
+        ?string $player2BcpId,
+        ?string $player2Name,
         int $player2Score,
         ?int $bcpTableNumber,
         int $player1TotalScore = 0,
@@ -71,6 +71,14 @@ class Pairing
     }
 
     /**
+     * Check if this pairing is a bye (no opponent).
+     */
+    public function isBye(): bool
+    {
+        return $this->player2BcpId === null;
+    }
+
+    /**
      * Get combined round score for both players.
      *
      * Used for storing in allocations.
@@ -84,17 +92,25 @@ class Pairing
      * Get combined total tournament score for both players.
      *
      * Used for sorting pairings (higher scores get lower table numbers).
+     * For bye pairings, returns only player1's score.
      */
     public function getCombinedTotalScore(): int
     {
+        if ($this->isBye()) {
+            return $this->player1TotalScore;
+        }
         return $this->player1TotalScore + $this->player2TotalScore;
     }
 
     /**
      * Get the lower BCP ID for deterministic tie-breaking.
+     * For bye pairings, returns player1's BCP ID.
      */
     public function getMinBcpId(): string
     {
+        if ($this->isBye()) {
+            return $this->player1BcpId;
+        }
         return min($this->player1BcpId, $this->player2BcpId);
     }
 }

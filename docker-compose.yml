@@ -4,6 +4,8 @@ services:
     ports:
       - "8080:80"
     working_dir: /var/www/app
+    environment:
+      APP_ENV: development
     volumes:
       - .:/var/www/app
       - ./config/apache.conf:/etc/apache2/sites-available/000-default.conf
