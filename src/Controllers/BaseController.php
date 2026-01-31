@@ -95,19 +95,27 @@ abstract class BaseController
      */
     protected function setCookie(string $name, string $value, int $maxAge = 2592000, bool $httpOnly = true): void
     {
-        $options = [
-            'expires' => time() + $maxAge,
-            'path' => '/',
-            'httponly' => $httpOnly,
-            'samesite' => 'Lax',
-        ];
+        $expires = time() + $maxAge;
+        $secure = $this->isHttps();
 
-        // Set secure flag if using HTTPS
-        if ($this->isHttps()) {
-            $options['secure'] = true;
+        // Build Set-Cookie header manually for PHP 7.1-7.4 compatibility
+        // PHP 7.4 validates cookie path and rejects semicolons, so we can't use
+        // the path workaround. Using header() directly allows full control.
+        $cookie = rawurlencode($name) . '=' . rawurlencode($value);
+        $cookie .= '; Expires=' . gmdate('D, d-M-Y H:i:s', $expires) . ' GMT';
+        $cookie .= '; Max-Age=' . $maxAge;
+        $cookie .= '; Path=/';
+        $cookie .= '; SameSite=Lax';
+
+        if ($secure) {
+            $cookie .= '; Secure';
         }
 
-        setcookie($name, $value, $options);
+        if ($httpOnly) {
+            $cookie .= '; HttpOnly';
+        }
+
+        header('Set-Cookie: ' . $cookie, false);
     }
 
     /**
@@ -128,19 +136,25 @@ abstract class BaseController
      */
     protected function clearCookie(string $name): void
     {
-        $options = [
-            'expires' => time() - 3600,
-            'path' => '/',
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ];
+        $expires = time() - 3600;
+        $secure = $this->isHttps();
 
-        // Set secure flag if using HTTPS
-        if ($this->isHttps()) {
-            $options['secure'] = true;
+        // Build Set-Cookie header manually for PHP 7.1-7.4 compatibility
+        // PHP 7.4 validates cookie path and rejects semicolons, so we can't use
+        // the path workaround. Using header() directly allows full control.
+        $cookie = rawurlencode($name) . '=';
+        $cookie .= '; Expires=' . gmdate('D, d-M-Y H:i:s', $expires) . ' GMT';
+        $cookie .= '; Max-Age=0';
+        $cookie .= '; Path=/';
+        $cookie .= '; SameSite=Lax';
+
+        if ($secure) {
+            $cookie .= '; Secure';
         }
 
-        setcookie($name, '', $options);
+        $cookie .= '; HttpOnly';
+
+        header('Set-Cookie: ' . $cookie, false);
     }
 
     /**

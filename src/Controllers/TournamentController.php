@@ -16,8 +16,11 @@ use TournamentTables\Models\Tournament;
  */
 class TournamentController extends BaseController
 {
-    private TournamentService $service;
-    private TournamentImportService $importService;
+    /** @var TournamentService */
+    private $service;
+
+    /** @var TournamentImportService */
+    private $importService;
 
     public function __construct()
     {

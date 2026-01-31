@@ -13,7 +13,7 @@ A web app for tournament organizers to generate table allocations that ensure pl
 ## Requirements
 
 - Docker & Docker Compose
-- (Optional for local dev) PHP 7.4.33, MySQL 5.7+, Composer
+- (Optional for local dev) PHP 7.1, MySQL 5.7+, Composer
 
 ## Quick Setup with Docker
 

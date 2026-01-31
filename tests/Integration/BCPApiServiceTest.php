@@ -173,7 +173,7 @@ class BCPApiServiceTest extends TestCase
         $apiService = new BCPApiService();
         $pairings = $apiService->parseApiResponse([]);
 
-        $this->assertIsArray($pairings);
+        $this->assertTrue(is_array($pairings));
         $this->assertEmpty($pairings);
     }
 
@@ -187,7 +187,7 @@ class BCPApiServiceTest extends TestCase
         $apiService = new BCPApiService();
         $pairings = $apiService->parseApiResponse($data);
 
-        $this->assertIsArray($pairings);
+        $this->assertTrue(is_array($pairings));
         $this->assertEmpty($pairings);
     }
 
@@ -416,7 +416,7 @@ class BCPApiServiceTest extends TestCase
             $pairings = $apiService->fetchPairings($eventId, $round);
 
             // Validate response structure
-            $this->assertIsArray($pairings);
+            $this->assertTrue(is_array($pairings));
 
             // If there are pairings, validate their structure
             if (count($pairings) > 0) {
@@ -425,10 +425,10 @@ class BCPApiServiceTest extends TestCase
                 $first = $pairings[0];
                 $this->assertNotEmpty($first->player1BcpId, 'Player 1 BCP ID should not be empty');
                 $this->assertNotEmpty($first->player2BcpId, 'Player 2 BCP ID should not be empty');
-                $this->assertIsString($first->player1Name);
-                $this->assertIsString($first->player2Name);
-                $this->assertIsInt($first->player1Score);
-                $this->assertIsInt($first->player2Score);
+                $this->assertTrue(is_string($first->player1Name));
+                $this->assertTrue(is_string($first->player2Name));
+                $this->assertTrue(is_int($first->player1Score));
+                $this->assertTrue(is_int($first->player2Score));
 
                 // Table number can be null or int
                 $this->assertTrue(
@@ -475,12 +475,12 @@ class BCPApiServiceTest extends TestCase
             $name = $apiService->fetchTournamentName($bcpUrl);
 
             // Validate response
-            $this->assertIsString($name);
+            $this->assertTrue(is_string($name));
             $this->assertNotEmpty($name);
             $this->assertLessThanOrEqual(255, strlen($name));
 
             // Name should contain printable characters (not garbage)
-            $this->assertMatchesRegularExpression('/[a-zA-Z]/', $name);
+            $this->assertRegExp('/[a-zA-Z]/', $name);
         } catch (\RuntimeException $e) {
             // If network fails or API is unavailable, mark as incomplete
             $this->markTestIncomplete(
@@ -508,12 +508,12 @@ class BCPApiServiceTest extends TestCase
             $eventData = $apiService->fetchEventDetails($eventId);
 
             // Validate response structure
-            $this->assertIsArray($eventData);
+            $this->assertTrue(is_array($eventData));
             $this->assertArrayHasKey('name', $eventData);
             $this->assertArrayHasKey('id', $eventData);
 
             // Validate data types
-            $this->assertIsString($eventData['name']);
+            $this->assertTrue(is_string($eventData['name']));
             $this->assertNotEmpty($eventData['name']);
             $this->assertEquals($eventId, $eventData['id']);
         } catch (\RuntimeException $e) {

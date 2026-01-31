@@ -170,6 +170,25 @@ $hasTableCollisions = !empty($tableCollisions);
             margin-left: 0.5em;
         }
 
+        /* Bye row styling */
+        .bye-row {
+            background-color: #f5f5f5 !important;
+        }
+        .bye-indicator {
+            display: inline-block;
+            padding: 0.2em 0.5em;
+            background-color: #9e9e9e;
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-left: 0.5em;
+        }
+        .bye-no-table {
+            color: #9e9e9e;
+            font-style: italic;
+        }
+
         /* Base table styles (mobile-first) */
         .allocation-table {
             width: 100%;
@@ -771,22 +790,24 @@ $hasTableCollisions = !empty($tableCollisions);
                     $allTables = \TournamentTables\Models\Table::findByTournament($tournament->id);
 
                     foreach ($allocations as $allocation):
+                        $isBye = $allocation->isBye();
                         $allocationConflicts = $allocation->getConflicts();
                         $hasTableReuse = false;
                         $hasTerrainReuse = false;
-                        $hasTableCollision = isset($tableCollisions[$allocation->id]);
+                        $hasTableCollision = !$isBye && isset($tableCollisions[$allocation->id]);
                         foreach ($allocationConflicts as $c) {
                             if ($c['type'] === 'TABLE_REUSE') $hasTableReuse = true;
                             if ($c['type'] === 'TERRAIN_REUSE') $hasTerrainReuse = true;
                         }
                         $rowClass = '';
-                        if ($hasTableCollision) $rowClass = 'conflict-table-collision';
+                        if ($isBye) $rowClass = 'bye-row';
+                        elseif ($hasTableCollision) $rowClass = 'conflict-table-collision';
                         elseif ($hasTableReuse) $rowClass = 'conflict-table-reuse';
                         // Note: terrain reuse no longer highlights rows - shown via emoji instead
 
                         $table = $allocation->getTable();
                         $player1 = $allocation->getPlayer1();
-                        $player2 = $allocation->getPlayer2();
+                        $player2 = $isBye ? null : $allocation->getPlayer2();
                         $terrainType = $table ? $table->getTerrainType() : null;
                         $terrainEmoji = $terrainType ? $terrainType->emoji : null;
                     ?>
@@ -799,8 +820,17 @@ $hasTableCollisions = !empty($tableCollisions);
                         $terrainName = $terrainType ? htmlspecialchars($terrainType->name) : null;
                     ?>
                     <tr class="<?= $rowClass ?>" data-allocation-id="<?= $allocation->id ?>">
-                        <!-- Checkbox for swap selection (T074) -->
+                        <!-- Checkbox for swap selection (T074) - disabled for bye -->
                         <td class="select-cell">
+                            <?php if ($isBye): ?>
+                            <input
+                                type="checkbox"
+                                class="swap-checkbox"
+                                disabled
+                                title="Cannot swap bye allocations"
+                                aria-label="Cannot swap bye allocations"
+                            />
+                            <?php else: ?>
                             <input
                                 type="checkbox"
                                 class="swap-checkbox"
@@ -808,12 +838,15 @@ $hasTableCollisions = !empty($tableCollisions);
                                 onchange="updateSwapButton()"
                                 aria-label="Select for swap"
                             />
+                            <?php endif; ?>
                         </td>
 
-                        <!-- Table number with terrain -->
-                        <?php $bcpDiff = formatBcpDifference($allocation); ?>
-                        <td class="table-cell" title="<?= $terrainName ? "Table {$table->tableNumber} ({$terrainName})" : "Table " . ($table ? $table->tableNumber : 'N/A') ?>">
-                            <?php if ($table): ?>
+                        <!-- Table number with terrain (or "No Table" for bye) -->
+                        <?php $bcpDiff = $isBye ? ['emoji' => '', 'detail' => ''] : formatBcpDifference($allocation); ?>
+                        <td class="table-cell" title="<?= $isBye ? 'Bye - no table assigned' : ($terrainName ? "Table {$table->tableNumber} ({$terrainName})" : "Table " . ($table ? $table->tableNumber : 'N/A')) ?>">
+                            <?php if ($isBye): ?>
+                                <span class="bye-no-table">—</span>
+                            <?php elseif ($table): ?>
                                 <span><?= $bcpDiff['emoji'] ?> Table <?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?></span>
                                 <?php if ($terrainName): ?>
                                     <span class="terrain-suffix header-full">(<?= $terrainName ?>)</span>
@@ -835,8 +868,16 @@ $hasTableCollisions = !empty($tableCollisions);
                             <?php if ($player1 && $player1->faction): ?>
                             <span class="player-faction"><?= htmlspecialchars($player1->faction) ?></span>
                             <?php endif; ?>
+                            <?php if ($isBye): ?>
+                            <span class="bye-indicator">BYE</span>
+                            <?php endif; ?>
                         </td>
-                        <!-- Player 2 with total score and faction -->
+                        <!-- Player 2 with total score and faction (or empty for bye) -->
+                        <?php if ($isBye): ?>
+                        <td class="bye-no-table" title="Bye - no opponent">
+                            <span style="color: #9e9e9e; font-style: italic;">No opponent</span>
+                        </td>
+                        <?php else: ?>
                         <?php $p2TerrainReuse = playerHasTerrainReuse($player2Name, $allocationConflicts); ?>
                         <td title="<?= $player2Name ?><?= $player2 && $player2->faction ? ' (' . htmlspecialchars($player2->faction) . ')' : '' ?> - Score: <?= $player2 ? $player2->totalScore : 0 ?><?= $p2TerrainReuse ? ' - Already experienced this terrain' : '' ?>">
                             <span class="player-name">
@@ -848,9 +889,13 @@ $hasTableCollisions = !empty($tableCollisions);
                             <span class="player-faction"><?= htmlspecialchars($player2->faction) ?></span>
                             <?php endif; ?>
                         </td>
+                        <?php endif; ?>
 
-                        <!-- Change table - dropdown on desktop, button on mobile -->
+                        <!-- Change table - dropdown on desktop, button on mobile (disabled for bye) -->
                         <td class="change-cell">
+                            <?php if ($isBye): ?>
+                            <span class="bye-no-table" title="Bye - no table to change">—</span>
+                            <?php else: ?>
                             <!-- Desktop dropdown -->
                             <select
                                 class="change-table-dropdown"
@@ -877,6 +922,7 @@ $hasTableCollisions = !empty($tableCollisions);
                                 aria-label="Change table"
                                 title="Change table"
                             >&#9998;</button>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>

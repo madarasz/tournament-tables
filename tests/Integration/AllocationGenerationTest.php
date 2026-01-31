@@ -180,7 +180,7 @@ class AllocationGenerationTest extends TestCase
         $this->assertEquals($p2->id, $loaded->player2Id);
         $this->assertEquals(2, $loaded->player1Score);
         $this->assertEquals(1, $loaded->player2Score);
-        $this->assertIsArray($loaded->allocationReason);
+        $this->assertTrue(is_array($loaded->allocationReason));
         $this->assertTrue($loaded->allocationReason['isRound1']);
     }
 

@@ -43,7 +43,7 @@ class Round extends BaseModel
     /**
      * Create instance from database row.
      */
-    public static function fromRow(array $row): self
+    public static function fromRow(array $row)
     {
         return new self(
             (int) $row['id'],

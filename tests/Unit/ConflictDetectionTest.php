@@ -302,7 +302,7 @@ class ConflictDetectionTest extends TestCase
             protected function queryPlayerTableHistory($playerId): array
             {
                 $tables = $this->playerTables[$playerId] ?? [];
-                return array_map(fn($t) => ['table_number' => $t], $tables);
+                return array_map(function ($t) { return ['table_number' => $t]; }, $tables);
             }
 
             protected function queryPlayerTerrainHistory($playerId): array
@@ -331,7 +331,7 @@ class ConflictDetectionTest extends TestCase
             protected function queryPlayerTerrainHistory($playerId): array
             {
                 $terrains = $this->playerTerrains[$playerId] ?? [];
-                return array_map(fn($t) => ['id' => $t, 'name' => "Terrain {$t}"], $terrains);
+                return array_map(function ($t) { return ['id' => $t, 'name' => "Terrain {$t}"]; }, $terrains);
             }
         };
     }
@@ -352,13 +352,13 @@ class ConflictDetectionTest extends TestCase
             protected function queryPlayerTableHistory($playerId): array
             {
                 $tables = $this->playerTables[$playerId] ?? [];
-                return array_map(fn($t) => ['table_number' => $t], $tables);
+                return array_map(function ($t) { return ['table_number' => $t]; }, $tables);
             }
 
             protected function queryPlayerTerrainHistory($playerId): array
             {
                 $terrains = $this->playerTerrains[$playerId] ?? [];
-                return array_map(fn($t) => ['id' => $t, 'name' => "Terrain {$t}"], $terrains);
+                return array_map(function ($t) { return ['id' => $t, 'name' => "Terrain {$t}"]; }, $terrains);
             }
         };
     }

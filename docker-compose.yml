@@ -1,9 +1,11 @@
 services:
   php:
-    image: php:7.4.33-apache
+    image: php:7.1-apache
     ports:
       - "8080:80"
     working_dir: /var/www/app
+    environment:
+      APP_ENV: development
     volumes:
       - .:/var/www/app
       - ./config/apache.conf:/etc/apache2/sites-available/000-default.conf
@@ -26,6 +28,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: tournament_tables
+    command: --default-authentication-plugin=mysql_native_password
     ports:
       - "3306:3306"
     volumes:

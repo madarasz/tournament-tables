@@ -39,7 +39,7 @@ Store multiple tokens in a JSON-formatted cookie with tournament metadata:
 - **Sufficient capacity** - ~100 tournaments possible within 4KB limit, 20-limit provides safety margin
 
 ### Key Constraints
-- **PHP 7.4.33 compatibility** - No PHP 8.x features
+- **PHP 7.1 compatibility** - No PHP 7.2+ features
 - **Cookie size limit** - 4KB maximum (20 tournaments = ~2KB with metadata)
 - **Security** - Maintain HttpOnly, SameSite=Lax, Secure flags
 - **Token format** - Existing 16-character tokens remain unchanged

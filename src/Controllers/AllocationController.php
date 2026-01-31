@@ -18,7 +18,8 @@ use TournamentTables\Services\CostCalculator;
  */
 class AllocationController extends BaseController
 {
-    private AllocationEditService $editService;
+    /** @var AllocationEditService */
+    private $editService;
 
     public function __construct()
     {

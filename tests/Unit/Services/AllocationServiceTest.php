@@ -343,9 +343,9 @@ class AllocationServiceTest extends TestCase
         );
 
         $this->assertInstanceOf(AllocationResult::class, $result);
-        $this->assertIsArray($result->allocations);
-        $this->assertIsArray($result->conflicts);
-        $this->assertIsString($result->summary);
+        $this->assertTrue(is_array($result->allocations));
+        $this->assertTrue(is_array($result->conflicts));
+        $this->assertTrue(is_string($result->summary));
     }
 
     /**

@@ -13,7 +13,8 @@ use TournamentTables\Services\AuthService;
  */
 class AuthController extends BaseController
 {
-    private AuthService $service;
+    /** @var AuthService */
+    private $service;
 
     public function __construct()
     {

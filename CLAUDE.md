@@ -13,10 +13,10 @@ Web application for tournament organizers that generates intelligent table alloc
 
 | Component | Technology | Notes |
 |-----------|-----------|-------|
-| **Backend** | PHP 7.4.33 | **Strict compatibility required** |
+| **Backend** | PHP 7.1 | **Strict compatibility required** |
 | **Database** | MySQL 8.0 | InnoDB, utf8mb4 collation |
 | **Frontend** | Pico CSS + HTMX | Lightweight, no heavy JS framework |
-| **Testing** | PHPUnit 9.5 + Playwright 1.57 | Unit/Integration/E2E |
+| **Testing** | PHPUnit 7.5 + Playwright 1.57 | Unit/Integration/E2E |
 | **Container** | Docker Compose | Dev and test environments |
 
 ## Directory Structure
@@ -95,7 +95,7 @@ For manual Docker commands or local development without Docker, see `docs/develo
 
 - **PSR-12** coding standard
 - **Strict types**: `declare(strict_types=1);` in all files
-- **PHP 7.4.33 only**: No PHP 8.x features (match, named arguments, etc.)
+- **PHP 7.1 only**: No PHP 7.4+ features (arrow functions, typed properties, etc.)
 - **Models**: Static CRUD methods, `fromRow()` for hydration
 - **Services**: Stateless business logic
 - **Controllers**: Thin, delegate to services
@@ -136,7 +136,7 @@ Where `bcp_table_mismatch` = 1 if table differs from original BCP assignment, 0 
 
 ## Important Design Decisions
 
-1. **PHP 7.4.33 strict**: No PHP 8.x features
+1. **PHP 7.1 strict**: No PHP 7.4+ features
 2. **Greedy algorithm**: O(n²) for performance over optimality
 3. **Public views unauthenticated**: Players view without login
 4. **Post-publish editing**: Admins can edit after publishing

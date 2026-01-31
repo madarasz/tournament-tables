@@ -17,7 +17,8 @@ use TournamentTables\Database\Connection;
  */
 class TournamentCreationTest extends TestCase
 {
-    private TournamentService $service;
+    /** @var TournamentService */
+    private $service;
 
     protected function setUp(): void
     {
