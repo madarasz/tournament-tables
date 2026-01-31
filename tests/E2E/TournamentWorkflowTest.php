@@ -350,7 +350,7 @@ class TournamentWorkflowTest extends TestCase
         $players = Player::findByTournament($tournament->id);
 
         // Shuffle players for different pairings
-        $playerIds = array_map(fn($p) => $p->id, $players);
+        $playerIds = array_map(function ($p) { return $p->id; }, $players);
         shuffle($playerIds);
 
         // Create temporary allocations (just to have players in round)

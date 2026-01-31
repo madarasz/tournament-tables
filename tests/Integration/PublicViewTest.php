@@ -72,7 +72,7 @@ class PublicViewTest extends TestCase
         $response = json_decode($output, true);
 
         // Should succeed without authentication
-        $this->assertIsArray($response);
+        $this->assertTrue(is_array($response));
         $this->assertEquals($this->tournament->id, $response['id']);
         $this->assertEquals($this->tournament->name, $response['name']);
         $this->assertEquals($this->tournament->tableCount, $response['tableCount']);
@@ -97,7 +97,7 @@ class PublicViewTest extends TestCase
         $response = json_decode($output, true);
 
         // Should succeed without authentication
-        $this->assertIsArray($response);
+        $this->assertTrue(is_array($response));
         $this->assertEquals($this->tournament->name, $response['tournamentName']);
         $this->assertEquals(1, $response['roundNumber']);
         $this->assertArrayHasKey('allocations', $response);
@@ -121,7 +121,7 @@ class PublicViewTest extends TestCase
         $response = json_decode($output, true);
 
         // Should return error
-        $this->assertIsArray($response);
+        $this->assertTrue(is_array($response));
         $this->assertArrayHasKey('error', $response);
         $this->assertEquals('not_found', $response['error']);
     }
@@ -255,7 +255,7 @@ class PublicViewTest extends TestCase
 
         $response = json_decode($output, true);
 
-        $this->assertIsArray($response);
+        $this->assertTrue(is_array($response));
         $this->assertEquals($this->tournament->id, $response['id']);
         $this->assertEmpty($response['publishedRounds']);
     }

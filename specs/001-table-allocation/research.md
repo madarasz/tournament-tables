@@ -14,7 +14,7 @@ This document resolves all NEEDS CLARIFICATION items from the Technical Context.
 
 ### Rationale
 
-For a PHP 7.4.33 web application with minimal interactivity requirements, server-rendered HTML with progressive enhancement is the optimal approach:
+For a PHP 7.1 web application with minimal interactivity requirements, server-rendered HTML with progressive enhancement is the optimal approach:
 
 - **HTMX** (v1.9.x): Enables dynamic updates without writing JavaScript. Perfect for table swaps, refresh buttons, and form submissions. Works naturally with PHP server-rendered responses.
 - **Pico CSS** (v1.5.x): Classless CSS framework providing clean styling with minimal markup. No build step required.
@@ -52,7 +52,7 @@ HTMX patterns for our features:
 
 BCP is a JavaScript-rendered SPA (confirmed by testing the provided URL `https://www.bestcoastpairings.com/event/t6OOun8POR60?active_tab=pairings&round=1` - page shows "You need to enable JavaScript to run this app"). Chrome PHP provides:
 
-- PHP 7.4 compatibility
+- PHP 7.1 compatibility
 - Direct Chrome DevTools Protocol integration
 - Page rendering and DOM access after JavaScript execution
 - Network request interception (may reveal API endpoints)
@@ -195,7 +195,7 @@ For the problem scale (max 20 pairings, 20 tables, 6 rounds):
 | Criterion | Greedy | Hungarian | Backtracking |
 |-----------|--------|-----------|--------------|
 | Implementation complexity | Low | Medium | High |
-| PHP 7.4 compatibility | Native | Needs port | Native |
+| PHP 7.1 compatibility | Native | Needs port | Native |
 | Optimality | Near-optimal | Optimal | Optimal |
 | Auditability | Excellent | Requires wrapper | Good |
 | Performance | O(P×T) = 400 ops | O(n³) = 8000 ops | O(T^P) worst |
@@ -297,20 +297,20 @@ Storage: JSON column in allocations table or separate audit table.
 ```json
 {
     "require": {
-        "php": "^7.4",
+        "php": "^7.1",
         "chrome-php/chrome": "^1.8",
         "ext-pdo": "*",
         "ext-json": "*"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.5"
+        "phpunit/phpunit": "^7.5"
     }
 }
 ```
 
 ## Server Requirements
 
-- PHP 7.4.33
+- PHP 7.1
 - MySQL 5.7+
 - Chrome/Chromium browser installed (for headless scraping)
 - Composer for dependency management

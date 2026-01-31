@@ -99,8 +99,8 @@ class PageLoadPerformanceTest extends TestCase
         // Load tournament with all relations
         $tournament = Tournament::find($this->tournament->id);
         $response = $tournament->toArray();
-        $response['tables'] = array_map(fn($t) => $t->toArray(), $tournament->getTables());
-        $response['rounds'] = array_map(fn($r) => $r->toArray(), $tournament->getRounds());
+        $response['tables'] = array_map(function ($t) { return $t->toArray(); }, $tournament->getTables());
+        $response['rounds'] = array_map(function ($r) { return $r->toArray(); }, $tournament->getRounds());
 
         $duration = microtime(true) - $startTime;
 

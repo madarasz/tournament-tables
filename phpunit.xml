@@ -24,14 +24,14 @@
         </testsuite>
     </testsuites>
 
-    <coverage processUncoveredFiles="true">
-        <include>
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">src</directory>
-        </include>
-        <exclude>
-            <directory>src/Views</directory>
-        </exclude>
-    </coverage>
+            <exclude>
+                <directory>src/Views</directory>
+            </exclude>
+        </whitelist>
+    </filter>
 
     <php>
         <env name="APP_ENV" value="testing"/>
