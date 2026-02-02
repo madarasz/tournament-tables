@@ -24,6 +24,23 @@ $adminToken = $adminToken ?? null;
 $autoImport = $autoImport ?? null;
 ?>
 
+<?php if (isset($_GET['loginSuccess'])): ?>
+<article class="alert-success" id="login-success">
+    <p><strong>Login Successful!</strong> Welcome back to <?= htmlspecialchars($tournament->name) ?>.</p>
+</article>
+<script>
+// Auto-dismiss login success message after 4 seconds
+setTimeout(function() {
+    var el = document.getElementById('login-success');
+    if (el) {
+        el.style.transition = 'opacity 0.5s';
+        el.style.opacity = '0';
+        setTimeout(function() { el.remove(); }, 500);
+    }
+}, 4000);
+</script>
+<?php endif; ?>
+
 <?php if ($justCreated && $adminToken): ?>
 <article class="alert-success" id="creation-success">
     <header>

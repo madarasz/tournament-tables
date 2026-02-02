@@ -58,39 +58,24 @@ document.body.addEventListener('htmx:afterRequest', function(event) {
         try {
             const response = JSON.parse(event.detail.xhr.responseText);
             if (response.tournamentId) {
+                // Show brief redirecting message
                 const article = createAlertArticle('alert-success', 'Login Successful');
+                const p = document.createElement('p');
+                p.textContent = 'Redirecting to tournament...';
+                article.appendChild(p);
+                resultEl.appendChild(article);
 
-                const p1 = document.createElement('p');
-                p1.appendChild(document.createTextNode('Welcome back! You now have access to '));
-                const strong = document.createElement('strong');
-                strong.textContent = response.tournamentName || 'this tournament';
-                p1.appendChild(strong);
-                p1.appendChild(document.createTextNode('.'));
-                article.appendChild(p1);
-
-                const p2 = document.createElement('p');
-                const link = document.createElement('a');
                 // Validate tournamentId is numeric to prevent URL injection
                 const tournamentId = parseInt(response.tournamentId, 10);
                 if (!isNaN(tournamentId) && tournamentId > 0) {
-                    link.href = '/admin/tournament/' + tournamentId;
+                    window.location.href = '/admin/tournament/' + tournamentId + '?loginSuccess=1';
                 } else {
-                    link.href = '/admin';
+                    window.location.href = '/admin';
                 }
-                link.setAttribute('role', 'button');
-                link.textContent = 'Go to Tournament';
-                p2.appendChild(link);
-                article.appendChild(p2);
-
-                resultEl.appendChild(article);
             }
         } catch (e) {
-            // JSON parse error, show generic success
-            const article = createAlertArticle('alert-success', 'Login Successful');
-            const p = document.createElement('p');
-            p.textContent = 'You are now authenticated.';
-            article.appendChild(p);
-            resultEl.appendChild(article);
+            // JSON parse error, redirect to admin home
+            window.location.href = '/admin';
         }
     }
 });
