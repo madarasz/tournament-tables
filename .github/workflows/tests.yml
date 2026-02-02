@@ -9,25 +9,67 @@ on:
 jobs:
   phpunit:
     name: PHPUnit Tests (PHP 7.1)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: tournament_tables
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Start services
-        run: docker-compose up -d
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.1'
+          extensions: pdo, pdo_mysql, json
+          coverage: none
 
-      - name: Wait for services to be healthy
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Create database config
         run: |
-          echo "Waiting for PHP service to be healthy..."
-          timeout 120 bash -c 'until docker-compose exec -T php curl -sf http://localhost/api/terrain-types > /dev/null 2>&1; do sleep 5; done'
-          echo "Services are ready"
+          cat > config/database.php << 'EOF'
+          <?php
+          declare(strict_types=1);
+          return [
+              'host' => '127.0.0.1',
+              'database' => 'tournament_tables',
+              'username' => 'root',
+              'password' => 'root',
+              'charset' => 'utf8mb4',
+          ];
+          EOF
+
+      - name: Run migrations
+        run: php bin/migrate.php
+
+      - name: Seed terrain types
+        run: php bin/seed-terrain-types.php
 
       - name: Run PHPUnit tests
-        run: docker-compose exec -T php ./vendor/bin/phpunit --testsuite unit,integration,performance,contract
-
-      - name: Stop services
-        if: always()
-        run: docker-compose down
+        run: vendor/bin/phpunit --testsuite unit,integration,performance,contract
