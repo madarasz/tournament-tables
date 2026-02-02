@@ -222,6 +222,158 @@ class ByeHandlingTest extends TestCase
         $this->assertTrue($pairings[0]->isBye());
     }
 
+    /**
+     * Test parseApiResponse handles pairings without game data (unplayed games).
+     *
+     * When a round is not fully played, BCP's API returns pairings without
+     * player1Game and player2Game fields. These should be imported with score 0.
+     */
+    public function testParseApiResponseHandlesPairingsWithoutGameData(): void
+    {
+        $apiService = new BCPApiService();
+
+        $apiResponse = [
+            'active' => [
+                // Pairing without any game data (game not yet played)
+                [
+                    'player1' => [
+                        'id' => 'p1id',
+                        'user' => ['firstName' => 'John', 'lastName' => 'Doe'],
+                    ],
+                    'player2' => [
+                        'id' => 'p2id',
+                        'user' => ['firstName' => 'Jane', 'lastName' => 'Smith'],
+                    ],
+                    // No player1Game or player2Game fields
+                    'table' => 1,
+                ],
+            ],
+        ];
+
+        $pairings = $apiService->parseApiResponse($apiResponse);
+
+        $this->assertCount(1, $pairings);
+        $this->assertFalse($pairings[0]->isBye());
+        $this->assertEquals('p1id', $pairings[0]->player1BcpId);
+        $this->assertEquals('p2id', $pairings[0]->player2BcpId);
+        $this->assertEquals(0, $pairings[0]->player1Score);
+        $this->assertEquals(0, $pairings[0]->player2Score);
+        $this->assertEquals(1, $pairings[0]->bcpTableNumber);
+    }
+
+    /**
+     * Test parseApiResponse handles pairing with only player1Game (player2 not started).
+     */
+    public function testParseApiResponseHandlesMissingPlayer2Game(): void
+    {
+        $apiService = new BCPApiService();
+
+        $apiResponse = [
+            'active' => [
+                [
+                    'player1' => [
+                        'id' => 'p1id',
+                        'user' => ['firstName' => 'John', 'lastName' => 'Doe'],
+                    ],
+                    'player2' => [
+                        'id' => 'p2id',
+                        'user' => ['firstName' => 'Jane', 'lastName' => 'Smith'],
+                    ],
+                    'player1Game' => ['points' => 15],
+                    // No player2Game - perhaps player 2 hasn't submitted score yet
+                    'table' => 2,
+                ],
+            ],
+        ];
+
+        $pairings = $apiService->parseApiResponse($apiResponse);
+
+        $this->assertCount(1, $pairings);
+        $this->assertFalse($pairings[0]->isBye());
+        $this->assertEquals(15, $pairings[0]->player1Score);
+        $this->assertEquals(0, $pairings[0]->player2Score);
+    }
+
+    /**
+     * Test parseApiResponse handles mixed pairings - some played, some not.
+     */
+    public function testParseApiResponseHandlesMixedPlayedAndUnplayedPairings(): void
+    {
+        $apiService = new BCPApiService();
+
+        $apiResponse = [
+            'active' => [
+                // Played pairing
+                [
+                    'player1' => [
+                        'id' => 'p1id',
+                        'user' => ['firstName' => 'John', 'lastName' => 'Doe'],
+                    ],
+                    'player2' => [
+                        'id' => 'p2id',
+                        'user' => ['firstName' => 'Jane', 'lastName' => 'Smith'],
+                    ],
+                    'player1Game' => ['points' => 20],
+                    'player2Game' => ['points' => 15],
+                    'table' => 1,
+                ],
+                // Unplayed pairing
+                [
+                    'player1' => [
+                        'id' => 'p3id',
+                        'user' => ['firstName' => 'Bob', 'lastName' => 'Wilson'],
+                    ],
+                    'player2' => [
+                        'id' => 'p4id',
+                        'user' => ['firstName' => 'Alice', 'lastName' => 'Brown'],
+                    ],
+                    // No game data
+                    'table' => 2,
+                ],
+            ],
+        ];
+
+        $pairings = $apiService->parseApiResponse($apiResponse);
+
+        $this->assertCount(2, $pairings);
+
+        // First pairing has scores
+        $this->assertEquals(20, $pairings[0]->player1Score);
+        $this->assertEquals(15, $pairings[0]->player2Score);
+
+        // Second pairing has zero scores
+        $this->assertEquals(0, $pairings[1]->player1Score);
+        $this->assertEquals(0, $pairings[1]->player2Score);
+    }
+
+    /**
+     * Test parseApiResponse handles bye without game data.
+     */
+    public function testParseApiResponseHandlesByeWithoutGameData(): void
+    {
+        $apiService = new BCPApiService();
+
+        $apiResponse = [
+            'active' => [
+                // Bye without game data
+                [
+                    'player1' => [
+                        'id' => 'byePlayerId',
+                        'user' => ['firstName' => 'Bye', 'lastName' => 'Player'],
+                    ],
+                    // No player2, no game data
+                ],
+            ],
+        ];
+
+        $pairings = $apiService->parseApiResponse($apiResponse);
+
+        $this->assertCount(1, $pairings);
+        $this->assertTrue($pairings[0]->isBye());
+        $this->assertEquals('byePlayerId', $pairings[0]->player1BcpId);
+        $this->assertEquals(0, $pairings[0]->player1Score);
+    }
+
     // -------------------------------------------------------------------------
     // AllocationService Tests
     // -------------------------------------------------------------------------
