@@ -41,8 +41,10 @@ $isPublic = $isPublic ?? false;
         <div class="container">
             <ul>
                 <li><a href="/admin" class="brand">Tournament Tables</a></li>
-                <li><a href="/admin/tournament/create">New Tournament</a></li>
-                <li><a href="/admin/login">Login</a></li>
+                <li class="nav-right">
+                    <a href="/admin/tournament/create">New Tournament</a>
+                    <a href="/admin/login">Login</a>
+                </li>
             </ul>
         </div>
     </nav>

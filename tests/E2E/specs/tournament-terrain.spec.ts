@@ -59,6 +59,9 @@ test.describe('Terrain Type Configuration (US2)', () => {
     // Verify we're on the dashboard (tournament name from BCP mock starts with "Test Tournament")
     await expect(page.locator('h1')).toContainText('Test Tournament');
 
+    // Click on the Tables tab to access terrain configuration
+    await page.click('[data-tab="tables"]');
+
     // Verify Table Configuration section is present
     await expect(
       page.getByRole('heading', { name: 'Table Configuration' })
@@ -164,6 +167,9 @@ test.describe('Terrain Type Configuration (US2)', () => {
     // Wait for page to load
     await expect(page.locator('h1')).toContainText('Test Tournament');
 
+    // Click on the Tables tab again after reload
+    await page.click('[data-tab="tables"]');
+
     // Verify terrain type selections persisted after reload
     await expect(page.locator('select[data-table-number="1"]')).toHaveValue(
       '1'
@@ -201,6 +207,9 @@ test.describe('Terrain Type Configuration (US2)', () => {
     // Reload again to verify update persisted
     await page.reload();
     await expect(page.locator('h1')).toContainText('Test Tournament');
+
+    // Click on the Tables tab again after reload
+    await page.click('[data-tab="tables"]');
 
     // Verify updated terrain type persisted
     await expect(page.locator('select[data-table-number="1"]')).toHaveValue(

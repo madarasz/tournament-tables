@@ -19,7 +19,7 @@
 nav {
   background: var(--primary);
   padding: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 
 nav ul {
@@ -37,6 +37,36 @@ nav a {
 
 nav a:hover {
   text-decoration: underline;
+}
+
+/* Right-aligned nav items */
+nav ul .nav-right {
+  margin-left: auto;
+  display: flex;
+  gap: 1rem;
+}
+
+/* Full-bleed: break out of container */
+.full-bleed {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+}
+
+/* Tournament name header extension of nav */
+.nav-tournament-name {
+  background: var(--primary);
+  padding: 0.5rem 1rem 0.75rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  text-align: center;
+}
+
+.nav-tournament-name h1 {
+  color: white;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .brand {
@@ -541,4 +571,195 @@ button.is-loading {
     padding: 1rem 2rem;
     font-size: 1.5rem;
   }
+}
+
+/* ==========================================================================
+   Dashboard Tabs
+   ========================================================================== */
+
+.dashboard-tabs {
+  display: flex;
+  justify-content: center;
+  background: #0d7ea8; /* Darker blue than nav */
+  padding: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.dashboard-tabs.full-bleed {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-tabs::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.dashboard-tab {
+  background: none;
+  border: none;
+  padding: 0.4rem 1.25rem;
+  margin: 0;
+  min-height: 32px;
+  min-width: max-content;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.2s, background-color 0.2s;
+  white-space: nowrap;
+}
+
+.dashboard-tab:hover {
+  color: white;
+}
+
+.dashboard-tab:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: -2px;
+}
+
+.dashboard-tab.active {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Tab panels */
+.dashboard-tab-panel {
+  display: block;
+}
+
+.dashboard-tab-panel[hidden] {
+  display: none;
+}
+
+/* Mobile: Ensure tabs remain scrollable */
+@media (max-width: 576px) {
+  .dashboard-tabs {
+    gap: 0;
+  }
+
+  .dashboard-tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* ==========================================================================
+   Dashboard-specific Styles (moved from inline)
+   ========================================================================== */
+
+/* Import Round Row Styles */
+.import-round-row {
+  background: transparent;
+}
+
+.import-round-cell {
+  text-align: center;
+  padding: 1rem !important;
+  border-top: 1px dashed var(--pico-muted-border-color, #e0e0e0);
+}
+
+.import-round-cell button {
+  margin: 0 auto;
+  min-width: 200px;
+}
+
+.import-result {
+  margin-top: 0.75rem;
+}
+
+.import-result:empty {
+  display: none;
+}
+
+/* Responsive styles for Table Configuration - Set All Tables */
+.set-all-container {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--pico-card-background-color, #f8f9fa);
+  border-radius: var(--pico-border-radius, 0.25rem);
+  border: 1px solid var(--pico-muted-border-color, #e0e0e0);
+}
+
+.set-all-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.set-all-controls {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.set-all-controls select {
+  flex: 1;
+  min-width: 200px;
+  margin-bottom: 0;
+}
+
+.set-all-controls button {
+  white-space: nowrap;
+  margin-bottom: 0;
+  min-height: 44px; /* Touch-friendly target */
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.set-all-hint {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--pico-muted-color, #666);
+}
+
+/* Mobile: Stack elements vertically */
+@media (max-width: 576px) {
+  .set-all-controls {
+    flex-direction: column;
+  }
+
+  .set-all-controls select {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .set-all-controls button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Tablet: Keep horizontal but allow wrapping */
+@media (min-width: 577px) and (max-width: 768px) {
+  .set-all-controls select {
+    min-width: 180px;
+  }
+}
+
+/* Row highlight animation for visual feedback */
+@keyframes highlightFade {
+  0% { background-color: var(--pico-primary-focus, rgba(16, 149, 193, 0.25)); }
+  100% { background-color: transparent; }
+}
+
+.table-row-highlight {
+  animation: highlightFade 0.8s ease-out;
+}
+
+/* Danger Zone Styles */
+.danger-zone {
+  border: 1px solid var(--pico-del-color, #c62828);
+  border-radius: var(--pico-border-radius, 0.25rem);
+  padding: 1.5rem;
+  margin-top: 0;
+}
+
+.danger-zone h2 {
+  color: var(--pico-del-color, #c62828);
+  margin-top: 0;
 }
