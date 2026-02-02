@@ -11,7 +11,7 @@ use TournamentTables\Database\Connection;
  *
  * Child classes must define:
  * - protected static string $tableName (the database table name)
- * - public static function fromRow(array $row): static
+ * - public static function fromRow(array $row)
  * - protected function insert(): bool
  * - protected function update(): bool
  */

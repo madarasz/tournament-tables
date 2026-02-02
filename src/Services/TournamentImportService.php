@@ -21,7 +21,7 @@ class TournamentImportService
     /** @var BCPApiService */
     private $bcpService;
 
-    public function __construct(BCPApiService $bcpService = null)
+    public function __construct(?BCPApiService $bcpService = null)
     {
         $this->bcpService = $bcpService ?? new BCPApiService();
     }
