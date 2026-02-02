@@ -267,12 +267,12 @@ class CostCalculatorTest extends TestCase
         $result = $this->calculator->calculate(1, 3, 1, 'Volkus', $history, null, 5);
 
         $this->assertInstanceOf(CostResult::class, $result);
-        $this->assertIsInt($result->totalCost);
-        $this->assertIsArray($result->costBreakdown);
+        $this->assertTrue(is_int($result->totalCost));
+        $this->assertTrue(is_array($result->costBreakdown));
         $this->assertArrayHasKey('tableReuse', $result->costBreakdown);
         $this->assertArrayHasKey('terrainReuse', $result->costBreakdown);
         $this->assertArrayHasKey('bcpTableMismatch', $result->costBreakdown);
-        $this->assertIsArray($result->reasons);
+        $this->assertTrue(is_array($result->reasons));
     }
 
     /**

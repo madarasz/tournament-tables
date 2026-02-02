@@ -17,13 +17,13 @@ class Allocation extends BaseModel
     /** @var int */
     public $roundId;
 
-    /** @var int */
+    /** @var int|null */
     public $tableId;
 
     /** @var int */
     public $player1Id;
 
-    /** @var int */
+    /** @var int|null */
     public $player2Id;
 
     /** @var int */
@@ -41,9 +41,9 @@ class Allocation extends BaseModel
     public function __construct(
         ?int $id = null,
         int $roundId = 0,
-        int $tableId = 0,
+        ?int $tableId = null,
         int $player1Id = 0,
-        int $player2Id = 0,
+        ?int $player2Id = null,
         int $player1Score = 0,
         int $player2Score = 0,
         ?array $allocationReason = null,
@@ -60,6 +60,14 @@ class Allocation extends BaseModel
         $this->bcpTableNumber = $bcpTableNumber;
     }
 
+    /**
+     * Check if this allocation is a bye (no opponent).
+     */
+    public function isBye(): bool
+    {
+        return $this->player2Id === null;
+    }
+
     protected static function getTableName(): string
     {
         return 'allocations';
@@ -68,7 +76,7 @@ class Allocation extends BaseModel
     /**
      * Create instance from database row.
      */
-    public static function fromRow(array $row): self
+    public static function fromRow(array $row)
     {
         $reason = null;
         if (!empty($row['allocation_reason'])) {
@@ -79,12 +87,20 @@ class Allocation extends BaseModel
             ? (int) $row['bcp_table_number']
             : null;
 
+        $tableId = isset($row['table_id']) && $row['table_id'] !== null
+            ? (int) $row['table_id']
+            : null;
+
+        $player2Id = isset($row['player2_id']) && $row['player2_id'] !== null
+            ? (int) $row['player2_id']
+            : null;
+
         return new self(
             (int) $row['id'],
             (int) $row['round_id'],
-            (int) $row['table_id'],
+            $tableId,
             (int) $row['player1_id'],
-            (int) $row['player2_id'],
+            $player2Id,
             (int) $row['player1_score'],
             (int) $row['player2_score'],
             $reason,
@@ -102,9 +118,9 @@ class Allocation extends BaseModel
         $rows = Connection::fetchAll(
             'SELECT a.*, t.table_number
              FROM allocations a
-             JOIN tables t ON a.table_id = t.id
+             LEFT JOIN tables t ON a.table_id = t.id
              WHERE a.round_id = ?
-             ORDER BY t.table_number ASC',
+             ORDER BY CASE WHEN t.table_number IS NULL THEN 1 ELSE 0 END, t.table_number ASC',
             [$roundId]
         );
 
@@ -185,17 +201,25 @@ class Allocation extends BaseModel
 
     /**
      * Get player 2.
+     * Returns null for bye allocations.
      */
     public function getPlayer2(): ?Player
     {
+        if ($this->player2Id === null) {
+            return null;
+        }
         return Player::find($this->player2Id);
     }
 
     /**
      * Get the table.
+     * Returns null for bye allocations.
      */
     public function getTable(): ?Table
     {
+        if ($this->tableId === null) {
+            return null;
+        }
         return Table::find($this->tableId);
     }
 
@@ -264,12 +288,13 @@ class Allocation extends BaseModel
             'id' => $this->id,
             'tableNumber' => $table ? $table->tableNumber : null,
             'terrainType' => $terrainType ? $terrainType->name : null,
+            'isBye' => $this->isBye(),
             'player1' => [
                 'id' => $player1 ? $player1->id : null,
                 'name' => $player1 ? $player1->name : null,
                 'score' => $this->player1Score,
             ],
-            'player2' => [
+            'player2' => $this->isBye() ? null : [
                 'id' => $player2 ? $player2->id : null,
                 'name' => $player2 ? $player2->name : null,
                 'score' => $this->player2Score,
@@ -292,10 +317,11 @@ class Allocation extends BaseModel
         return [
             'tableNumber' => $table ? $table->tableNumber : null,
             'terrainType' => $terrainType ? $terrainType->name : null,
+            'isBye' => $this->isBye(),
             'player1Name' => $player1 ? $player1->name : null,
             'player1Score' => $this->player1Score,
-            'player2Name' => $player2 ? $player2->name : null,
-            'player2Score' => $this->player2Score,
+            'player2Name' => $this->isBye() ? null : ($player2 ? $player2->name : null),
+            'player2Score' => $this->isBye() ? 0 : $this->player2Score,
         ];
     }
 }

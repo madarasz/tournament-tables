@@ -20,7 +20,8 @@ use TournamentTables\Services\AllocationGenerationService;
  */
 class RoundController extends BaseController
 {
-    private AllocationGenerationService $generationService;
+    /** @var AllocationGenerationService */
+    private $generationService;
 
     public function __construct()
     {
@@ -96,7 +97,10 @@ class RoundController extends BaseController
 
                 // If no tables exist (first import), create them from pairing count
                 if (empty($tables)) {
-                    $tableCount = count($pairings);
+                    $regularPairings = array_filter($pairings, function ($pairing) {
+                        return !$pairing->isBye();
+                    });
+                    $tableCount = count($regularPairings);
                     $tables = Table::createForTournament($tournamentId, $tableCount);
                 }
 
@@ -105,20 +109,56 @@ class RoundController extends BaseController
                 foreach ($pairings as $pairing) {
                     // Get total scores for each player (default to 0 if not found)
                     $player1TotalScore = $totalScores[$pairing->player1BcpId] ?? 0;
-                    $player2TotalScore = $totalScores[$pairing->player2BcpId] ?? 0;
 
-                    // Find or create players with total scores
+                    // Find or create player1 with total score
                     $player1 = Player::findOrCreate(
                         $tournamentId,
                         $pairing->player1BcpId,
                         $pairing->player1Name,
-                        $player1TotalScore
+                        $player1TotalScore,
+                        $pairing->player1Faction
                     );
+
+                    // Handle bye pairings (no opponent)
+                    if ($pairing->isBye()) {
+                        $reason = [
+                            'timestamp' => date('c'),
+                            'totalCost' => 0,
+                            'costBreakdown' => ['tableReuse' => 0, 'terrainReuse' => 0, 'tableNumber' => 0],
+                            'reasons' => ['Bye - no opponent this round'],
+                            'alternativesConsidered' => [],
+                            'isRound1' => $roundNumber === 1,
+                            'isBye' => true,
+                            'conflicts' => [],
+                        ];
+
+                        // Create bye allocation with null table_id and player2_id
+                        $allocation = new Allocation(
+                            null,
+                            $round->id,
+                            null, // No table for bye
+                            $player1->id,
+                            null, // No player2 for bye
+                            $pairing->player1Score,
+                            0,
+                            $reason,
+                            null  // No BCP table for bye
+                        );
+                        $allocation->save();
+
+                        $playersImported += 1;
+                        $pairingsImported++;
+                        continue;
+                    }
+
+                    // Regular pairing - find or create player2
+                    $player2TotalScore = $totalScores[$pairing->player2BcpId] ?? 0;
                     $player2 = Player::findOrCreate(
                         $tournamentId,
                         $pairing->player2BcpId,
                         $pairing->player2Name,
-                        $player2TotalScore
+                        $player2TotalScore,
+                        $pairing->player2Faction
                     );
 
                     // Determine table assignment

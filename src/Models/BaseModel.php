@@ -11,7 +11,7 @@ use TournamentTables\Database\Connection;
  *
  * Child classes must define:
  * - protected static string $tableName (the database table name)
- * - public static function fromRow(array $row): self
+ * - public static function fromRow(array $row)
  * - protected function insert(): bool
  * - protected function update(): bool
  */
@@ -28,8 +28,11 @@ abstract class BaseModel
 
     /**
      * Create instance from database row.
+     *
+     * @param array $row Database row
+     * @return static
      */
-    abstract public static function fromRow(array $row): self;
+    abstract public static function fromRow(array $row);
 
     /**
      * Insert a new record.

@@ -17,7 +17,8 @@ use TournamentTables\Database\Connection;
  */
 class AllocationGenerationService
 {
-    private AllocationService $allocationService;
+    /** @var AllocationService */
+    private $allocationService;
 
     public function __construct(?AllocationService $allocationService = null)
     {
@@ -94,9 +95,30 @@ class AllocationGenerationService
         $pairings = [];
         foreach ($allocations as $allocation) {
             $player1 = Player::find($allocation->player1Id);
-            $player2 = Player::find($allocation->player2Id);
 
-            if ($player1 === null || $player2 === null) {
+            if ($player1 === null) {
+                continue;
+            }
+
+            // Handle bye allocations
+            if ($allocation->isBye()) {
+                $pairings[] = new Pairing(
+                    $player1->bcpPlayerId,
+                    $player1->name,
+                    $allocation->player1Score,
+                    null, // player2BcpId
+                    null, // player2Name
+                    0,    // player2Score
+                    null, // bcpTableNumber
+                    $player1->totalScore,
+                    0     // player2TotalScore
+                );
+                continue;
+            }
+
+            // Regular pairing
+            $player2 = Player::find($allocation->player2Id);
+            if ($player2 === null) {
                 continue;
             }
 
@@ -177,10 +199,36 @@ class AllocationGenerationService
             $savedAllocations = [];
             foreach ($result->allocations as $allocData) {
                 $player1Id = $playerLookup[$allocData['player1']['bcpId']] ?? null;
+
+                if ($player1Id === null) {
+                    continue;
+                }
+
+                // Handle bye allocations (no player2, no table)
+                $isBye = $allocData['player2'] === null || ($allocData['reason']['isBye'] ?? false);
+
+                if ($isBye) {
+                    $allocation = new Allocation(
+                        null,
+                        $round->id,
+                        null, // No table for bye
+                        $player1Id,
+                        null, // No player2 for bye
+                        $allocData['player1']['score'],
+                        0,
+                        $allocData['reason'],
+                        null  // No BCP table for bye
+                    );
+                    $allocation->save();
+                    $savedAllocations[] = $allocation->toArray();
+                    continue;
+                }
+
+                // Regular allocation
                 $player2Id = $playerLookup[$allocData['player2']['bcpId']] ?? null;
                 $tableId = $tableLookup[$allocData['tableNumber']] ?? null;
 
-                if ($player1Id === null || $player2Id === null || $tableId === null) {
+                if ($player2Id === null || $tableId === null) {
                     continue;
                 }
 

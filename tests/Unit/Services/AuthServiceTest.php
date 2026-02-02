@@ -14,7 +14,8 @@ use TournamentTables\Services\AuthService;
  */
 class AuthServiceTest extends TestCase
 {
-    private AuthService $service;
+    /** @var AuthService */
+    private $service;
 
     protected function setUp(): void
     {
@@ -100,7 +101,7 @@ class AuthServiceTest extends TestCase
         $result = $this->service->validateToken('');
 
         $this->assertArrayHasKey('valid', $result);
-        $this->assertIsBool($result['valid']);
+        $this->assertTrue(is_bool($result['valid']));
     }
 
     public function testValidateTokenReturnsErrorKeyOnFailure(): void
@@ -109,6 +110,6 @@ class AuthServiceTest extends TestCase
 
         $this->assertFalse($result['valid']);
         $this->assertArrayHasKey('error', $result);
-        $this->assertIsString($result['error']);
+        $this->assertTrue(is_string($result['error']));
     }
 }

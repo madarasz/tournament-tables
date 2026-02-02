@@ -169,6 +169,37 @@ SQL;
         }
     }
 
+    // Make columns nullable for bye support (player2_id and table_id can be NULL for bye pairings)
+    $nullableAlterations = [
+        [
+            'table' => 'allocations',
+            'column' => 'player2_id',
+            'check' => "SELECT IS_NULLABLE FROM information_schema.COLUMNS
+                        WHERE TABLE_SCHEMA = :db AND TABLE_NAME = 'allocations'
+                        AND COLUMN_NAME = 'player2_id'",
+            'sql' => 'ALTER TABLE allocations MODIFY COLUMN player2_id INT DEFAULT NULL'
+        ],
+        [
+            'table' => 'allocations',
+            'column' => 'table_id',
+            'check' => "SELECT IS_NULLABLE FROM information_schema.COLUMNS
+                        WHERE TABLE_SCHEMA = :db AND TABLE_NAME = 'allocations'
+                        AND COLUMN_NAME = 'table_id'",
+            'sql' => 'ALTER TABLE allocations MODIFY COLUMN table_id INT DEFAULT NULL'
+        ],
+    ];
+
+    foreach ($nullableAlterations as $alter) {
+        $stmt = $pdo->prepare($alter['check']);
+        $stmt->execute(['db' => $dbName]);
+        $isNullable = $stmt->fetchColumn();
+
+        if ($isNullable === 'NO') {
+            $pdo->exec($alter['sql']);
+            echo "Made column '{$alter['column']}' nullable in '{$alter['table']}' table.\n";
+        }
+    }
+
     echo "Schema upgrade complete.\n";
 
 } catch (PDOException $e) {

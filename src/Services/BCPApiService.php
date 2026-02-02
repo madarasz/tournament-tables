@@ -89,14 +89,15 @@ class BCPApiService
      *
      * @param string $eventId BCP event ID
      * @param int $round Round number
+     * @param array<string, int> $totalScores Optional map of BCP player ID to total score
      * @return Pairing[]
      * @throws \RuntimeException If API request fails after retries
      */
-    public function fetchPairings(string $eventId, int $round): array
+    public function fetchPairings(string $eventId, int $round, array $totalScores = []): array
     {
         $url = $this->buildPairingsUrl($eventId, $round);
         $data = $this->fetchJsonWithRetry($url);
-        return $this->parseApiResponse($data);
+        return $this->parseApiResponse($data, $totalScores);
     }
 
     /**
@@ -212,9 +213,10 @@ class BCPApiService
      * Reference: specs/001-table-allocation/research.md#api-response-structure
      *
      * @param array $data Decoded JSON from BCP API
+     * @param array<string, int> $totalScores Optional map of BCP player ID to total score
      * @return Pairing[]
      */
-    public function parseApiResponse(array $data): array
+    public function parseApiResponse(array $data, array $totalScores = []): array
     {
         if (!isset($data['active']) || !is_array($data['active'])) {
             return [];
@@ -223,7 +225,7 @@ class BCPApiService
         $pairings = [];
 
         foreach ($data['active'] as $item) {
-            $pairing = $this->parsePairingItem($item);
+            $pairing = $this->parsePairingItem($item, $totalScores);
             if ($pairing !== null) {
                 $pairings[] = $pairing;
             }
@@ -250,33 +252,67 @@ class BCPApiService
      * Parse a single pairing item from API response.
      *
      * @param array $item Single pairing data from API
+     * @param array<string, int> $totalScores Optional map of BCP player ID to total score
      * @return Pairing|null Returns null if required fields are missing
      */
-    private function parsePairingItem(array $item): ?Pairing
+    private function parsePairingItem(array $item, array $totalScores = []): ?Pairing
     {
-        // Validate required fields
-        if (!isset($item['player1'], $item['player2'], $item['player1Game'], $item['player2Game'])) {
+        // Validate player1 is present (required)
+        if (!isset($item['player1'], $item['player1Game'])) {
             return null;
         }
 
-        // Extract player data
+        // Extract player1 data
         $player1BcpId = $item['player1']['id'] ?? '';
         $player1Name = $this->formatPlayerName($item['player1']['user'] ?? []);
         $player1Score = (int)($item['player1Game']['points'] ?? 0);
         $player1Faction = $this->extractFaction($item['player1']);
 
+        // Skip if missing player1 ID
+        if (empty($player1BcpId)) {
+            return null;
+        }
+
+        // Table number (nullable)
+        $bcpTableNumber = isset($item['table']) ? (int)$item['table'] : null;
+
+        // Check if this is a bye pairing (player2 is missing or has no ID)
+        $isBye = !isset($item['player2']) || empty($item['player2']['id'] ?? '');
+
+        if ($isBye) {
+            // Bye pairing - player2 fields are null
+            // Look up player1's total score from the map (default to 0 if not found)
+            $player1TotalScore = $totalScores[$player1BcpId] ?? 0;
+
+            return new Pairing(
+                $player1BcpId,
+                $player1Name,
+                $player1Score,
+                null, // player2BcpId
+                null, // player2Name
+                0,    // player2Score
+                $bcpTableNumber,
+                $player1TotalScore,
+                0, // player2TotalScore (no player2 for bye)
+                $player1Faction,
+                null  // player2Faction
+            );
+        }
+
+        // Regular pairing - validate player2 game data exists
+        if (!isset($item['player2Game'])) {
+            return null;
+        }
+
+        // Extract player2 data
         $player2BcpId = $item['player2']['id'] ?? '';
         $player2Name = $this->formatPlayerName($item['player2']['user'] ?? []);
         $player2Score = (int)($item['player2Game']['points'] ?? 0);
         $player2Faction = $this->extractFaction($item['player2']);
 
-        // Table number (nullable)
-        $bcpTableNumber = isset($item['table']) ? (int)$item['table'] : null;
-
-        // Skip if missing player IDs
-        if (empty($player1BcpId) || empty($player2BcpId)) {
-            return null;
-        }
+        // Look up total scores from the map (default to 0 if not found)
+        $player1TotalScore = $totalScores[$player1BcpId] ?? 0;
+        $player2TotalScore = $totalScores[$player2BcpId] ?? 0;
 
         return new Pairing(
             $player1BcpId,
@@ -286,8 +322,8 @@ class BCPApiService
             $player2Name,
             $player2Score,
             $bcpTableNumber,
-            0, // player1TotalScore
-            0, // player2TotalScore
+            $player1TotalScore,
+            $player2TotalScore,
             $player1Faction,
             $player2Faction
         );

@@ -254,6 +254,23 @@ function abbreviatePlayerName($fullName) {
             color: #856404;
         }
 
+        /* Bye row styling */
+        .bye-row {
+            background-color: #f5f5f5 !important;
+        }
+        .bye-row:hover {
+            background-color: #eeeeee !important;
+        }
+        .bye-indicator {
+            color: #9e9e9e;
+            font-style: italic;
+            font-size: 0.9em;
+        }
+        .bye-no-table {
+            color: #9e9e9e;
+            font-style: italic;
+        }
+
         /* Footer */
         .public-footer {
             margin-top: 3rem;
@@ -394,19 +411,36 @@ function abbreviatePlayerName($fullName) {
             </thead>
             <tbody>
                 <?php foreach ($allocations as $allocation):
+                    $isBye = $allocation->isBye();
                     $table = $allocation->getTable();
                     $player1 = $allocation->getPlayer1();
-                    $player2 = $allocation->getPlayer2();
+                    $player2 = $isBye ? null : $allocation->getPlayer2();
                     $terrainType = $table ? $table->getTerrainType() : null;
                     $emoji = $terrainType ? $terrainType->emoji : '';
 
                     // Prepare names (UX Improvement #8)
                     $p1Name = $player1 ? htmlspecialchars($player1->name) : 'Unknown';
-                    $p2Name = $player2 ? htmlspecialchars($player2->name) : 'Unknown';
+                    $p2Name = $isBye ? '' : ($player2 ? htmlspecialchars($player2->name) : 'Unknown');
                     $p1Short = abbreviatePlayerName($p1Name);
-                    $p2Short = abbreviatePlayerName($p2Name);
+                    $p2Short = $isBye ? '' : abbreviatePlayerName($p2Name);
                 ?>
-                <tr>
+                <tr class="<?= $isBye ? 'bye-row' : '' ?>">
+                    <?php if ($isBye): ?>
+                    <td class="table-number bye-no-table">—</td>
+                    <td class="terrain-type bye-no-table">—</td>
+                    <td class="player-name">
+                        <span class="player-name-full"><?= $p1Name ?></span>
+                        <span class="player-name-short"><?= $p1Short ?> (<?= $player1 ? $player1->totalScore : 0 ?>)</span>
+                        <?php if ($player1 && $player1->faction): ?>
+                        <span class="player-faction"><?= htmlspecialchars($player1->faction) ?></span>
+                        <?php endif; ?>
+                        <span class="bye-indicator">(Bye - no game this round)</span>
+                    </td>
+                    <td class="player-score"><?= $player1 ? $player1->totalScore : 0 ?></td>
+                    <td class="vs-separator"></td>
+                    <td class="player-score"></td>
+                    <td class="player-name bye-no-table">—</td>
+                    <?php else: ?>
                     <td class="table-number"><?= $table ? $table->tableNumber : 'N/A' ?><?= $emoji ? ' ' . $emoji : '' ?></td>
                     <td class="terrain-type"><?= $terrainType ? htmlspecialchars($terrainType->name) : '-' ?></td>
                     <td class="player-name">
@@ -426,6 +460,7 @@ function abbreviatePlayerName($fullName) {
                         <span class="player-faction"><?= htmlspecialchars($player2->faction) ?></span>
                         <?php endif; ?>
                     </td>
+                    <?php endif; ?>
                 </tr>
                 <?php endforeach; ?>
             </tbody>

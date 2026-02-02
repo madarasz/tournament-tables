@@ -18,7 +18,7 @@ class TokenGeneratorTest extends TestCase
     {
         $token = TokenGenerator::generate();
 
-        $this->assertIsString($token);
+        $this->assertTrue(is_string($token));
         $this->assertEquals(16, strlen($token));
     }
 
@@ -28,7 +28,7 @@ class TokenGeneratorTest extends TestCase
 
         // Base64 alphabet: A-Z, a-z, 0-9, +, /
         // We use URL-safe base64: A-Z, a-z, 0-9, -, _
-        $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]+$/', $token);
+        $this->assertRegExp('/^[A-Za-z0-9_-]+$/', $token);
     }
 
     public function testGenerateReturnsUniqueTokens(): void
@@ -53,8 +53,8 @@ class TokenGeneratorTest extends TestCase
         }
 
         // Should have a mix of uppercase, lowercase, and numbers
-        $this->assertMatchesRegularExpression('/[A-Z]/', $chars);
-        $this->assertMatchesRegularExpression('/[a-z]/', $chars);
-        $this->assertMatchesRegularExpression('/[0-9]/', $chars);
+        $this->assertRegExp('/[A-Z]/', $chars);
+        $this->assertRegExp('/[a-z]/', $chars);
+        $this->assertRegExp('/[0-9]/', $chars);
     }
 }

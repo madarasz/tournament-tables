@@ -18,7 +18,8 @@ use TournamentTables\Database\Connection;
  */
 class TournamentImportService
 {
-    private BCPApiService $bcpService;
+    /** @var BCPApiService */
+    private $bcpService;
 
     public function __construct(?BCPApiService $bcpService = null)
     {
@@ -79,13 +80,20 @@ class TournamentImportService
     /**
      * Derive the table count from pairings.
      *
+     * Bye pairings (odd player count) are excluded from table count calculation.
+     *
      * @param Pairing[] $pairings Array of pairings
      * @return int Table count
      */
     private function deriveTableCount(array $pairings): int
     {
-        $tableCount = count($pairings);
-        foreach ($pairings as $pairing) {
+        // Count only regular pairings (not byes) for initial table count
+        $regularPairings = array_filter($pairings, function (Pairing $p) {
+            return !$p->isBye();
+        });
+        $tableCount = count($regularPairings);
+
+        foreach ($regularPairings as $pairing) {
             if ($pairing->bcpTableNumber !== null && $pairing->bcpTableNumber > $tableCount) {
                 $tableCount = $pairing->bcpTableNumber;
             }
@@ -143,11 +151,10 @@ class TournamentImportService
             $pairingsImported = 0;
 
             foreach ($pairings as $pairing) {
-                // Get total scores for each player (default to 0 if not found)
+                // Get total score for player 1 (always exists)
                 $player1TotalScore = $totalScores[$pairing->player1BcpId] ?? 0;
-                $player2TotalScore = $totalScores[$pairing->player2BcpId] ?? 0;
 
-                // Find or create players with total scores and factions
+                // Find or create player 1 with total score and faction
                 $player1 = Player::findOrCreate(
                     $tournament->id,
                     $pairing->player1BcpId,
@@ -155,6 +162,39 @@ class TournamentImportService
                     $player1TotalScore,
                     $pairing->player1Faction
                 );
+
+                // Handle bye pairings (no opponent)
+                if ($pairing->isBye()) {
+                    $reason = [
+                        'timestamp' => date('c'),
+                        'totalCost' => 0,
+                        'costBreakdown' => ['tableReuse' => 0, 'terrainReuse' => 0, 'tableNumber' => 0],
+                        'reasons' => ['Bye - no opponent this round (auto-imported)'],
+                        'alternativesConsidered' => [],
+                        'isRound1' => true,
+                        'isBye' => true,
+                        'conflicts' => [],
+                    ];
+
+                    // Create bye allocation with null table_id and player2_id
+                    $allocation = new Allocation(
+                        null,
+                        $round->id,
+                        null, // No table for bye
+                        $player1->id,
+                        null, // No player2 for bye
+                        $pairing->player1Score,
+                        0,
+                        $reason,
+                        null  // No BCP table for bye
+                    );
+                    $allocation->save();
+                    $pairingsImported++;
+                    continue;
+                }
+
+                // Regular pairing - find or create player 2
+                $player2TotalScore = $totalScores[$pairing->player2BcpId] ?? 0;
                 $player2 = Player::findOrCreate(
                     $tournament->id,
                     $pairing->player2BcpId,

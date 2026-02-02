@@ -271,7 +271,7 @@ class BCPContractTest extends TestCase
     {
         $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
 
-        $this->assertIsArray($pairings, 'Parsed pairings should be an array');
+        $this->assertTrue(is_array($pairings), 'Parsed pairings should be an array');
         $this->assertNotEmpty($pairings, 'Should have at least one pairing');
     }
 
@@ -291,8 +291,8 @@ class BCPContractTest extends TestCase
                 $pairing->player1Name,
                 "Pairing $index should have player1 name"
             );
-            $this->assertIsInt(
-                $pairing->player1Score,
+            $this->assertTrue(
+                is_int($pairing->player1Score),
                 "Pairing $index should have player1 score as int"
             );
         }
@@ -314,8 +314,8 @@ class BCPContractTest extends TestCase
                 $pairing->player2Name,
                 "Pairing $index should have player2 name"
             );
-            $this->assertIsInt(
-                $pairing->player2Score,
+            $this->assertTrue(
+                is_int($pairing->player2Score),
                 "Pairing $index should have player2 score as int"
             );
         }
@@ -362,7 +362,7 @@ class BCPContractTest extends TestCase
     {
         $scores = $this->parsePlacingsData(self::$placingsData);
 
-        $this->assertIsArray($scores, 'Parsed scores should be an array');
+        $this->assertTrue(is_array($scores), 'Parsed scores should be an array');
         $this->assertNotEmpty($scores, 'Should have at least one player score');
     }
 
@@ -374,8 +374,8 @@ class BCPContractTest extends TestCase
         $scores = $this->parsePlacingsData(self::$placingsData);
 
         foreach ($scores as $playerId => $score) {
-            $this->assertIsString($playerId, 'Player ID key should be string');
-            $this->assertIsInt($score, 'Score should be integer');
+            $this->assertTrue(is_string($playerId), 'Player ID key should be string');
+            $this->assertTrue(is_int($score), 'Score should be integer');
             $this->assertGreaterThanOrEqual(0, $score, 'Score should be non-negative');
         }
     }
@@ -388,9 +388,9 @@ class BCPContractTest extends TestCase
      * Load a JSON schema file.
      *
      * @param string $filename Schema filename (relative to schemas directory)
-     * @return object Decoded schema object
+     * @return \stdClass Decoded schema object
      */
-    private function loadSchema(string $filename): object
+    private function loadSchema(string $filename)
     {
         $path = __DIR__ . '/schemas/' . $filename;
         $this->assertFileExists($path, "Schema file not found: $filename");

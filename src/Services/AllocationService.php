@@ -45,18 +45,34 @@ class AllocationService
         $conflicts = [];
         $isRound1 = ($roundNumber === 1);
 
-        // Round 1: Use BCP's original table assignments (FR-007.1)
-        if ($isRound1) {
-            return $this->generateRound1Allocations($pairings, $tables);
+        // Separate bye pairings from regular pairings
+        $regularPairings = [];
+        $byePairings = [];
+        foreach ($pairings as $pairing) {
+            if ($pairing->isBye()) {
+                $byePairings[] = $pairing;
+            } else {
+                $regularPairings[] = $pairing;
+            }
         }
 
-        // Sort pairings by combined score (descending), then by BCP ID (ascending) for stability
-        $sortedPairings = $this->stableSort($pairings);
+        // Round 1: Use BCP's original table assignments (FR-007.1)
+        if ($isRound1) {
+            $result = $this->generateRound1Allocations($regularPairings, $tables);
+            // Append bye allocations
+            foreach ($byePairings as $byePairing) {
+                $result->allocations[] = $this->createByeAllocation($byePairing, true);
+            }
+            return $result;
+        }
+
+        // Sort regular pairings by combined score (descending), then by BCP ID (ascending) for stability
+        $sortedPairings = $this->stableSort($regularPairings);
 
         // Track which tables are used
         $usedTables = [];
 
-        // Process each pairing in order
+        // Process each regular pairing in order
         foreach ($sortedPairings as $pairing) {
             $result = $this->allocatePairing($pairing, $tables, $usedTables, $history);
 
@@ -69,10 +85,50 @@ class AllocationService
             }
         }
 
+        // Append bye allocations (no table assignment needed)
+        foreach ($byePairings as $byePairing) {
+            $allocations[] = $this->createByeAllocation($byePairing, false);
+        }
+
         // Generate summary
         $summary = $this->generateSummary($conflicts);
 
         return new AllocationResult($allocations, $conflicts, $summary);
+    }
+
+    /**
+     * Create a bye allocation (no table, no opponent).
+     *
+     * @param Pairing $pairing Bye pairing
+     * @param bool $isRound1 Whether this is round 1
+     * @return array Allocation data
+     */
+    private function createByeAllocation(Pairing $pairing, bool $isRound1): array
+    {
+        return [
+            'tableNumber' => null,
+            'terrainType' => null,
+            'player1' => [
+                'bcpId' => $pairing->player1BcpId,
+                'name' => $pairing->player1Name,
+                'score' => $pairing->player1Score,
+            ],
+            'player2' => null,
+            'reason' => [
+                'timestamp' => date('c'),
+                'totalCost' => 0,
+                'costBreakdown' => [
+                    'tableReuse' => 0,
+                    'terrainReuse' => 0,
+                    'bcpTableMismatch' => 0,
+                ],
+                'reasons' => ['Bye - no opponent this round'],
+                'alternativesConsidered' => [],
+                'isRound1' => $isRound1,
+                'isBye' => true,
+                'conflicts' => [],
+            ],
+        ];
     }
 
     /**

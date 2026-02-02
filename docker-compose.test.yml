@@ -17,7 +17,7 @@ services:
       bash -c "a2enmod rewrite && docker-php-ext-install pdo pdo_mysql &&
       echo 'PassEnv APP_ENV BCP_MOCK_BASE_URL BCP_MOCK_API_URL' >> /etc/apache2/apache2.conf &&
       echo '<?php declare(strict_types=1); return [\"host\"=>\"mysql\",\"database\"=>\"tournament_tables\",\"username\"=>\"root\",\"password\"=>\"root\",\"charset\"=>\"utf8mb4\"];' > config/database.php &&
-      php bin/migrate.php && apache2-foreground"
+      php bin/migrate.php && php bin/seed-terrain-types.php && apache2-foreground"
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost/api/terrain-types"]
       interval: 5s
@@ -34,6 +34,8 @@ services:
   playwright:
     image: mcr.microsoft.com/playwright:v1.57.0-noble
     working_dir: /app/tests/E2E
+    ports:
+      - "9323:9323"
     volumes:
       - .:/app
       - playwright_cache:/root/.cache
@@ -48,7 +50,7 @@ services:
 
   # Utility service for running migrations before tests
   migrate:
-    image: php:7.4.33-cli
+    image: php:7.1-cli
     volumes:
       - .:/var/www/app
     working_dir: /var/www/app

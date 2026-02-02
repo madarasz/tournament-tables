@@ -18,8 +18,11 @@ use TournamentTables\Database\Connection;
  */
 class AuthenticationTest extends TestCase
 {
-    private AuthService $authService;
-    private TournamentService $tournamentService;
+    /** @var AuthService */
+    private $authService;
+
+    /** @var TournamentService */
+    private $tournamentService;
 
     protected function setUp(): void
     {
@@ -167,7 +170,7 @@ class AuthenticationTest extends TestCase
 
         $result = AdminAuthMiddleware::check();
 
-        $this->assertIsString($result);
+        $this->assertTrue(is_string($result));
         $this->assertStringContainsString('Missing', $result);
     }
 
@@ -177,7 +180,7 @@ class AuthenticationTest extends TestCase
 
         $result = AdminAuthMiddleware::check();
 
-        $this->assertIsString($result);
+        $this->assertTrue(is_string($result));
         $this->assertStringContainsString('Invalid', $result);
     }
 
@@ -198,7 +201,7 @@ class AuthenticationTest extends TestCase
 
         $result = AdminAuthMiddleware::check();
 
-        $this->assertIsString($result);
+        $this->assertTrue(is_string($result));
         $this->assertStringContainsString('Invalid', $result);
     }
 
@@ -300,7 +303,7 @@ class AuthenticationTest extends TestCase
 
         $result = AdminAuthMiddleware::check();
 
-        $this->assertIsString($result);
+        $this->assertTrue(is_string($result));
         $this->assertStringContainsString('format', strtolower($result));
     }
 
@@ -310,7 +313,7 @@ class AuthenticationTest extends TestCase
 
         $result = AdminAuthMiddleware::check();
 
-        $this->assertIsString($result);
+        $this->assertTrue(is_string($result));
         $this->assertStringContainsString('format', strtolower($result));
     }
 
