@@ -12,9 +12,9 @@ Build a web application that generates table allocations for BCP tournaments, en
 **Language/Version**: PHP 7.1 (strict compatibility required per constitution)
 **Primary Dependencies**:
 - Frontend: HTMX 1.9.x + Pico CSS 1.5.x (no build step, server-rendered)
-- Testing: PHPUnit 9.5
+- Testing: PHPUnit 7.5
 **Storage**: MySQL 5.7+
-**Testing**: PHPUnit 9.5 (per constitution)
+**Testing**: PHPUnit 7.5 (per constitution)
 **Target Platform**: Web-based, accessible from tournament venue devices
 **Project Type**: Web application (frontend + backend)
 **Performance Goals**:
