@@ -30,7 +30,7 @@ $autoImport = $autoImport ?? null;
 </div>
 
 <!-- Tab Navigation (darker blue bar) -->
-<nav class="dashboard-tabs full-bleed" role="tablist" aria-label="Dashboard sections">
+<nav class="dashboard-tabs" role="tablist" aria-label="Dashboard sections">
     <button
         role="tab"
         class="dashboard-tab active"
