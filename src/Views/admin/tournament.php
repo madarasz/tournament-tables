@@ -16,6 +16,8 @@
  * - $autoImport: array (optional) - Auto-import result {success: bool, tableCount?: int, pairingsImported?: int, error?: string}
  */
 
+use TournamentTables\Services\CsrfService;
+
 $title = $tournament->name;
 $tableCount = count($tables); // Use actual table count from database
 $hasRounds = !empty($rounds);
@@ -23,6 +25,39 @@ $justCreated = $justCreated ?? false;
 $adminToken = $adminToken ?? null;
 $autoImport = $autoImport ?? null;
 ?>
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= htmlspecialchars($title) ?> - Tournament Tables</title>
+    <?= CsrfService::getMetaTag() ?>
+
+    <!-- Pico CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="/css/app.css">
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- App utilities -->
+    <script src="/js/utils.js"></script>
+    <script src="/js/form-utils.js"></script>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="/admin" class="brand">Tournament Tables</a></li>
+                <li class="nav-right">
+                    <a href="/admin/tournament/create">New Tournament</a>
+                    <a href="/admin/login">Login</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
 
 <!-- Tournament name header (extends nav bar) -->
 <div class="nav-tournament-name full-bleed">
@@ -59,6 +94,8 @@ $autoImport = $autoImport ?? null;
         tabindex="-1"
     >Manage</button>
 </nav>
+
+<main class="container">
 
 <?php if (isset($_GET['loginSuccess'])): ?>
 <article class="alert-success" id="login-success">
@@ -312,25 +349,23 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
     </section>
 </section>
 
-<style>
-/* Delete button styles (component-specific) */
-.delete-button {
-    background-color: var(--pico-del-color, #c62828);
-    border-color: var(--pico-del-color, #c62828);
-}
+</main>
 
-.delete-button:hover:not(:disabled) {
-    background-color: #b71c1c;
-    border-color: #b71c1c;
-}
-
-.delete-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-</style>
+<footer>
+    <div class="container">
+        Tournament Tables - Tournament Table Allocation System
+    </div>
+</footer>
 
 <script>
+// Configure HTMX to include CSRF token in requests
+document.body.addEventListener('htmx:configRequest', function(event) {
+    var csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+        event.detail.headers['X-CSRF-Token'] = csrfToken.getAttribute('content');
+    }
+});
+
 // Tab Controller
 (function() {
     var tabs = document.querySelectorAll('.dashboard-tab');
@@ -653,3 +688,5 @@ document.getElementById('clear-all-button').addEventListener('click', function()
     });
 })();
 </script>
+</body>
+</html>

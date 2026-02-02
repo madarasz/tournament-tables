@@ -1,6 +1,6 @@
 <?php
 /**
- * Home page view.
+ * Admin home page view.
  *
  * Displays list of tournaments the user has access to.
  *

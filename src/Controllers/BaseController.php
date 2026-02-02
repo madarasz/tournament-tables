@@ -382,13 +382,14 @@ abstract class BaseController
     /**
      * Render a view template directly to output.
      *
-     * @param string $view View name (relative to Views directory)
+     * @param string $view View name (relative to Views directory, supports subdirectories like 'admin/home')
      * @param array $data Data to pass to view
      */
     protected function renderView(string $view, array $data = []): void
     {
-        // Sanitize view name to prevent path traversal
-        $view = str_replace(['..', '/', '\\'], '', basename($view));
+        // Sanitize view name to prevent path traversal while allowing subdirectories
+        $view = str_replace('..', '', $view);
+        $view = ltrim($view, '/\\');
         extract($data);
 
         $viewPath = __DIR__ . '/../Views/' . $view . '.php';

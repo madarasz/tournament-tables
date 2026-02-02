@@ -42,13 +42,13 @@ document.body.addEventListener('htmx:beforeOnLoad', function(event) {
     if (event.detail.pathInfo.requestPath === '/api/tournaments') {
         // Check if we got a redirect response (HTMX follows redirects and returns the final page)
         // Success case: server redirects to dashboard, HTMX returns HTML
-        const xhr = event.detail.xhr;
-        const contentType = xhr.getResponseHeader('Content-Type') || '';
+        var xhr = event.detail.xhr;
+        var contentType = xhr.getResponseHeader('Content-Type') || '';
 
         // If we got HTML back, the server redirected us - follow it
         if (contentType.indexOf('text/html') !== -1) {
             // Get the final URL from the redirect chain
-            const finalUrl = xhr.responseURL;
+            var finalUrl = xhr.responseURL;
             if (finalUrl && finalUrl !== window.location.href) {
                 window.location.href = finalUrl;
                 event.preventDefault();
@@ -61,40 +61,43 @@ document.body.addEventListener('htmx:beforeOnLoad', function(event) {
 // Handle creation errors
 document.body.addEventListener('htmx:afterRequest', function(event) {
     if (event.detail.pathInfo.requestPath === '/api/tournaments' && !event.detail.successful) {
-        const resultEl = document.getElementById('result');
+        var resultEl = document.getElementById('result');
         resultEl.innerHTML = '';
         setButtonLoading('submit-btn', 'submit-indicator', 'submit-text', false);
 
         try {
-            const response = JSON.parse(event.detail.xhr.responseText);
-            const article = createAlertArticle('alert-error', 'Tournament Creation Failed');
+            var response = JSON.parse(event.detail.xhr.responseText);
+            var article = createAlertArticle('alert-error', 'Tournament Creation Failed');
 
             if (response.fields && typeof response.fields === 'object') {
-                const ul = document.createElement('ul');
-                for (const [field, errors] of Object.entries(response.fields)) {
-                    if (Array.isArray(errors)) {
-                        errors.forEach(function(error) {
-                            const li = document.createElement('li');
-                            li.textContent = String(error);
-                            ul.appendChild(li);
-                        });
+                var ul = document.createElement('ul');
+                for (var field in response.fields) {
+                    if (response.fields.hasOwnProperty(field)) {
+                        var errors = response.fields[field];
+                        if (Array.isArray(errors)) {
+                            errors.forEach(function(error) {
+                                var li = document.createElement('li');
+                                li.textContent = String(error);
+                                ul.appendChild(li);
+                            });
+                        }
                     }
                 }
                 article.appendChild(ul);
             } else if (response.message) {
-                const p = document.createElement('p');
+                var p = document.createElement('p');
                 p.textContent = String(response.message);
                 article.appendChild(p);
             } else {
-                const p = document.createElement('p');
+                var p = document.createElement('p');
                 p.textContent = 'An error occurred. Please try again.';
                 article.appendChild(p);
             }
 
             resultEl.appendChild(article);
         } catch (e) {
-            const article = createAlertArticle('alert-error', 'Error');
-            const p = document.createElement('p');
+            var article = createAlertArticle('alert-error', 'Error');
+            var p = document.createElement('p');
             p.textContent = 'An unexpected error occurred. Please try again.';
             article.appendChild(p);
             resultEl.appendChild(article);
@@ -109,4 +112,4 @@ document.getElementById('bcpUrl').focus();
 <?php
 $content = ob_get_clean();
 
-include __DIR__ . '/../layout.php';
+require __DIR__ . '/layout.php';
