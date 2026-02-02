@@ -265,7 +265,12 @@ class PublicViewTest extends TestCase
     private function isDatabaseAvailable(): bool
     {
         try {
-            Connection::getInstance();
+            $db = Connection::getInstance();
+            // Check if required tables exist
+            $result = $db->query("SHOW TABLES LIKE 'allocations'");
+            if ($result->rowCount() === 0) {
+                return false;
+            }
             return true;
         } catch (\Exception $e) {
             return false;

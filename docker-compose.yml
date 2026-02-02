@@ -14,8 +14,10 @@ services:
         condition: service_healthy
     command: >
       bash -c "a2enmod rewrite && docker-php-ext-install pdo pdo_mysql &&
+      curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer &&
+      composer install --no-interaction --prefer-dist &&
       echo '<?php declare(strict_types=1); return [\"host\"=>\"mysql\",\"database\"=>\"tournament_tables\",\"username\"=>\"root\",\"password\"=>\"root\",\"charset\"=>\"utf8mb4\"];' > config/database.php &&
-      php bin/migrate.php && apache2-foreground"
+      php bin/migrate.php && php bin/seed-terrain-types.php && apache2-foreground"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/api/terrain-types"]
       interval: 10s

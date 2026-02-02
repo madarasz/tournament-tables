@@ -133,7 +133,7 @@ docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright 
 docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test --headed
 
 # View test report
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright show-report
+docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright show-report --host 0.0.0.0
 
 # Stop test environment
 docker-compose -f docker-compose.yml -f docker-compose.test.yml down

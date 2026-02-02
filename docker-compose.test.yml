@@ -34,6 +34,8 @@ services:
   playwright:
     image: mcr.microsoft.com/playwright:v1.57.0-noble
     working_dir: /app/tests/E2E
+    ports:
+      - "9323:9323"
     volumes:
       - .:/app
       - playwright_cache:/root/.cache
