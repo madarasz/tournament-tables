@@ -6,14 +6,12 @@
  */
 
 $title = 'Login';
+$pageName = 'Admin Login';
 ob_start();
 ?>
 
 <article>
-    <header>
-        <h1>Tournament Admin Login</h1>
-        <p>Enter your 16-character admin token to access tournament management.</p>
-    </header>
+    <p>Enter your 16-character admin token to access tournament management.</p>
 
     <form id="loginForm" hx-post="/api/auth" hx-target="#result" hx-swap="innerHTML">
         <label for="token">

@@ -6,14 +6,12 @@
  */
 
 $title = 'Create Tournament';
+$pageName = 'Create New Tournament';
 ob_start();
 ?>
 
 <article>
-    <header>
-        <h1>Create New Tournament</h1>
-        <p>Enter your BCP event URL and we'll automatically import the tournament name and setup.</p>
-    </header>
+    <p>Enter your BCP event URL and we'll automatically import the tournament name and setup.</p>
 
     <form id="createTournamentForm" hx-post="/api/tournaments" hx-target="#result" hx-swap="innerHTML">
         <label for="bcpUrl">

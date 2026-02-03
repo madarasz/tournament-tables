@@ -35,10 +35,9 @@ function formatRelativeTime(int $timestamp): string
 }
 
 $title = 'My Tournaments';
+$pageName = 'My Tournaments';
 ob_start();
 ?>
-
-<h1>My Tournaments</h1>
 
 <?php if ($isEmpty): ?>
     <article>
@@ -51,32 +50,34 @@ ob_start();
         </footer>
     </article>
 <?php else: ?>
-    <p><a href="/admin/tournament/create" role="button">Create New Tournament</a></p>
+    <article>
+        <p><a href="/admin/tournament/create" role="button">Create New Tournament</a></p>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Tournament Name</th>
-                <th>Tables</th>
-                <th>Rounds</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($tournaments as $tournament): ?>
+        <table>
+            <thead>
                 <tr>
-                    <td>
-                        <strong>
-                            <a href="/admin/tournament/<?= $tournament['id'] ?>" role="button" class="secondary">
-                                <?= htmlspecialchars($tournament['name']) ?>
-                            </a>
-                        </strong>
-                    </td>
-                    <td class="text-center"><?= $tournament['tableCount'] ?></td>
-                    <td class="text-center"><?= $tournament['roundCount'] ?></td>
+                    <th>Tournament Name</th>
+                    <th>Tables</th>
+                    <th>Rounds</th>
                 </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                <?php foreach ($tournaments as $tournament): ?>
+                    <tr>
+                        <td>
+                            <strong>
+                                <a href="/admin/tournament/<?= $tournament['id'] ?>" role="button" class="secondary">
+                                    <?= htmlspecialchars($tournament['name']) ?>
+                                </a>
+                            </strong>
+                        </td>
+                        <td class="text-center"><?= $tournament['tableCount'] ?></td>
+                        <td class="text-center"><?= $tournament['roundCount'] ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </article>
 <?php endif; ?>
 
 <?php

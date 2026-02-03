@@ -46,6 +46,18 @@ nav ul .nav-right {
   gap: 1rem;
 }
 
+/* Back link in nav - right aligned */
+nav .container > .back-link {
+  display: block;
+  text-align: right;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+nav .container > .back-link:hover {
+  color: white;
+}
+
 /* Full-bleed: break out of container */
 .full-bleed {
   width: 100vw;
@@ -54,15 +66,19 @@ nav ul .nav-right {
 }
 
 /* Tournament name header extension of nav */
-.nav-tournament-name {
+.nav-page-name {
   background: var(--primary);
   padding: 0.5rem 1rem 0.75rem;
   margin-top: 0;
   margin-bottom: 0;
   text-align: center;
+  /* Content width on desktop, centered */
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.nav-tournament-name h1 {
+.nav-page-name h1 {
   color: white;
   margin: 0;
   font-size: 1.5rem;
@@ -234,6 +250,14 @@ footer {
   border: 1px solid var(--pico-secondary, #62778c);
   padding: 0.75rem;
   border-radius: 0.25rem;
+}
+
+/* ==========================================================================
+   Articles
+    ========================================================================== */
+article {
+  /* margin: 0; */
+  padding: 1rem;
 }
 
 /* ==========================================================================
@@ -459,6 +483,16 @@ button.is-loading {
   .show-mobile {
     display: none !important;
   }
+
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .hide-desktop {
+    display: inline !important;
+  }
 }
 
 /* ==========================================================================
@@ -586,6 +620,11 @@ button.is-loading {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
+  /* Content width on desktop, centered */
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 4px;
 }
 
 .dashboard-tabs.full-bleed {
@@ -635,13 +674,28 @@ button.is-loading {
   display: none;
 }
 
-/* Mobile: Ensure tabs remain scrollable and full-width */
+.dashboard-tab-panel h2 {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* Mobile: Ensure tabs and title remain full-width */
 @media (max-width: 576px) {
+  .nav-page-name {
+    width: 100vw;
+    max-width: none;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    border-radius: 0;
+  }
+
   .dashboard-tabs {
     gap: 0;
     width: 100vw;
+    max-width: none;
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
+    border-radius: 0;
   }
 
   .dashboard-tab {
@@ -1385,7 +1439,7 @@ button.is-loading {
    Admin Layout - Page Name Bar Back Link
    ========================================================================== */
 
-.nav-tournament-name .back-link {
+.nav-page-name .back-link {
   position: absolute;
   left: 1rem;
   color: rgba(255, 255, 255, 0.8);
@@ -1393,16 +1447,16 @@ button.is-loading {
   font-size: 0.9rem;
 }
 
-.nav-tournament-name .back-link:hover {
+.nav-page-name .back-link:hover {
   color: white;
 }
 
-.nav-tournament-name .page-subtitle {
+.nav-page-name .page-subtitle {
   color: rgba(255, 255, 255, 0.8);
   margin: 0.25rem 0 0;
   font-size: 0.9rem;
 }
 
-.nav-tournament-name {
+.nav-page-name {
   position: relative;
 }

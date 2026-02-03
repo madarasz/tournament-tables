@@ -60,7 +60,7 @@ $autoImport = $autoImport ?? null;
     </nav>
 
 <!-- Tournament name header (extends nav bar) -->
-<div class="nav-tournament-name full-bleed">
+<div class="nav-page-name full-bleed">
     <h1><?= htmlspecialchars($tournament->name) ?></h1>
 </div>
 
@@ -69,12 +69,12 @@ $autoImport = $autoImport ?? null;
     <button
         role="tab"
         class="dashboard-tab active"
-        id="tab-overview"
-        data-tab="overview"
+        id="tab-rounds"
+        data-tab="rounds"
         aria-selected="true"
-        aria-controls="panel-overview"
+        aria-controls="panel-rounds"
         tabindex="0"
-    >Overview</button>
+    >Rounds</button>
     <button
         role="tab"
         class="dashboard-tab"
@@ -154,31 +154,8 @@ setTimeout(function() {
 $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNumber; }, $rounds)) + 1 : 1;
 ?>
 
-<!-- Overview Tab Panel -->
-<section role="tabpanel" id="panel-overview" class="dashboard-tab-panel" aria-labelledby="tab-overview">
-    <!-- General Info -->
-    <article style="margin-bottom: 1.5rem;">
-        <div class="grid">
-            <div>
-                <strong>Tables:</strong> <?= $tableCount ?>
-            </div>
-            <div>
-                <strong>Rounds Imported:</strong> <?= count($rounds) ?>
-            </div>
-            <div>
-                <strong>BCP Event ID:</strong> <?= htmlspecialchars($tournament->bcpEventId) ?>
-            </div>
-            <div>
-                <a href="<?= htmlspecialchars($tournament->bcpUrl) ?>" target="_blank" rel="noopener">
-                    View on Best Coast Pairings
-                </a>
-            </div>
-            <div>
-                <a href="/<?= $tournament->id ?>">Public View</a>
-            </div>
-        </div>
-    </article>
-
+<!-- Rounds Tab Panel -->
+<section role="tabpanel" id="panel-rounds" class="dashboard-tab-panel" aria-labelledby="tab-rounds">
     <h2>Rounds</h2>
 
     <table role="grid">
@@ -317,6 +294,29 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
 <section role="tabpanel" id="panel-manage" class="dashboard-tab-panel" aria-labelledby="tab-manage" hidden>
     <h2>Tournament Management</h2>
 
+    <!-- General Info -->
+    <article style="margin-bottom: 1.5rem;">
+        <div class="grid">
+            <div>
+                <strong>Tables:</strong> <?= $tableCount ?>
+            </div>
+            <div>
+                <strong>Rounds Imported:</strong> <?= count($rounds) ?>
+            </div>
+            <div>
+                <strong>BCP Event ID:</strong> <?= htmlspecialchars($tournament->bcpEventId) ?>
+            </div>
+            <div>
+                <a href="<?= htmlspecialchars($tournament->bcpUrl) ?>" target="_blank" rel="noopener">
+                    View on Best Coast Pairings
+                </a>
+            </div>
+            <div>
+                <a href="/<?= $tournament->id ?>">Public View</a>
+            </div>
+        </div>
+    </article>
+
     <section class="danger-zone">
         <h3 style="color: var(--pico-del-color, #c62828); margin-top: 0;">Delete Tournament</h3>
         <p>Deleting a tournament will permanently remove all rounds, tables, players, and allocations. This action cannot be undone.</p>
@@ -440,7 +440,7 @@ document.body.addEventListener('htmx:configRequest', function(event) {
     // Handle URL hash on load
     function handleHash() {
         var hash = window.location.hash.replace('#', '');
-        if (hash && ['overview', 'tables', 'manage'].indexOf(hash) !== -1) {
+        if (hash && ['rounds', 'tables', 'manage'].indexOf(hash) !== -1) {
             activateTab(hash);
         }
     }

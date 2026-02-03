@@ -44,9 +44,9 @@ $backLink = $backLink ?? null;
     <nav>
         <div class="container">
             <ul>
-                <li><a href="/admin" class="brand">Tournament Tables</a></li>
+                <li><a href="/admin" class="brand"><span class="hide-mobile">Tournament Tables</span><span class="hide-desktop">T-Tables</span></a></li>
                 <li class="nav-right">
-                    <a href="/admin/tournament/create">New Tournament</a>
+                    <a href="/admin/tournament/create"><span class="hide-mobile">Create New Tournament</span><span class="hide-desktop">Create</span></a>
                     <a href="/admin/login">Login</a>
                 </li>
             </ul>
@@ -54,7 +54,7 @@ $backLink = $backLink ?? null;
     </nav>
 
     <?php if ($pageName): ?>
-    <div class="nav-tournament-name full-bleed">
+    <div class="nav-page-name full-bleed">
         <?php if ($backLink): ?>
         <a href="<?= htmlspecialchars($backLink) ?>" class="back-link">&laquo; Back</a>
         <?php endif; ?>

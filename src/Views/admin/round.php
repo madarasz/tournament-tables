@@ -140,29 +140,34 @@ $hasTableCollisions = !empty($tableCollisions);
     </script>
 </head>
 <body>
-    <main class="container">
-        <nav>
+    <nav>
+        <div class="container">
             <ul>
-                <li><strong><a href="/admin" style="text-decoration: none;">Tournament Tables</a></strong></li>
+                <li><a href="/admin" class="brand">Tournament Tables</a></li>
+                <li class="nav-right">
+                    <a href="/admin/tournament/create">New Tournament</a>
+                    <a href="/admin/login">Login</a>
+                </li>
             </ul>
-            <ul>
-                <li><a href="/admin/tournament/<?= $tournament->id ?>"><?= htmlspecialchars($tournament->name) ?></a></li>
-            </ul>
-        </nav>
+            <a href="/admin/tournament/<?= $tournament->id ?>" class="back-link">&laquo; <?= htmlspecialchars($tournament->name) ?></a>
+        </div>
+    </nav>
 
-        <header>
-            <h1>
-                Round <?= $round->roundNumber ?>
-                <?php if ($isPublished): ?>
-                    <span class="round-published-badge">Published</span>
-                <?php endif; ?>
-                <?php if ($hasTableCollisions): ?>
-                    <span class="round-conflict-badge">Table Collision!</span>
-                <?php elseif ($hasConflicts): ?>
-                    <span class="round-conflict-badge"><?= count($conflicts) ?> Conflict(s)</span>
-                <?php endif; ?>
-            </h1>
-        </header>
+    <div class="nav-page-name full-bleed">
+        <h1>
+            Round <?= $round->roundNumber ?>
+            <?php if ($isPublished): ?>
+                <span class="round-published-badge">Published</span>
+            <?php endif; ?>
+            <?php if ($hasTableCollisions): ?>
+                <span class="round-conflict-badge">Table Collision!</span>
+            <?php elseif ($hasConflicts): ?>
+                <span class="round-conflict-badge"><?= count($conflicts) ?> Conflict(s)</span>
+            <?php endif; ?>
+        </h1>
+    </div>
+
+    <main class="container">
 
         <?php if ($justImported): ?>
         <!-- Success message for round import (FR-015, UX Improvement #5) -->
@@ -367,7 +372,7 @@ $hasTableCollisions = !empty($tableCollisions);
                         <?php $bcpDiff = $isBye ? ['emoji' => '', 'detail' => ''] : formatBcpDifference($allocation); ?>
                         <td class="table-cell" title="<?= $isBye ? 'Bye - no table assigned' : ($terrainName ? "Table {$table->tableNumber} ({$terrainName})" : "Table " . ($table ? $table->tableNumber : 'N/A')) ?>">
                             <?php if ($isBye): ?>
-                                <span class="bye-no-table">—</span>
+                                <span class="bye-indicator">BYE</span>
                             <?php elseif ($table): ?>
                                 <span><?= $bcpDiff['emoji'] ?> Table <?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?></span>
                                 <?php if ($terrainName): ?>
@@ -389,9 +394,6 @@ $hasTableCollisions = !empty($tableCollisions);
                             <span class="player-score">(<?= $player1 ? $player1->totalScore : 0 ?>)</span>
                             <?php if ($player1 && $player1->faction): ?>
                             <span class="player-faction"><?= htmlspecialchars($player1->faction) ?></span>
-                            <?php endif; ?>
-                            <?php if ($isBye): ?>
-                            <span class="bye-indicator">BYE</span>
                             <?php endif; ?>
                         </td>
                         <!-- Player 2 with total score and faction (or empty for bye) -->
