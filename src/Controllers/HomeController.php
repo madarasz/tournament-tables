@@ -22,7 +22,7 @@ class HomeController extends BaseController
         $tournaments = $this->getMultiTokenCookie();
 
         if (empty($tournaments)) {
-            $this->renderView('home', [
+            $this->renderView('admin/home', [
                 'tournaments' => [],
                 'isEmpty' => true
             ]);
@@ -68,7 +68,7 @@ class HomeController extends BaseController
             return $b['lastAccessed'] - $a['lastAccessed'];
         });
 
-        $this->renderView('home', [
+        $this->renderView('admin/home', [
             'tournaments' => $tournamentData,
             'isEmpty' => empty($tournamentData)
         ]);

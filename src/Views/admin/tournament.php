@@ -16,6 +16,8 @@
  * - $autoImport: array (optional) - Auto-import result {success: bool, tableCount?: int, pairingsImported?: int, error?: string}
  */
 
+use TournamentTables\Services\CsrfService;
+
 $title = $tournament->name;
 $tableCount = count($tables); // Use actual table count from database
 $hasRounds = !empty($rounds);
@@ -23,9 +25,42 @@ $justCreated = $justCreated ?? false;
 $adminToken = $adminToken ?? null;
 $autoImport = $autoImport ?? null;
 ?>
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= htmlspecialchars($title) ?> - Tournament Tables</title>
+    <?= CsrfService::getMetaTag() ?>
+
+    <!-- Pico CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="/css/app.css">
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- App utilities -->
+    <script src="/js/utils.js"></script>
+    <script src="/js/form-utils.js"></script>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="/admin" class="brand">Tournament Tables</a></li>
+                <li class="nav-right">
+                    <a href="/admin/tournament/create">New Tournament</a>
+                    <a href="/admin/login">Login</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
 
 <!-- Tournament name header (extends nav bar) -->
-<div class="nav-tournament-name full-bleed">
+<div class="nav-page-name full-bleed">
     <h1><?= htmlspecialchars($tournament->name) ?></h1>
 </div>
 
@@ -34,12 +69,12 @@ $autoImport = $autoImport ?? null;
     <button
         role="tab"
         class="dashboard-tab active"
-        id="tab-overview"
-        data-tab="overview"
+        id="tab-rounds"
+        data-tab="rounds"
         aria-selected="true"
-        aria-controls="panel-overview"
+        aria-controls="panel-rounds"
         tabindex="0"
-    >Overview</button>
+    >Rounds</button>
     <button
         role="tab"
         class="dashboard-tab"
@@ -59,6 +94,8 @@ $autoImport = $autoImport ?? null;
         tabindex="-1"
     >Manage</button>
 </nav>
+
+<main class="container">
 
 <?php if (isset($_GET['loginSuccess'])): ?>
 <article class="alert-success" id="login-success">
@@ -117,31 +154,8 @@ setTimeout(function() {
 $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNumber; }, $rounds)) + 1 : 1;
 ?>
 
-<!-- Overview Tab Panel -->
-<section role="tabpanel" id="panel-overview" class="dashboard-tab-panel" aria-labelledby="tab-overview">
-    <!-- General Info -->
-    <article style="margin-bottom: 1.5rem;">
-        <div class="grid">
-            <div>
-                <strong>Tables:</strong> <?= $tableCount ?>
-            </div>
-            <div>
-                <strong>Rounds Imported:</strong> <?= count($rounds) ?>
-            </div>
-            <div>
-                <strong>BCP Event ID:</strong> <?= htmlspecialchars($tournament->bcpEventId) ?>
-            </div>
-            <div>
-                <a href="<?= htmlspecialchars($tournament->bcpUrl) ?>" target="_blank" rel="noopener">
-                    View on Best Coast Pairings
-                </a>
-            </div>
-            <div>
-                <a href="/<?= $tournament->id ?>">Public View</a>
-            </div>
-        </div>
-    </article>
-
+<!-- Rounds Tab Panel -->
+<section role="tabpanel" id="panel-rounds" class="dashboard-tab-panel" aria-labelledby="tab-rounds">
     <h2>Rounds</h2>
 
     <table role="grid">
@@ -280,6 +294,29 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
 <section role="tabpanel" id="panel-manage" class="dashboard-tab-panel" aria-labelledby="tab-manage" hidden>
     <h2>Tournament Management</h2>
 
+    <!-- General Info -->
+    <article style="margin-bottom: 1.5rem;">
+        <div class="grid">
+            <div>
+                <strong>Tables:</strong> <?= $tableCount ?>
+            </div>
+            <div>
+                <strong>Rounds Imported:</strong> <?= count($rounds) ?>
+            </div>
+            <div>
+                <strong>BCP Event ID:</strong> <?= htmlspecialchars($tournament->bcpEventId) ?>
+            </div>
+            <div>
+                <a href="<?= htmlspecialchars($tournament->bcpUrl) ?>" target="_blank" rel="noopener">
+                    View on Best Coast Pairings
+                </a>
+            </div>
+            <div>
+                <a href="/<?= $tournament->id ?>">Public View</a>
+            </div>
+        </div>
+    </article>
+
     <section class="danger-zone">
         <h3 style="color: var(--pico-del-color, #c62828); margin-top: 0;">Delete Tournament</h3>
         <p>Deleting a tournament will permanently remove all rounds, tables, players, and allocations. This action cannot be undone.</p>
@@ -312,25 +349,23 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
     </section>
 </section>
 
-<style>
-/* Delete button styles (component-specific) */
-.delete-button {
-    background-color: var(--pico-del-color, #c62828);
-    border-color: var(--pico-del-color, #c62828);
-}
+</main>
 
-.delete-button:hover:not(:disabled) {
-    background-color: #b71c1c;
-    border-color: #b71c1c;
-}
-
-.delete-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-</style>
+<footer>
+    <div class="container">
+        Tournament Tables - Tournament Table Allocation System
+    </div>
+</footer>
 
 <script>
+// Configure HTMX to include CSRF token in requests
+document.body.addEventListener('htmx:configRequest', function(event) {
+    var csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+        event.detail.headers['X-CSRF-Token'] = csrfToken.getAttribute('content');
+    }
+});
+
 // Tab Controller
 (function() {
     var tabs = document.querySelectorAll('.dashboard-tab');
@@ -405,7 +440,7 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
     // Handle URL hash on load
     function handleHash() {
         var hash = window.location.hash.replace('#', '');
-        if (hash && ['overview', 'tables', 'manage'].indexOf(hash) !== -1) {
+        if (hash && ['rounds', 'tables', 'manage'].indexOf(hash) !== -1) {
             activateTab(hash);
         }
     }
@@ -497,10 +532,12 @@ document.getElementById('terrain-form').addEventListener('submit', function(e) {
     setButtonLoading('save-terrain-button', 'save-terrain-indicator', 'save-terrain-text', true);
     document.getElementById('terrain-result').innerHTML = '';
 
+    var csrfToken = document.querySelector('meta[name="csrf-token"]');
     fetch('/api/tournaments/<?= $tournament->id ?>/tables', {
         method: 'PUT',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
         },
         body: JSON.stringify({ tables: tables })
     })
@@ -623,9 +660,13 @@ document.getElementById('clear-all-button').addEventListener('click', function()
         setButtonLoading('delete-tournament-button', 'delete-indicator', 'delete-text', true);
         document.getElementById('delete-result').innerHTML = '';
 
+        var csrfToken = document.querySelector('meta[name="csrf-token"]');
         fetch('/api/tournaments/' + tournamentId, {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
+            }
         })
         .then(function(response) {
             return response.json().then(function(data) {
@@ -653,3 +694,5 @@ document.getElementById('clear-all-button').addEventListener('click', function()
     });
 })();
 </script>
+</body>
+</html>
