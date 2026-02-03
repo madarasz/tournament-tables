@@ -49,17 +49,14 @@ test.describe('Admin Authentication (US5)', () => {
     // Submit the form
     await page.locator('button[type="submit"]').click();
 
-    // Wait for success message
-    await expect(page.getByText('Login Successful')).toBeVisible();
-
-    // Click "Go to Tournament" button
-    await page.getByRole('button', { name: 'Go to Tournament' }).click();
-
-    // Should navigate to tournament dashboard
+    // Should automatically redirect to tournament dashboard
     await page.waitForURL(/\/admin\/tournament\/\d+/, { timeout: 10000 });
 
     // Verify we're on the correct tournament
     expect(page.url()).toContain(`/admin/tournament/${tournamentId}`);
+
+    // Success message should be displayed on dashboard (auto-dismisses after 4 seconds)
+    await expect(page.getByText('Login Successful!')).toBeVisible();
 
     // Verify cookie is set (JSON format with tournament tokens)
     const cookieValue = await getAdminTokenFromCookies(page.context(), baseURL!);

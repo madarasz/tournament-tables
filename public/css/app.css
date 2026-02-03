@@ -19,7 +19,7 @@
 nav {
   background: var(--primary);
   padding: 1rem;
-  margin-bottom: 2rem;
+  margin-bottom: 0;
 }
 
 nav ul {
@@ -37,6 +37,52 @@ nav a {
 
 nav a:hover {
   text-decoration: underline;
+}
+
+/* Right-aligned nav items */
+nav ul .nav-right {
+  margin-left: auto;
+  display: flex;
+  gap: 1rem;
+}
+
+/* Back link in nav - right aligned */
+nav .container > .back-link {
+  display: block;
+  text-align: right;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+nav .container > .back-link:hover {
+  color: white;
+}
+
+/* Full-bleed: break out of container */
+.full-bleed {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+}
+
+/* Tournament name header extension of nav */
+.nav-page-name {
+  background: var(--primary);
+  padding: 0.5rem 1rem 0.75rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  text-align: center;
+  /* Content width on desktop, centered */
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.nav-page-name h1 {
+  color: white;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .brand {
@@ -204,6 +250,14 @@ footer {
   border: 1px solid var(--pico-secondary, #62778c);
   padding: 0.75rem;
   border-radius: 0.25rem;
+}
+
+/* ==========================================================================
+   Articles
+    ========================================================================== */
+article {
+  /* margin: 0; */
+  padding: 1rem;
 }
 
 /* ==========================================================================
@@ -429,6 +483,16 @@ button.is-loading {
   .show-mobile {
     display: none !important;
   }
+
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .hide-desktop {
+    display: inline !important;
+  }
 }
 
 /* ==========================================================================
@@ -541,4 +605,858 @@ button.is-loading {
     padding: 1rem 2rem;
     font-size: 1.5rem;
   }
+}
+
+/* ==========================================================================
+   Dashboard Tabs
+   ========================================================================== */
+
+.dashboard-tabs {
+  display: flex;
+  justify-content: center;
+  background: #0d7ea8; /* Darker blue than nav */
+  padding: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+  /* Content width on desktop, centered */
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 4px;
+}
+
+.dashboard-tabs.full-bleed {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-tabs::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.dashboard-tab {
+  background: none;
+  border: none;
+  padding: 0.4rem 1.25rem;
+  margin: 0;
+  min-height: 32px;
+  min-width: max-content;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  transition: color 0.2s, background-color 0.2s;
+  white-space: nowrap;
+}
+
+.dashboard-tab:hover {
+  color: white;
+}
+
+.dashboard-tab:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: -2px;
+}
+
+.dashboard-tab.active {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Tab panels */
+.dashboard-tab-panel {
+  display: block;
+}
+
+.dashboard-tab-panel[hidden] {
+  display: none;
+}
+
+.dashboard-tab-panel h2 {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* Mobile: Ensure tabs and title remain full-width */
+@media (max-width: 576px) {
+  .nav-page-name {
+    width: 100vw;
+    max-width: none;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    border-radius: 0;
+  }
+
+  .dashboard-tabs {
+    gap: 0;
+    width: 100vw;
+    max-width: none;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    border-radius: 0;
+  }
+
+  .dashboard-tab {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* ==========================================================================
+   Dashboard-specific Styles (moved from inline)
+   ========================================================================== */
+
+/* Import Round Row Styles */
+.import-round-row {
+  background: transparent;
+}
+
+.import-round-cell {
+  text-align: center;
+  padding: 1rem !important;
+  border-top: 1px dashed var(--pico-muted-border-color, #e0e0e0);
+}
+
+.import-round-cell button {
+  margin: 0 auto;
+  min-width: 200px;
+}
+
+.import-result {
+  margin-top: 0.75rem;
+}
+
+.import-result:empty {
+  display: none;
+}
+
+/* Responsive styles for Table Configuration - Set All Tables */
+.set-all-container {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--pico-card-background-color, #f8f9fa);
+  border-radius: var(--pico-border-radius, 0.25rem);
+  border: 1px solid var(--pico-muted-border-color, #e0e0e0);
+}
+
+.set-all-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.set-all-controls {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.set-all-controls select {
+  flex: 1;
+  min-width: 200px;
+  margin-bottom: 0;
+}
+
+.set-all-controls button {
+  white-space: nowrap;
+  margin-bottom: 0;
+  min-height: 44px; /* Touch-friendly target */
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.set-all-hint {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--pico-muted-color, #666);
+}
+
+/* Mobile: Stack elements vertically */
+@media (max-width: 576px) {
+  .set-all-controls {
+    flex-direction: column;
+  }
+
+  .set-all-controls select {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .set-all-controls button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Tablet: Keep horizontal but allow wrapping */
+@media (min-width: 577px) and (max-width: 768px) {
+  .set-all-controls select {
+    min-width: 180px;
+  }
+}
+
+/* Row highlight animation for visual feedback */
+@keyframes highlightFade {
+  0% { background-color: var(--pico-primary-focus, rgba(16, 149, 193, 0.25)); }
+  100% { background-color: transparent; }
+}
+
+.table-row-highlight {
+  animation: highlightFade 0.8s ease-out;
+}
+
+/* Danger Zone Styles */
+.danger-zone {
+  border: 1px solid var(--pico-del-color, #c62828);
+  border-radius: var(--pico-border-radius, 0.25rem);
+  padding: 1.5rem;
+  margin-top: 0;
+}
+
+.danger-zone h2 {
+  color: var(--pico-del-color, #c62828);
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   Delete Button Styles (from dashboard.php)
+   ========================================================================== */
+
+.delete-button {
+  background-color: var(--pico-del-color, #c62828);
+  border-color: var(--pico-del-color, #c62828);
+}
+
+.delete-button:hover:not(:disabled) {
+  background-color: #b71c1c;
+  border-color: #b71c1c;
+}
+
+.delete-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Round Management Styles (from manage.php)
+   ========================================================================== */
+
+/* Conflict highlighting */
+.conflict-table-collision,
+.conflict-table-collision:nth-child(odd),
+.conflict-table-collision:nth-child(even) {
+  background-color: hsla(0, 77%, 61%, 1.00) !important;
+  border-left: 4px solid #c62828;
+}
+
+.conflict-table-reuse,
+.conflict-table-reuse:nth-child(odd),
+.conflict-table-reuse:nth-child(even) {
+  background-color: #ffcdd2 !important;
+  border-left: 4px solid #f44336;
+}
+
+/* Round management badges */
+.round-published-badge {
+  display: inline-block;
+  padding: 0.25em 0.5em;
+  background-color: #4caf50;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.875em;
+  margin-left: 0.5em;
+}
+
+.round-conflict-badge {
+  display: inline-block;
+  padding: 0.25em 0.5em;
+  background-color: #f44336;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.875em;
+  margin-left: 0.5em;
+}
+
+/* Bye row styling */
+.bye-row {
+  background-color: #f5f5f5 !important;
+}
+
+.bye-indicator {
+  display: inline-block;
+  padding: 0.2em 0.5em;
+  background-color: #9e9e9e;
+  color: white;
+  border-radius: 4px;
+  font-size: 0.75em;
+  font-weight: bold;
+  margin-left: 0.5em;
+}
+
+.bye-no-table {
+  color: #9e9e9e;
+  font-style: italic;
+}
+
+/* Base allocation table styles (mobile-first) */
+.allocation-table {
+  width: 100%;
+  font-size: 14px;
+}
+
+.allocation-table th,
+.allocation-table td {
+  padding: 8px 4px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.allocation-table th {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Score styling - muted, inline with player name */
+.player-score {
+  color: #1976d2;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+/* Terrain in table column */
+.terrain-suffix {
+  font-style: italic;
+  color: #666;
+  font-size: 0.85em;
+}
+
+/* BCP table difference indicator */
+.bcp-diff {
+  display: block;
+  color: #666;
+  font-size: 0.75em;
+  font-weight: normal;
+  margin-top: 2px;
+}
+
+/* VS separator column */
+.vs-cell {
+  text-align: center;
+  color: #888;
+  font-size: 12px;
+  padding: 8px 2px !important;
+}
+
+/* Player name styling */
+.player-name {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-cell {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Player faction styling */
+.player-faction {
+  display: block;
+  font-size: 0.75em;
+  color: #888;
+  font-style: italic;
+  margin-top: 2px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Checkbox - touch-friendly on mobile */
+.select-cell {
+  width: 44px;
+  text-align: center;
+}
+
+.swap-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+/* Table number column */
+.table-cell {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* Change table - dropdown on desktop, button on mobile */
+.change-cell {
+  width: 120px;
+}
+
+.change-table-dropdown {
+  width: 100%;
+  font-size: 0.875em;
+  padding: 6px 8px;
+}
+
+.change-table-btn {
+  display: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  background: var(--secondary);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 44px;
+}
+
+.change-table-btn:hover {
+  background: var(--secondary-hover);
+}
+
+/* Header abbreviations */
+.header-full {
+  display: inline;
+}
+
+.header-short {
+  display: none;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin-bottom: 1em;
+}
+
+.loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Conflict list */
+.conflict-list {
+  margin-top: 1em;
+  padding: 1em;
+  color: #666;
+  background-color: #fff3e0;
+  border-radius: 4px;
+}
+
+.conflict-list h3 {
+  margin: 0;
+  color: #666;
+}
+
+.conflict-item {
+  padding: 0.5em 0;
+  border-bottom: 1px solid #ffe0b2;
+}
+
+.conflict-item:last-child {
+  border-bottom: none;
+}
+
+.conflict-type {
+  font-weight: bold;
+  color: #e65100;
+}
+
+#allocation-results {
+  min-height: 200px;
+}
+
+/* Swap button container - sticky on mobile */
+.swap-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-top: 1em;
+  padding: 1em;
+  background: var(--background-color, #fff);
+  border-top: 1px solid var(--muted-border-color, #ddd);
+}
+
+.swap-status {
+  font-size: 0.875em;
+  color: #666;
+}
+
+/* Modal for mobile table editing */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--background-color, #fff);
+  border-radius: 12px 12px 0 0;
+  padding: 1.5em;
+  width: 100%;
+  max-width: 500px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1em;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.1em;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.modal-description {
+  color: #666;
+  margin-bottom: 1em;
+  font-size: 0.9em;
+}
+
+.table-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.table-option-btn {
+  width: 100%;
+  padding: 14px 16px;
+  text-align: left;
+  background: var(--secondary-focus, #f0f0f0);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: border-color 0.2s;
+}
+
+.table-option-btn:hover,
+.table-option-btn:focus {
+  border-color: var(--primary);
+}
+
+.table-option-btn.selected {
+  border-color: var(--primary);
+  background: var(--primary-focus, #e3f2fd);
+}
+
+.table-option-terrain {
+  font-style: italic;
+  color: #666;
+  margin-left: 8px;
+}
+
+/* Round navigation */
+.round-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1em;
+}
+
+.round-nav-spacer {
+  flex: 1;
+}
+
+.round-nav-btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  border-radius: 4px;
+  white-space: nowrap;
+  background: var(--secondary-focus, #f0f0f0);
+  border: 1px solid var(--muted-border-color, #ccc);
+}
+
+.round-nav-btn:hover {
+  background: var(--secondary-hover, #e0e0e0);
+  text-decoration: none;
+}
+
+/* Import Next button - same as nav buttons but white background with blue text */
+.import-next-btn {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  border-radius: 4px;
+  white-space: nowrap;
+  background: #fff;
+  border: 1px solid var(--muted-border-color, #ccc);
+  color: var(--pico-primary, #1095c1);
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.import-next-btn:hover {
+  background: var(--pico-primary-focus, #e3f2fd);
+}
+
+.import-next-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Import result container in navigation area */
+.import-next-result {
+  margin-top: 0.5rem;
+  text-align: right;
+}
+
+.import-next-result:empty {
+  display: none;
+}
+
+/* ==========================================================================
+   Round Management Mobile Styles (< 768px)
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .allocation-table {
+    font-size: 13px;
+  }
+
+  .allocation-table th,
+  .allocation-table td {
+    padding: 10px 4px;
+  }
+
+  /* Larger touch targets */
+  .swap-checkbox {
+    width: 24px;
+    height: 24px;
+  }
+
+  .select-cell {
+    width: 40px;
+  }
+
+  /* Abbreviate headers */
+  .header-full {
+    display: none;
+  }
+
+  .header-short {
+    display: inline;
+  }
+
+  /* Round navigation - compact side-by-side */
+  .round-nav-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    max-width: 45%;
+  }
+
+  .nav-short {
+    display: inline;
+  }
+
+  .nav-full {
+    display: none;
+  }
+
+  /* Import Next button - compact on mobile, same as nav buttons */
+  .import-next-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    max-width: 45%;
+  }
+
+  /* Show mobile edit button, hide dropdown */
+  .change-table-dropdown {
+    display: none;
+  }
+
+  .change-table-btn {
+    display: inline-block;
+  }
+
+  .change-cell {
+    width: 48px;
+  }
+
+  /* Player names - show abbreviated version */
+  .player-name-full {
+    display: none;
+  }
+
+  .player-name-short {
+    display: inline;
+  }
+
+  .player-name {
+    max-width: 100px;
+  }
+
+  /* Sticky swap controls at bottom */
+  .swap-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+    z-index: 100;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Add padding at bottom for sticky controls */
+  #allocation-results {
+    padding-bottom: 80px;
+  }
+
+  /* Modal slides up from bottom */
+  .modal-content {
+    animation: slideUp 0.2s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+}
+
+/* ==========================================================================
+   Round Management Desktop Styles (>= 768px)
+   ========================================================================== */
+
+@media (min-width: 768px) {
+  .allocation-table {
+    font-size: 15px;
+  }
+
+  .allocation-table th,
+  .allocation-table td {
+    padding: 12px 8px;
+  }
+
+  .player-name {
+    max-width: 200px;
+  }
+
+  .player-name-full {
+    display: inline;
+  }
+
+  .player-name-short {
+    display: none;
+  }
+
+  .change-cell {
+    width: 140px;
+  }
+
+  /* Modal centered on desktop */
+  .modal-overlay {
+    align-items: center;
+  }
+
+  .modal-content {
+    border-radius: 12px;
+    max-height: 80vh;
+  }
+}
+
+/* ==========================================================================
+   Admin Message Widget
+   ========================================================================== */
+
+.admin-message {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  border-left: 4px solid;
+}
+
+.admin-message--success {
+  background: #d4edda;
+  border-color: #28a745;
+  color: #155724;
+}
+
+.admin-message--error {
+  background: #f8d7da;
+  border-color: #dc3545;
+  color: #721c24;
+}
+
+.admin-message--warning {
+  background: #fff3cd;
+  border-color: #ffc107;
+  color: #856404;
+}
+
+.admin-message--info {
+  background: #e3f2fd;
+  border-color: #2196f3;
+  color: #0d47a1;
+}
+
+/* ==========================================================================
+   Admin Layout - Page Name Bar Back Link
+   ========================================================================== */
+
+.nav-page-name .back-link {
+  position: absolute;
+  left: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.nav-page-name .back-link:hover {
+  color: white;
+}
+
+.nav-page-name .page-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+.nav-page-name {
+  position: relative;
 }

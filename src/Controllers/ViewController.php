@@ -31,7 +31,7 @@ class ViewController extends BaseController
      */
     public function createTournament(array $params, ?array $body): void
     {
-        echo $this->render('tournament/create');
+        include __DIR__ . '/../Views/admin/create.php';
     }
 
     /**
@@ -68,15 +68,7 @@ class ViewController extends BaseController
             }
         }
 
-        echo $this->renderWithLayout('tournament/dashboard', [
-            'tournament' => $tournament,
-            'rounds' => $rounds,
-            'tables' => $tables,
-            'terrainTypes' => $terrainTypes,
-            'justCreated' => $justCreated,
-            'adminToken' => $adminToken,
-            'autoImport' => $autoImport,
-        ]);
+        include __DIR__ . '/../Views/admin/tournament.php';
     }
 
     /**
@@ -111,7 +103,7 @@ class ViewController extends BaseController
         $rounds = Round::findByTournament($tournamentId);
 
         // Render the round management view
-        include __DIR__ . '/../Views/round/manage.php';
+        include __DIR__ . '/../Views/admin/round.php';
     }
 
     /**
@@ -217,7 +209,7 @@ class ViewController extends BaseController
      */
     public function login(array $params, ?array $body): void
     {
-        include __DIR__ . '/../Views/auth/login.php';
+        include __DIR__ . '/../Views/admin/login.php';
     }
 
     /**

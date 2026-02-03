@@ -6,14 +6,12 @@
  */
 
 $title = 'Login';
+$pageName = 'Admin Login';
 ob_start();
 ?>
 
 <article>
-    <header>
-        <h1>Tournament Admin Login</h1>
-        <p>Enter your 16-character admin token to access tournament management.</p>
-    </header>
+    <p>Enter your 16-character admin token to access tournament management.</p>
 
     <form id="loginForm" hx-post="/api/auth" hx-target="#result" hx-swap="innerHTML">
         <label for="token">
@@ -52,45 +50,30 @@ ob_start();
 // Handle successful authentication
 document.body.addEventListener('htmx:afterRequest', function(event) {
     if (event.detail.pathInfo.requestPath === '/api/auth' && event.detail.successful) {
-        const resultEl = document.getElementById('result');
+        var resultEl = document.getElementById('result');
         resultEl.innerHTML = '';
 
         try {
-            const response = JSON.parse(event.detail.xhr.responseText);
+            var response = JSON.parse(event.detail.xhr.responseText);
             if (response.tournamentId) {
-                const article = createAlertArticle('alert-success', 'Login Successful');
-
-                const p1 = document.createElement('p');
-                p1.appendChild(document.createTextNode('Welcome back! You now have access to '));
-                const strong = document.createElement('strong');
-                strong.textContent = response.tournamentName || 'this tournament';
-                p1.appendChild(strong);
-                p1.appendChild(document.createTextNode('.'));
-                article.appendChild(p1);
-
-                const p2 = document.createElement('p');
-                const link = document.createElement('a');
-                // Validate tournamentId is numeric to prevent URL injection
-                const tournamentId = parseInt(response.tournamentId, 10);
-                if (!isNaN(tournamentId) && tournamentId > 0) {
-                    link.href = '/admin/tournament/' + tournamentId;
-                } else {
-                    link.href = '/admin';
-                }
-                link.setAttribute('role', 'button');
-                link.textContent = 'Go to Tournament';
-                p2.appendChild(link);
-                article.appendChild(p2);
-
+                // Show brief redirecting message
+                var article = createAlertArticle('alert-success', 'Login Successful');
+                var p = document.createElement('p');
+                p.textContent = 'Redirecting to tournament...';
+                article.appendChild(p);
                 resultEl.appendChild(article);
+
+                // Validate tournamentId is numeric to prevent URL injection
+                var tournamentId = parseInt(response.tournamentId, 10);
+                if (!isNaN(tournamentId) && tournamentId > 0) {
+                    window.location.href = '/admin/tournament/' + tournamentId + '?loginSuccess=1';
+                } else {
+                    window.location.href = '/admin';
+                }
             }
         } catch (e) {
-            // JSON parse error, show generic success
-            const article = createAlertArticle('alert-success', 'Login Successful');
-            const p = document.createElement('p');
-            p.textContent = 'You are now authenticated.';
-            article.appendChild(p);
-            resultEl.appendChild(article);
+            // JSON parse error, redirect to admin home
+            window.location.href = '/admin';
         }
     }
 });
@@ -98,39 +81,42 @@ document.body.addEventListener('htmx:afterRequest', function(event) {
 // Handle authentication errors
 document.body.addEventListener('htmx:afterRequest', function(event) {
     if (event.detail.pathInfo.requestPath === '/api/auth' && !event.detail.successful) {
-        const resultEl = document.getElementById('result');
+        var resultEl = document.getElementById('result');
         resultEl.innerHTML = '';
 
         try {
-            const response = JSON.parse(event.detail.xhr.responseText);
-            const article = createAlertArticle('alert-error', 'Authentication Failed');
+            var response = JSON.parse(event.detail.xhr.responseText);
+            var article = createAlertArticle('alert-error', 'Authentication Failed');
 
             if (response.fields && typeof response.fields === 'object') {
-                const ul = document.createElement('ul');
-                for (const [field, errors] of Object.entries(response.fields)) {
-                    if (Array.isArray(errors)) {
-                        errors.forEach(error => {
-                            const li = document.createElement('li');
-                            li.textContent = String(error);
-                            ul.appendChild(li);
-                        });
+                var ul = document.createElement('ul');
+                for (var field in response.fields) {
+                    if (response.fields.hasOwnProperty(field)) {
+                        var errors = response.fields[field];
+                        if (Array.isArray(errors)) {
+                            errors.forEach(function(error) {
+                                var li = document.createElement('li');
+                                li.textContent = String(error);
+                                ul.appendChild(li);
+                            });
+                        }
                     }
                 }
                 article.appendChild(ul);
             } else if (response.message) {
-                const p = document.createElement('p');
+                var p = document.createElement('p');
                 p.textContent = String(response.message);
                 article.appendChild(p);
             } else {
-                const p = document.createElement('p');
+                var p = document.createElement('p');
                 p.textContent = 'Invalid token. Please check and try again.';
                 article.appendChild(p);
             }
 
             resultEl.appendChild(article);
         } catch (e) {
-            const article = createAlertArticle('alert-error', 'Error');
-            const p = document.createElement('p');
+            var article = createAlertArticle('alert-error', 'Error');
+            var p = document.createElement('p');
             p.textContent = 'An unexpected error occurred. Please try again.';
             article.appendChild(p);
             resultEl.appendChild(article);
@@ -145,4 +131,4 @@ document.getElementById('token').focus();
 <?php
 $content = ob_get_clean();
 
-include __DIR__ . '/../layout.php';
+require __DIR__ . '/layout.php';

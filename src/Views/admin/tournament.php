@@ -16,6 +16,8 @@
  * - $autoImport: array (optional) - Auto-import result {success: bool, tableCount?: int, pairingsImported?: int, error?: string}
  */
 
+use TournamentTables\Services\CsrfService;
+
 $title = $tournament->name;
 $tableCount = count($tables); // Use actual table count from database
 $hasRounds = !empty($rounds);
@@ -23,9 +25,97 @@ $justCreated = $justCreated ?? false;
 $adminToken = $adminToken ?? null;
 $autoImport = $autoImport ?? null;
 ?>
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= htmlspecialchars($title) ?> - Tournament Tables</title>
+    <?= CsrfService::getMetaTag() ?>
+
+    <!-- Pico CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="/css/app.css">
+
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    <!-- App utilities -->
+    <script src="/js/utils.js"></script>
+    <script src="/js/form-utils.js"></script>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <ul>
+                <li><a href="/admin" class="brand">Tournament Tables</a></li>
+                <li class="nav-right">
+                    <a href="/admin/tournament/create">New Tournament</a>
+                    <a href="/admin/login">Login</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+<!-- Tournament name header (extends nav bar) -->
+<div class="nav-page-name full-bleed">
+    <h1><?= htmlspecialchars($tournament->name) ?></h1>
+</div>
+
+<!-- Tab Navigation (darker blue bar) -->
+<nav class="dashboard-tabs" role="tablist" aria-label="Dashboard sections">
+    <button
+        role="tab"
+        class="dashboard-tab active"
+        id="tab-rounds"
+        data-tab="rounds"
+        aria-selected="true"
+        aria-controls="panel-rounds"
+        tabindex="0"
+    >Rounds</button>
+    <button
+        role="tab"
+        class="dashboard-tab"
+        id="tab-tables"
+        data-tab="tables"
+        aria-selected="false"
+        aria-controls="panel-tables"
+        tabindex="-1"
+    >Tables</button>
+    <button
+        role="tab"
+        class="dashboard-tab"
+        id="tab-manage"
+        data-tab="manage"
+        aria-selected="false"
+        aria-controls="panel-manage"
+        tabindex="-1"
+    >Manage</button>
+</nav>
+
+<main class="container">
+
+<?php if (isset($_GET['loginSuccess'])): ?>
+<article class="alert-success" id="login-success">
+    <p><strong>Login Successful!</strong> Welcome back to <?= htmlspecialchars($tournament->name) ?>.</p>
+</article>
+<script>
+// Auto-dismiss login success message after 4 seconds
+setTimeout(function() {
+    var el = document.getElementById('login-success');
+    if (el) {
+        el.style.transition = 'opacity 0.5s';
+        el.style.opacity = '0';
+        setTimeout(function() { el.remove(); }, 500);
+    }
+}, 4000);
+</script>
+<?php endif; ?>
 
 <?php if ($justCreated && $adminToken): ?>
-<article class="alert-success" id="creation-success">
+<article class="alert-success" id="creation-success" style="margin-top: 1.5rem;">
     <header>
         <h3>Tournament Created Successfully!</h3>
     </header>
@@ -57,36 +147,15 @@ $autoImport = $autoImport ?? null;
 </article>
 <?php endif; ?>
 
-<header>
-    <h1 style="margin-bottom: 0;"><?= htmlspecialchars($tournament->name) ?></h1>
-    <article style="margin-top: 0;">
-        <div class="grid">
-            <div>
-                <strong>Tables:</strong> <?= $tableCount ?>
-            </div>
-            <div>
-                <strong>Rounds Imported:</strong> <?= count($rounds) ?>
-            </div>
-            <div>
-                <strong>BCP Event ID:</strong> <?= htmlspecialchars($tournament->bcpEventId) ?>
-            </div>
-            <div>
-                <a href="<?= htmlspecialchars($tournament->bcpUrl) ?>" target="_blank" rel="noopener">
-                    View on Best Coast Pairings
-                </a>
-            </div>
-            <div>
-                <a href="/<?= $tournament->id ?>">Public View</a>
-            </div>
-        </div>
-    </article>
-</header>
+<!-- Tab Panels -->
 
 <?php
 // Calculate next round number (MAX + 1 or 1 if no rounds)
 $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNumber; }, $rounds)) + 1 : 1;
 ?>
-<section>
+
+<!-- Rounds Tab Panel -->
+<section role="tabpanel" id="panel-rounds" class="dashboard-tab-panel" aria-labelledby="tab-rounds">
     <h2>Rounds</h2>
 
     <table role="grid">
@@ -137,7 +206,8 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
     </table>
 </section>
 
-<section>
+<!-- Tables Tab Panel -->
+<section role="tabpanel" id="panel-tables" class="dashboard-tab-panel" aria-labelledby="tab-tables" hidden>
     <h2>Table Configuration</h2>
     <article>
         <p>Assign terrain types to tables. Players will preferentially be assigned to terrain types they haven't experienced.</p>
@@ -220,173 +290,168 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
     </article>
 </section>
 
-<section class="danger-zone">
-    <h2>Danger Zone</h2>
-    <p>Deleting a tournament will permanently remove all rounds, tables, players, and allocations. This action cannot be undone.</p>
+<!-- Manage Tab Panel -->
+<section role="tabpanel" id="panel-manage" class="dashboard-tab-panel" aria-labelledby="tab-manage" hidden>
+    <h2>Tournament Management</h2>
 
-    <div style="margin-top: 1rem;">
-        <label for="delete-confirm-input">
-            Type "<strong><?= htmlspecialchars($tournament->name) ?></strong>" to confirm:
-        </label>
-        <input
-            type="text"
-            id="delete-confirm-input"
-            placeholder="Enter tournament name"
-            autocomplete="off"
-        >
-    </div>
+    <!-- General Info -->
+    <article style="margin-bottom: 1.5rem;">
+        <div class="grid">
+            <div>
+                <strong>Tables:</strong> <?= $tableCount ?>
+            </div>
+            <div>
+                <strong>Rounds Imported:</strong> <?= count($rounds) ?>
+            </div>
+            <div>
+                <strong>BCP Event ID:</strong> <?= htmlspecialchars($tournament->bcpEventId) ?>
+            </div>
+            <div>
+                <a href="<?= htmlspecialchars($tournament->bcpUrl) ?>" target="_blank" rel="noopener">
+                    View on Best Coast Pairings
+                </a>
+            </div>
+            <div>
+                <a href="/<?= $tournament->id ?>">Public View</a>
+            </div>
+        </div>
+    </article>
 
-    <div style="margin-top: 1rem;">
-        <button
-            type="button"
-            id="delete-tournament-button"
-            class="delete-button"
-            disabled
-        >
-            <span id="delete-indicator" style="display: none;">Deleting...</span>
-            <span id="delete-text">Delete Tournament</span>
-        </button>
-    </div>
+    <section class="danger-zone">
+        <h3 style="color: var(--pico-del-color, #c62828); margin-top: 0;">Delete Tournament</h3>
+        <p>Deleting a tournament will permanently remove all rounds, tables, players, and allocations. This action cannot be undone.</p>
 
-    <div id="delete-result" style="margin-top: 1rem;"></div>
+        <div style="margin-top: 1rem;">
+            <label for="delete-confirm-input">
+                Type "<strong><?= htmlspecialchars($tournament->name) ?></strong>" to confirm:
+            </label>
+            <input
+                type="text"
+                id="delete-confirm-input"
+                placeholder="Enter tournament name"
+                autocomplete="off"
+            >
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <button
+                type="button"
+                id="delete-tournament-button"
+                class="delete-button"
+                disabled
+            >
+                <span id="delete-indicator" style="display: none;">Deleting...</span>
+                <span id="delete-text">Delete Tournament</span>
+            </button>
+        </div>
+
+        <div id="delete-result" style="margin-top: 1rem;"></div>
+    </section>
 </section>
 
-<style>
-/* Utility classes */
-.text-center {
-    text-align: center;
-}
+</main>
 
-/* Import Round Row Styles */
-.import-round-row {
-    background: transparent;
-}
-
-.import-round-cell {
-    text-align: center;
-    padding: 1rem !important;
-    border-top: 1px dashed var(--pico-muted-border-color, #e0e0e0);
-}
-
-.import-round-cell button {
-    margin: 0 auto;
-    min-width: 200px;
-}
-
-.import-result {
-    margin-top: 0.75rem;
-}
-
-.import-result:empty {
-    display: none;
-}
-
-/* Responsive styles for Table Configuration - Set All Tables */
-.set-all-container {
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-    background: var(--pico-card-background-color, #f8f9fa);
-    border-radius: var(--pico-border-radius, 0.25rem);
-    border: 1px solid var(--pico-muted-border-color, #e0e0e0);
-}
-
-.set-all-label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-}
-
-.set-all-controls {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    align-items: stretch;
-}
-
-.set-all-controls select {
-    flex: 1;
-    min-width: 200px;
-    margin-bottom: 0;
-}
-
-.set-all-controls button {
-    white-space: nowrap;
-    margin-bottom: 0;
-    min-height: 44px; /* Touch-friendly target per NNG guidelines */
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
-.set-all-hint {
-    display: block;
-    margin-top: 0.5rem;
-    color: var(--pico-muted-color, #666);
-}
-
-/* Mobile: Stack elements vertically */
-@media (max-width: 576px) {
-    .set-all-controls {
-        flex-direction: column;
-    }
-
-    .set-all-controls select {
-        min-width: 100%;
-        width: 100%;
-    }
-
-    .set-all-controls button {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-/* Tablet: Keep horizontal but allow wrapping */
-@media (min-width: 577px) and (max-width: 768px) {
-    .set-all-controls select {
-        min-width: 180px;
-    }
-}
-
-/* Row highlight animation for visual feedback */
-@keyframes highlightFade {
-    0% { background-color: var(--pico-primary-focus, rgba(16, 149, 193, 0.25)); }
-    100% { background-color: transparent; }
-}
-
-.table-row-highlight {
-    animation: highlightFade 0.8s ease-out;
-}
-
-/* Danger Zone Styles */
-.danger-zone {
-    border: 1px solid var(--pico-del-color, #c62828);
-    border-radius: var(--pico-border-radius, 0.25rem);
-    padding: 1.5rem;
-    margin-top: 2rem;
-}
-
-.danger-zone h2 {
-    color: var(--pico-del-color, #c62828);
-    margin-top: 0;
-}
-
-.delete-button {
-    background-color: var(--pico-del-color, #c62828);
-    border-color: var(--pico-del-color, #c62828);
-}
-
-.delete-button:hover:not(:disabled) {
-    background-color: #b71c1c;
-    border-color: #b71c1c;
-}
-
-.delete-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-</style>
+<footer>
+    <div class="container">
+        Tournament Tables - Tournament Table Allocation System
+    </div>
+</footer>
 
 <script>
+// Configure HTMX to include CSRF token in requests
+document.body.addEventListener('htmx:configRequest', function(event) {
+    var csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (csrfToken) {
+        event.detail.headers['X-CSRF-Token'] = csrfToken.getAttribute('content');
+    }
+});
+
+// Tab Controller
+(function() {
+    var tabs = document.querySelectorAll('.dashboard-tab');
+    var panels = document.querySelectorAll('.dashboard-tab-panel');
+
+    function activateTab(tabId) {
+        // Update tabs
+        tabs.forEach(function(tab) {
+            var isActive = tab.getAttribute('data-tab') === tabId;
+            tab.classList.toggle('active', isActive);
+            tab.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            tab.setAttribute('tabindex', isActive ? '0' : '-1');
+        });
+
+        // Update panels
+        panels.forEach(function(panel) {
+            var panelId = panel.id.replace('panel-', '');
+            var isActive = panelId === tabId;
+            if (isActive) {
+                panel.removeAttribute('hidden');
+            } else {
+                panel.setAttribute('hidden', '');
+            }
+        });
+
+        // Update URL hash without scrolling
+        if (history.replaceState) {
+            history.replaceState(null, null, '#' + tabId);
+        } else {
+            location.hash = tabId;
+        }
+    }
+
+    // Click handler
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            activateTab(this.getAttribute('data-tab'));
+        });
+    });
+
+    // Keyboard navigation
+    document.querySelector('.dashboard-tabs').addEventListener('keydown', function(e) {
+        var currentTab = document.activeElement;
+        if (!currentTab.classList.contains('dashboard-tab')) return;
+
+        var tabsArray = Array.prototype.slice.call(tabs);
+        var currentIndex = tabsArray.indexOf(currentTab);
+        var newIndex = currentIndex;
+
+        switch (e.key) {
+            case 'ArrowLeft':
+                newIndex = currentIndex > 0 ? currentIndex - 1 : tabsArray.length - 1;
+                break;
+            case 'ArrowRight':
+                newIndex = currentIndex < tabsArray.length - 1 ? currentIndex + 1 : 0;
+                break;
+            case 'Home':
+                newIndex = 0;
+                break;
+            case 'End':
+                newIndex = tabsArray.length - 1;
+                break;
+            default:
+                return;
+        }
+
+        e.preventDefault();
+        tabsArray[newIndex].focus();
+        activateTab(tabsArray[newIndex].getAttribute('data-tab'));
+    });
+
+    // Handle URL hash on load
+    function handleHash() {
+        var hash = window.location.hash.replace('#', '');
+        if (hash && ['rounds', 'tables', 'manage'].indexOf(hash) !== -1) {
+            activateTab(hash);
+        }
+    }
+
+    // Initial load
+    handleHash();
+
+    // Handle browser back/forward
+    window.addEventListener('hashchange', handleHash);
+})();
+
 // Copy admin token to clipboard
 function copyAdminToken() {
     var tokenDisplay = document.getElementById('admin-token-display');
@@ -467,10 +532,12 @@ document.getElementById('terrain-form').addEventListener('submit', function(e) {
     setButtonLoading('save-terrain-button', 'save-terrain-indicator', 'save-terrain-text', true);
     document.getElementById('terrain-result').innerHTML = '';
 
+    var csrfToken = document.querySelector('meta[name="csrf-token"]');
     fetch('/api/tournaments/<?= $tournament->id ?>/tables', {
         method: 'PUT',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
         },
         body: JSON.stringify({ tables: tables })
     })
@@ -592,10 +659,14 @@ document.getElementById('clear-all-button').addEventListener('click', function()
 
         setButtonLoading('delete-tournament-button', 'delete-indicator', 'delete-text', true);
         document.getElementById('delete-result').innerHTML = '';
-
+        
+        var csrfToken = document.querySelector('meta[name="csrf-token"]');
         fetch('/api/tournaments/' + tournamentId, {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
+            }
         })
         .then(function(response) {
             return response.json().then(function(data) {
@@ -623,3 +694,5 @@ document.getElementById('clear-all-button').addEventListener('click', function()
     });
 })();
 </script>
+</body>
+</html>

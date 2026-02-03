@@ -1,18 +1,24 @@
 <?php
+declare(strict_types=1);
 /**
- * Base layout template with Pico CSS + HTMX.
+ * Admin layout template with Pico CSS + HTMX.
  *
- * Reference: specs/001-table-allocation/research.md#implementation-notes
+ * Provides consistent admin page structure with nav bar, page name bar,
+ * and message container.
  *
- * @var string $title Page title
+ * @var string $title Browser tab title
+ * @var string $pageName H1 in page name bar (optional)
+ * @var string $pageSubtitle Optional subtitle under page name
+ * @var string $backLink Optional back URL
  * @var string $content Page content HTML
- * @var bool $isPublic Whether this is a public page (no admin nav)
  */
 
 use TournamentTables\Services\CsrfService;
 
 $title = $title ?? 'Tournament Tables';
-$isPublic = $isPublic ?? false;
+$pageName = $pageName ?? null;
+$pageSubtitle = $pageSubtitle ?? null;
+$backLink = $backLink ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
@@ -36,29 +42,32 @@ $isPublic = $isPublic ?? false;
     <script src="/js/form-utils.js"></script>
 </head>
 <body>
-    <?php if (!$isPublic): ?>
     <nav>
         <div class="container">
             <ul>
-                <li><a href="/admin" class="brand">Tournament Tables</a></li>
+                <li><a href="/admin" class="brand"><span class="hide-mobile">Tournament Tables</span><span class="hide-desktop">T-Tables</span></a></li>
                 <li class="nav-right">
-                    <a href="/admin/tournament/create">New Tournament</a>
+                    <a href="/admin/tournament/create"><span class="hide-mobile">Create New Tournament</span><span class="hide-desktop">Create</span></a>
                     <a href="/admin/login">Login</a>
                 </li>
             </ul>
         </div>
     </nav>
-    <?php else: ?>
-    <nav>
-        <div class="container">
-            <ul>
-                <li><a href="/" class="brand">Tournament Tables</a></li>
-            </ul>
-        </div>
-    </nav>
+
+    <?php if ($pageName): ?>
+    <div class="nav-page-name full-bleed">
+        <?php if ($backLink): ?>
+        <a href="<?= htmlspecialchars($backLink) ?>" class="back-link">&laquo; Back</a>
+        <?php endif; ?>
+        <h1><?= htmlspecialchars($pageName) ?></h1>
+        <?php if ($pageSubtitle): ?>
+        <p class="page-subtitle"><?= htmlspecialchars($pageSubtitle) ?></p>
+        <?php endif; ?>
+    </div>
     <?php endif; ?>
 
     <main class="container">
+        <div id="admin-message-container"></div>
         <?= $content ?? '' ?>
     </main>
 

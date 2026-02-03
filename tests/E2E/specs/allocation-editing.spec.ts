@@ -57,7 +57,7 @@ test.describe('Allocation Editing', () => {
     await expect(page.getByText('Warpcoven')).toBeVisible();
 
     // Verify no conflict badges initially (table collisions or table reuse)
-    await expect(page.locator('.conflict-badge')).not.toBeVisible();
+    await expect(page.locator('.round-conflict-badge')).not.toBeVisible();
 
     // Verify no conflict row highlighting
     await expect(page.locator('tr.conflict-table-collision')).toHaveCount(0);
@@ -90,8 +90,8 @@ test.describe('Allocation Editing', () => {
     await page.waitForLoadState('networkidle');
 
     // Verify Table Collision badge appears
-    await expect(page.locator('.conflict-badge')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('.conflict-badge')).toContainText(
+    await expect(page.locator('.round-conflict-badge')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('.round-conflict-badge')).toContainText(
       'Table Collision'
     );
 
@@ -121,7 +121,7 @@ test.describe('Allocation Editing', () => {
     // Verify collision is resolved
     await expect(page.locator('tr.conflict-table-collision')).toHaveCount(0);
     await expect(
-      page.locator('.conflict-badge', { hasText: 'Table Collision' })
+      page.locator('.round-conflict-badge', { hasText: 'Table Collision' })
     ).not.toBeVisible();
 
     // STEP 4: Swap tables to create TABLE_REUSE conflict
@@ -162,7 +162,7 @@ test.describe('Allocation Editing', () => {
 
     // Verify conflict badge shows conflicts
     await expect(
-      page.locator('.conflict-badge', { hasText: 'Conflict' })
+      page.locator('.round-conflict-badge', { hasText: 'Conflict' })
     ).toBeVisible();
 
     // STEP 5: Regenerate allocations to resolve all conflicts
@@ -184,10 +184,10 @@ test.describe('Allocation Editing', () => {
     await expect(page.locator('tr.conflict-table-collision')).toHaveCount(0);
     await expect(page.locator('tr.conflict-table-reuse')).toHaveCount(0);
     await expect(
-      page.locator('.conflict-badge', { hasText: 'Collision' })
+      page.locator('.round-conflict-badge', { hasText: 'Collision' })
     ).not.toBeVisible();
     await expect(
-      page.locator('.conflict-badge', { hasText: 'Conflict' })
+      page.locator('.round-conflict-badge', { hasText: 'Conflict' })
     ).not.toBeVisible();
 
     // Warnings may still exist (terrain reuse is acceptable)

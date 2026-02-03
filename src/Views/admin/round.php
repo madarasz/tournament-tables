@@ -17,6 +17,8 @@
  */
 declare(strict_types=1);
 
+use TournamentTables\Services\CsrfService;
+
 $pageTitle = "{$tournament->name} - Round {$round->roundNumber}";
 $isPublished = $round->isPublished;
 
@@ -118,6 +120,7 @@ $hasTableCollisions = !empty($tableCollisions);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($pageTitle) ?></title>
+    <?= CsrfService::getMetaTag() ?>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
     <link rel="stylesheet" href="/css/app.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -133,514 +136,42 @@ $hasTableCollisions = !empty($tableCollisions);
             if (token) {
                 event.detail.headers['X-Admin-Token'] = token;
             }
+            var csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (csrfToken) {
+                event.detail.headers['X-CSRF-Token'] = csrfToken.getAttribute('content');
+            }
         });
     </script>
-    <style>
-        /* Conflict highlighting */
-        .conflict-table-collision,
-        .conflict-table-collision:nth-child(odd),
-        .conflict-table-collision:nth-child(even) {
-            background-color: hsla(0, 77%, 61%, 1.00) !important;
-            border-left: 4px solid #c62828;
-        }
-        .conflict-table-reuse,
-        .conflict-table-reuse:nth-child(odd),
-        .conflict-table-reuse:nth-child(even) {
-            background-color: #ffcdd2 !important;
-            border-left: 4px solid #f44336;
-        }
-
-        /* Badges */
-        .published-badge {
-            display: inline-block;
-            padding: 0.25em 0.5em;
-            background-color: #4caf50;
-            color: white;
-            border-radius: 4px;
-            font-size: 0.875em;
-            margin-left: 0.5em;
-        }
-        .conflict-badge {
-            display: inline-block;
-            padding: 0.25em 0.5em;
-            background-color: #f44336;
-            color: white;
-            border-radius: 4px;
-            font-size: 0.875em;
-            margin-left: 0.5em;
-        }
-
-        /* Bye row styling */
-        .bye-row {
-            background-color: #f5f5f5 !important;
-        }
-        .bye-indicator {
-            display: inline-block;
-            padding: 0.2em 0.5em;
-            background-color: #9e9e9e;
-            color: white;
-            border-radius: 4px;
-            font-size: 0.75em;
-            font-weight: bold;
-            margin-left: 0.5em;
-        }
-        .bye-no-table {
-            color: #9e9e9e;
-            font-style: italic;
-        }
-
-        /* Base table styles (mobile-first) */
-        .allocation-table {
-            width: 100%;
-            font-size: 14px;
-        }
-        .allocation-table th,
-        .allocation-table td {
-            padding: 8px 4px;
-            text-align: left;
-            vertical-align: middle;
-        }
-        .allocation-table th {
-            font-size: 12px;
-            white-space: nowrap;
-        }
-
-        /* Score styling - muted, inline with player name */
-        .player-score {
-            color: #1976d2;
-            font-weight: 600;
-            margin-left: 4px;
-        }
-
-        /* Terrain in table column */
-        .terrain-suffix {
-            font-style: italic;
-            color: #666;
-            font-size: 0.85em;
-        }
-
-        /* BCP table difference indicator */
-        .bcp-diff {
-            display: block;
-            color: #666;
-            font-size: 0.75em;
-            font-weight: normal;
-            margin-top: 2px;
-        }
-
-        /* VS separator column */
-        .vs-cell {
-            text-align: center;
-            color: #888;
-            font-size: 12px;
-            padding: 8px 2px !important;
-        }
-
-        /* Player name styling */
-        .player-name {
-            max-width: 150px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .player-cell {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        /* Player faction styling */
-        .player-faction {
-            display: block;
-            font-size: 0.75em;
-            color: #888;
-            font-style: italic;
-            margin-top: 2px;
-            max-width: 150px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        /* Checkbox - touch-friendly on mobile */
-        .select-cell {
-            width: 44px;
-            text-align: center;
-        }
-        .swap-checkbox {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-        }
-
-        /* Table number column */
-        .table-cell {
-            white-space: nowrap;
-            font-weight: 600;
-        }
-
-        /* Change table - dropdown on desktop, button on mobile */
-        .change-cell {
-            width: 120px;
-        }
-        .change-table-dropdown {
-            width: 100%;
-            font-size: 0.875em;
-            padding: 6px 8px;
-        }
-        .change-table-btn {
-            display: none;
-            width: 44px;
-            height: 44px;
-            padding: 0;
-            background: var(--secondary);
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 18px;
-            line-height: 44px;
-        }
-        .change-table-btn:hover {
-            background: var(--secondary-hover);
-        }
-
-        /* Header abbreviations */
-        .header-full { display: inline; }
-        .header-short { display: none; }
-
-        /* Action buttons */
-        .action-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5em;
-            margin-bottom: 1em;
-        }
-        .loading {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
-        /* Conflict list */
-        .conflict-list {
-            margin-top: 1em;
-            padding: 1em;
-            color: #666;
-            background-color: #fff3e0;
-            border-radius: 4px;
-        }
-        .conflict-list h3 {
-            margin: 0;
-            color: #666;
-        }   
-        .conflict-item {
-            padding: 0.5em 0;
-            border-bottom: 1px solid #ffe0b2;
-        }
-        .conflict-item:last-child {
-            border-bottom: none;
-        }
-        .conflict-type {
-            font-weight: bold;
-            color: #e65100;
-        }
-
-        #allocation-results {
-            min-height: 200px;
-        }
-
-        /* HTMX indicators */
-        .htmx-indicator {
-            display: none;
-        }
-        .htmx-request .htmx-indicator {
-            display: inline-block;
-        }
-        .htmx-request.htmx-indicator {
-            display: inline-block;
-        }
-
-        /* Swap button container - sticky on mobile */
-        .swap-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.5em;
-            margin-top: 1em;
-            padding: 1em;
-            background: var(--background-color, #fff);
-            border-top: 1px solid var(--muted-border-color, #ddd);
-        }
-        .swap-status {
-            font-size: 0.875em;
-            color: #666;
-        }
-
-        /* Modal for mobile table editing */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: flex-end;
-        }
-        .modal-overlay.active {
-            display: flex;
-        }
-        .modal-content {
-            background: var(--background-color, #fff);
-            border-radius: 12px 12px 0 0;
-            padding: 1.5em;
-            width: 100%;
-            max-width: 500px;
-            max-height: 70vh;
-            overflow-y: auto;
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1em;
-        }
-        .modal-header h3 {
-            margin: 0;
-            font-size: 1.1em;
-        }
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.5em;
-            cursor: pointer;
-            padding: 0;
-            line-height: 1;
-        }
-        .modal-description {
-            color: #666;
-            margin-bottom: 1em;
-            font-size: 0.9em;
-        }
-        .table-options {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .table-option-btn {
-            width: 100%;
-            padding: 14px 16px;
-            text-align: left;
-            background: var(--secondary-focus, #f0f0f0);
-            border: 2px solid transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: border-color 0.2s;
-        }
-        .table-option-btn:hover,
-        .table-option-btn:focus {
-            border-color: var(--primary);
-        }
-        .table-option-btn.selected {
-            border-color: var(--primary);
-            background: var(--primary-focus, #e3f2fd);
-        }
-        .table-option-terrain {
-            font-style: italic;
-            color: #666;
-            margin-left: 8px;
-        }
-
-        /* Round navigation (UX Improvement #7) */
-        .round-navigation {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1em;
-        }
-        .round-nav-spacer {
-            flex: 1;
-        }
-        .round-nav-btn {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            text-decoration: none;
-            border-radius: 4px;
-            white-space: nowrap;
-            background: var(--secondary-focus, #f0f0f0);
-            border: 1px solid var(--muted-border-color, #ccc);
-        }
-        .round-nav-btn:hover {
-            background: var(--secondary-hover, #e0e0e0);
-            text-decoration: none;
-        }
-
-        /* Import Next button - same as nav buttons but white background with blue text */
-        .import-next-btn {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            text-decoration: none;
-            border-radius: 4px;
-            white-space: nowrap;
-            background: #fff;
-            border: 1px solid var(--muted-border-color, #ccc);
-            color: var(--pico-primary, #1095c1);
-            cursor: pointer;
-            font-size: inherit;
-            font-family: inherit;
-            line-height: inherit;
-            margin: 0;
-            box-sizing: border-box;
-        }
-        .import-next-btn:hover {
-            background: var(--pico-primary-focus, #e3f2fd);
-        }
-        .import-next-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        /* Import result container in navigation area */
-        .import-next-result {
-            margin-top: 0.5rem;
-            text-align: right;
-        }
-        .import-next-result:empty {
-            display: none;
-        }
-
-        /* Mobile styles (< 768px) */
-        @media (max-width: 767px) {
-            .allocation-table {
-                font-size: 13px;
-            }
-            .allocation-table th,
-            .allocation-table td {
-                padding: 10px 4px;
-            }
-
-            /* Larger touch targets */
-            .swap-checkbox {
-                width: 24px;
-                height: 24px;
-            }
-            .select-cell {
-                width: 40px;
-            }
-
-            /* Abbreviate headers */
-            .header-full { display: none; }
-            .header-short { display: inline; }
-
-            /* Round navigation - compact side-by-side (UX Improvement #7) */
-            .round-nav-btn {
-                padding: 0.5rem 0.75rem;
-                font-size: 0.9rem;
-                max-width: 45%;
-            }
-            .nav-short { display: inline; }
-            .nav-full { display: none; }
-
-            /* Import Next button - compact on mobile, same as nav buttons */
-            .import-next-btn {
-                padding: 0.5rem 0.75rem;
-                font-size: 0.9rem;
-                max-width: 45%;
-            }
-
-            /* Show mobile edit button, hide dropdown */
-            .change-table-dropdown { display: none; }
-            .change-table-btn { display: inline-block; }
-            .change-cell { width: 48px; }
-
-            /* Player names - show abbreviated version */
-            .player-name-full { display: none; }
-            .player-name-short { display: inline; }
-            .player-name {
-                max-width: 100px;
-            }
-
-            /* Sticky swap controls at bottom */
-            .swap-controls {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                margin: 0;
-                z-index: 100;
-                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-            }
-
-            /* Add padding at bottom for sticky controls */
-            #allocation-results {
-                padding-bottom: 80px;
-            }
-
-            /* Modal slides up from bottom */
-            .modal-content {
-                animation: slideUp 0.2s ease-out;
-            }
-            @keyframes slideUp {
-                from { transform: translateY(100%); }
-                to { transform: translateY(0); }
-            }
-        }
-
-        /* Desktop styles (>= 768px) */
-        @media (min-width: 768px) {
-            .allocation-table {
-                font-size: 15px;
-            }
-            .allocation-table th,
-            .allocation-table td {
-                padding: 12px 8px;
-            }
-            .player-name {
-                max-width: 200px;
-            }
-            .player-name-full { display: inline; }
-            .player-name-short { display: none; }
-            .change-cell {
-                width: 140px;
-            }
-
-            /* Modal centered on desktop */
-            .modal-overlay {
-                align-items: center;
-            }
-            .modal-content {
-                border-radius: 12px;
-                max-height: 80vh;
-            }
-        }
-    </style>
 </head>
 <body>
-    <main class="container">
-        <nav>
+    <nav>
+        <div class="container">
             <ul>
-                <li><strong><a href="/admin" style="text-decoration: none;">Tournament Tables</a></strong></li>
+                <li><a href="/admin" class="brand">Tournament Tables</a></li>
+                <li class="nav-right">
+                    <a href="/admin/tournament/create">New Tournament</a>
+                    <a href="/admin/login">Login</a>
+                </li>
             </ul>
-            <ul>
-                <li><a href="/admin/tournament/<?= $tournament->id ?>"><?= htmlspecialchars($tournament->name) ?></a></li>
-            </ul>
-        </nav>
+            <a href="/admin/tournament/<?= $tournament->id ?>" class="back-link">&laquo; <?= htmlspecialchars($tournament->name) ?></a>
+        </div>
+    </nav>
 
-        <header>
-            <h1>
-                Round <?= $round->roundNumber ?>
-                <?php if ($isPublished): ?>
-                    <span class="published-badge">Published</span>
-                <?php endif; ?>
-                <?php if ($hasTableCollisions): ?>
-                    <span class="conflict-badge">Table Collision!</span>
-                <?php elseif ($hasConflicts): ?>
-                    <span class="conflict-badge"><?= count($conflicts) ?> Conflict(s)</span>
-                <?php endif; ?>
-            </h1>
-        </header>
+    <div class="nav-page-name full-bleed">
+        <h1>
+            Round <?= $round->roundNumber ?>
+            <?php if ($isPublished): ?>
+                <span class="round-published-badge">Published</span>
+            <?php endif; ?>
+            <?php if ($hasTableCollisions): ?>
+                <span class="round-conflict-badge">Table Collision!</span>
+            <?php elseif ($hasConflicts): ?>
+                <span class="round-conflict-badge"><?= count($conflicts) ?> Conflict(s)</span>
+            <?php endif; ?>
+        </h1>
+    </div>
+
+    <main class="container">
 
         <?php if ($justImported): ?>
         <!-- Success message for round import (FR-015, UX Improvement #5) -->
@@ -845,7 +376,7 @@ $hasTableCollisions = !empty($tableCollisions);
                         <?php $bcpDiff = $isBye ? ['emoji' => '', 'detail' => ''] : formatBcpDifference($allocation); ?>
                         <td class="table-cell" title="<?= $isBye ? 'Bye - no table assigned' : ($terrainName ? "Table {$table->tableNumber} ({$terrainName})" : "Table " . ($table ? $table->tableNumber : 'N/A')) ?>">
                             <?php if ($isBye): ?>
-                                <span class="bye-no-table">—</span>
+                                <span class="bye-indicator">BYE</span>
                             <?php elseif ($table): ?>
                                 <span><?= $bcpDiff['emoji'] ?> Table <?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?></span>
                                 <?php if ($terrainName): ?>
@@ -867,9 +398,6 @@ $hasTableCollisions = !empty($tableCollisions);
                             <span class="player-score">(<?= $player1 ? $player1->totalScore : 0 ?>)</span>
                             <?php if ($player1 && $player1->faction): ?>
                             <span class="player-faction"><?= htmlspecialchars($player1->faction) ?></span>
-                            <?php endif; ?>
-                            <?php if ($isBye): ?>
-                            <span class="bye-indicator">BYE</span>
                             <?php endif; ?>
                         </td>
                         <!-- Player 2 with total score and faction (or empty for bye) -->
@@ -1039,11 +567,13 @@ $hasTableCollisions = !empty($tableCollisions);
             var allocationId2 = parseInt(checkboxes[1].dataset.allocationId);
 
             // Execute swap immediately - action is reversible (swap again to undo)
+            var csrfToken = document.querySelector('meta[name="csrf-token"]');
             fetch('/api/allocations/swap', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Admin-Token': getAdminToken(currentTournamentId)
+                    'X-Admin-Token': getAdminToken(currentTournamentId),
+                    'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
                 },
                 body: JSON.stringify({
                     allocationId1: allocationId1,

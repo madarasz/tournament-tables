@@ -258,14 +258,15 @@ class BCPApiService
     private function parsePairingItem(array $item, array $totalScores = []): ?Pairing
     {
         // Validate player1 is present (required)
-        if (!isset($item['player1'], $item['player1Game'])) {
+        if (!isset($item['player1'])) {
             return null;
         }
 
         // Extract player1 data
         $player1BcpId = $item['player1']['id'] ?? '';
         $player1Name = $this->formatPlayerName($item['player1']['user'] ?? []);
-        $player1Score = (int)($item['player1Game']['points'] ?? 0);
+        // Handle missing player1Game (game not yet played) - treat as score 0
+        $player1Score = isset($item['player1Game']) ? (int)($item['player1Game']['points'] ?? 0) : 0;
         $player1Faction = $this->extractFaction($item['player1']);
 
         // Skip if missing player1 ID
@@ -299,15 +300,11 @@ class BCPApiService
             );
         }
 
-        // Regular pairing - validate player2 game data exists
-        if (!isset($item['player2Game'])) {
-            return null;
-        }
-
         // Extract player2 data
+        // Handle missing player2Game (game not yet played) - treat as score 0
         $player2BcpId = $item['player2']['id'] ?? '';
         $player2Name = $this->formatPlayerName($item['player2']['user'] ?? []);
-        $player2Score = (int)($item['player2Game']['points'] ?? 0);
+        $player2Score = isset($item['player2Game']) ? (int)($item['player2Game']['points'] ?? 0) : 0;
         $player2Faction = $this->extractFaction($item['player2']);
 
         // Look up total scores from the map (default to 0 if not found)
