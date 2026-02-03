@@ -68,14 +68,6 @@ class ViewController extends BaseController
             }
         }
 
-        // Render the tournament dashboard directly (it has its own layout with tabs)
-        $tournament = $tournament;
-        $rounds = $rounds;
-        $tables = $tables;
-        $terrainTypes = $terrainTypes;
-        $justCreated = $justCreated;
-        $adminToken = $adminToken;
-        $autoImport = $autoImport;
         include __DIR__ . '/../Views/admin/tournament.php';
     }
 

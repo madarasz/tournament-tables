@@ -136,6 +136,10 @@ $hasTableCollisions = !empty($tableCollisions);
             if (token) {
                 event.detail.headers['X-Admin-Token'] = token;
             }
+            var csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (csrfToken) {
+                event.detail.headers['X-CSRF-Token'] = csrfToken.getAttribute('content');
+            }
         });
     </script>
 </head>
@@ -563,11 +567,13 @@ $hasTableCollisions = !empty($tableCollisions);
             var allocationId2 = parseInt(checkboxes[1].dataset.allocationId);
 
             // Execute swap immediately - action is reversible (swap again to undo)
+            var csrfToken = document.querySelector('meta[name="csrf-token"]');
             fetch('/api/allocations/swap', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Admin-Token': getAdminToken(currentTournamentId)
+                    'X-Admin-Token': getAdminToken(currentTournamentId),
+                    'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
                 },
                 body: JSON.stringify({
                     allocationId1: allocationId1,

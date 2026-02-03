@@ -8,32 +8,6 @@
  * @var bool $isEmpty Whether the tournament list is empty
  */
 
-/**
- * Format a Unix timestamp as relative time.
- *
- * @param int $timestamp Unix timestamp
- * @return string Formatted relative time
- */
-function formatRelativeTime(int $timestamp): string
-{
-    $diff = time() - $timestamp;
-
-    if ($diff < 60) {
-        return 'Just now';
-    } elseif ($diff < 3600) {
-        $mins = floor($diff / 60);
-        return $mins . ' minute' . ($mins > 1 ? 's' : '') . ' ago';
-    } elseif ($diff < 86400) {
-        $hours = floor($diff / 3600);
-        return $hours . ' hour' . ($hours > 1 ? 's' : '') . ' ago';
-    } elseif ($diff < 604800) {
-        $days = floor($diff / 86400);
-        return $days . ' day' . ($days > 1 ? 's' : '') . ' ago';
-    } else {
-        return date('M j, Y', $timestamp);
-    }
-}
-
 $title = 'My Tournaments';
 $pageName = 'My Tournaments';
 ob_start();

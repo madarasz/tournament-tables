@@ -532,10 +532,12 @@ document.getElementById('terrain-form').addEventListener('submit', function(e) {
     setButtonLoading('save-terrain-button', 'save-terrain-indicator', 'save-terrain-text', true);
     document.getElementById('terrain-result').innerHTML = '';
 
+    var csrfToken = document.querySelector('meta[name="csrf-token"]');
     fetch('/api/tournaments/<?= $tournament->id ?>/tables', {
         method: 'PUT',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
         },
         body: JSON.stringify({ tables: tables })
     })
@@ -657,10 +659,14 @@ document.getElementById('clear-all-button').addEventListener('click', function()
 
         setButtonLoading('delete-tournament-button', 'delete-indicator', 'delete-text', true);
         document.getElementById('delete-result').innerHTML = '';
-
+        
+        var csrfToken = document.querySelector('meta[name="csrf-token"]');
         fetch('/api/tournaments/' + tournamentId, {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': csrfToken ? csrfToken.getAttribute('content') : ''
+            }
         })
         .then(function(response) {
             return response.json().then(function(data) {
