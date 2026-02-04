@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace TournamentTables\Tests\Integration;
 
-use PHPUnit\Framework\TestCase;
+use TournamentTables\Tests\DatabaseTestCase;
 use TournamentTables\Database\Connection;
 use TournamentTables\Models\Tournament;
 use TournamentTables\Models\Round;
@@ -20,7 +20,7 @@ use TournamentTables\Services\CostCalculator;
  * Tests edit persistence and conflict recalculation.
  * Reference: specs/001-table-allocation/tasks.md#T066
  */
-class AllocationEditTest extends TestCase
+class AllocationEditTest extends DatabaseTestCase
 {
     /**
      * @var Tournament
@@ -34,13 +34,7 @@ class AllocationEditTest extends TestCase
 
     protected function setUp(): void
     {
-        // Skip if no database connection
-        if (!$this->isDatabaseAvailable()) {
-            $this->markTestSkipped('Database not available');
-        }
-
-        // Clean up any existing test data
-        $this->cleanupTestData();
+        parent::setUp();
 
         // Create test tournament
         $this->tournament = $this->createTestTournament();
@@ -48,13 +42,6 @@ class AllocationEditTest extends TestCase
         // Initialize service
         $db = Connection::getInstance();
         $this->editService = new AllocationEditService($db, new CostCalculator());
-    }
-
-    protected function tearDown(): void
-    {
-        if ($this->isDatabaseAvailable()) {
-            $this->cleanupTestData();
-        }
     }
 
     /**
@@ -364,31 +351,6 @@ class AllocationEditTest extends TestCase
     }
 
     // Helper methods
-
-    private function isDatabaseAvailable(): bool
-    {
-        try {
-            $db = Connection::getInstance();
-            // Check if required tables exist
-            $result = $db->query("SHOW TABLES LIKE 'allocations'");
-            if ($result->rowCount() === 0) {
-                return false;
-            }
-            return true;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    private function cleanupTestData(): void
-    {
-        $db = Connection::getInstance();
-        $db->exec("DELETE FROM allocations WHERE 1=1");
-        $db->exec("DELETE FROM players WHERE 1=1");
-        $db->exec("DELETE FROM rounds WHERE 1=1");
-        $db->exec("DELETE FROM tables WHERE 1=1");
-        $db->exec("DELETE FROM tournaments WHERE bcp_event_id LIKE 'TEST%'");
-    }
 
     private function createTestTournament(): Tournament
     {

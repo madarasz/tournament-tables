@@ -1,0 +1,89 @@
+{
+  "active": [
+    {
+      "id": "player1_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 85},
+        {"name": "Paint Score", "value": 42}
+      ]
+    },
+    {
+      "id": "player2_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 72},
+        {"name": "Paint Score", "value": 38}
+      ]
+    },
+    {
+      "id": "player3_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 68},
+        {"name": "Paint Score", "value": 35}
+      ]
+    },
+    {
+      "id": "player4_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 55},
+        {"name": "Paint Score", "value": 30}
+      ]
+    },
+    {
+      "id": "player5_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 48},
+        {"name": "Paint Score", "value": 28}
+      ]
+    },
+    {
+      "id": "player6_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 42},
+        {"name": "Paint Score", "value": 25}
+      ]
+    },
+    {
+      "id": "player7_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 35},
+        {"name": "Paint Score", "value": 22}
+      ]
+    },
+    {
+      "id": "player8_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 28},
+        {"name": "Paint Score", "value": 20}
+      ]
+    },
+    {
+      "id": "player9_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 22},
+        {"name": "Paint Score", "value": 18}
+      ]
+    },
+    {
+      "id": "player10_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 18},
+        {"name": "Paint Score", "value": 15}
+      ]
+    },
+    {
+      "id": "player11_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 12},
+        {"name": "Paint Score", "value": 12}
+      ]
+    },
+    {
+      "id": "player12_bcp_id",
+      "overall_metrics": [
+        {"name": "Overall Score", "value": 8},
+        {"name": "Paint Score", "value": 10}
+      ]
+    }
+  ],
+  "deleted": []
+}

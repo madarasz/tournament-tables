@@ -59,30 +59,6 @@ class AuthServiceTest extends TestCase
         $this->assertStringContainsString('format', strtolower($result['error']));
     }
 
-    public function testValidateTokenTrimsWhitespace(): void
-    {
-        // Token with whitespace that becomes 16 chars after trim
-        // Should still fail because trimmed token won't be found in DB
-        // But the validation should process it correctly
-        $result = $this->service->validateToken('  abc123xyz45678  ');
-
-        // After trim, token is 16 chars but won't exist in DB
-        $this->assertFalse($result['valid']);
-        // Error should be about invalid token (not found), not format
-        $this->assertArrayHasKey('error', $result);
-    }
-
-    public function testValidateTokenRejectsNonExistentValidFormatToken(): void
-    {
-        // A token with correct format (16 chars) but doesn't exist in database
-        // Note: This test will only work properly when database is available
-        // In unit tests, it should still reject due to no DB connection
-        $result = $this->service->validateToken('Abc123XyzDef456G');
-
-        $this->assertFalse($result['valid']);
-        $this->assertArrayHasKey('error', $result);
-    }
-
     public function testValidateTokenRequiresExactly16Characters(): void
     {
         // Test 15 characters

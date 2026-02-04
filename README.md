@@ -96,8 +96,11 @@ composer seed        # Seed terrain types
 # Start development environment
 docker-compose up -d
 
-# Run all PHP tests (recommended)
+# Run PHP unit tests (recommended)
 composer test:unit
+
+# Run all PHP unit tests (excluding performance)
+composer test:unit:all
 
 # Or manually run specific test suites
 docker-compose exec php ./vendor/bin/phpunit --testsuite unit

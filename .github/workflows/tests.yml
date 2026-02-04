@@ -71,5 +71,5 @@ jobs:
       - name: Seed terrain types
         run: php bin/seed-terrain-types.php
 
-      - name: Run PHPUnit tests
-        run: vendor/bin/phpunit --testsuite unit,integration,performance,contract
+      - name: Run ALL PHPUnit tests
+        run: vendor/bin/phpunit --testsuite unit,integration,performance,contract,e2e

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace TournamentTables\Tests\Integration;
 
-use PHPUnit\Framework\TestCase;
+use TournamentTables\Tests\DatabaseTestCase;
 use TournamentTables\Database\Connection;
 use TournamentTables\Models\Tournament;
 use TournamentTables\Models\Round;
@@ -22,7 +22,7 @@ use TournamentTables\Services\Pairing;
  * Tests end-to-end allocation with database integration.
  * Reference: specs/001-table-allocation/tasks.md#T042
  */
-class AllocationGenerationTest extends TestCase
+class AllocationGenerationTest extends DatabaseTestCase
 {
     /**
      * @var Tournament
@@ -36,26 +36,13 @@ class AllocationGenerationTest extends TestCase
 
     protected function setUp(): void
     {
-        // Skip if no database connection
-        if (!$this->isDatabaseAvailable()) {
-            $this->markTestSkipped('Database not available');
-        }
-
-        // Clean up any existing test data
-        $this->cleanupTestData();
+        parent::setUp();
 
         // Create test tournament
         $this->tournament = $this->createTestTournament();
 
         // Initialize service
         $this->allocationService = new AllocationService(new CostCalculator());
-    }
-
-    protected function tearDown(): void
-    {
-        if ($this->isDatabaseAvailable()) {
-            $this->cleanupTestData();
-        }
     }
 
     /**
@@ -94,7 +81,6 @@ class AllocationGenerationTest extends TestCase
     public function testConflictDetectionWhenTableReuseUnavoidable(): void
     {
         // Create a tournament with only 2 tables but 4 players who will play again
-        $this->cleanupTestData();
         $this->tournament = $this->createSmallTournament(2);
 
         // Round 1: p1 vs p2 on table 1, p3 vs p4 on table 2
@@ -260,96 +246,61 @@ class AllocationGenerationTest extends TestCase
 
     // Helper methods
 
-    private function isDatabaseAvailable(): bool
-    {
-        try {
-            Connection::getInstance();
-            return true;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    private function cleanupTestData(): void
-    {
-        try {
-            Connection::execute("DELETE FROM tournaments WHERE bcp_event_id LIKE 'test_alloc_%' OR bcp_event_id LIKE 'test_small_%'");
-        } catch (\Exception $e) {
-            // Ignore cleanup errors
-        }
-    }
-
     private function createTestTournament(): Tournament
     {
-        Connection::beginTransaction();
+        // No explicit transaction - relies on test transaction from DatabaseTestCase
+        Connection::execute(
+            "INSERT INTO tournaments (name, bcp_event_id, bcp_url, table_count, admin_token)
+             VALUES (?, ?, ?, ?, ?)",
+            [
+                'Test Tournament Allocation',
+                'test_alloc_' . uniqid('', true),
+                'https://www.bestcoastpairings.com/event/test123',
+                8,
+                bin2hex(random_bytes(8)),
+            ]
+        );
 
-        try {
+        $tournamentId = Connection::lastInsertId();
+
+        // Create 8 tables without terrain types
+        for ($i = 1; $i <= 8; $i++) {
             Connection::execute(
-                "INSERT INTO tournaments (name, bcp_event_id, bcp_url, table_count, admin_token)
-                 VALUES (?, ?, ?, ?, ?)",
-                [
-                    'Test Tournament Allocation',
-                    'test_alloc_' . uniqid('', true),
-                    'https://www.bestcoastpairings.com/event/test123',
-                    8,
-                    bin2hex(random_bytes(8)),
-                ]
+                "INSERT INTO tables (tournament_id, table_number, terrain_type_id)
+                 VALUES (?, ?, ?)",
+                [$tournamentId, $i, null]
             );
-
-            $tournamentId = Connection::lastInsertId();
-
-            // Create 8 tables without terrain types
-            for ($i = 1; $i <= 8; $i++) {
-                Connection::execute(
-                    "INSERT INTO tables (tournament_id, table_number, terrain_type_id)
-                     VALUES (?, ?, ?)",
-                    [$tournamentId, $i, null]
-                );
-            }
-
-            Connection::commit();
-
-            return Tournament::find($tournamentId);
-        } catch (\Exception $e) {
-            Connection::rollBack();
-            throw $e;
         }
+
+        return Tournament::find($tournamentId);
     }
 
     private function createSmallTournament(int $tableCount): Tournament
     {
-        Connection::beginTransaction();
+        // No explicit transaction - relies on test transaction from DatabaseTestCase
+        Connection::execute(
+            "INSERT INTO tournaments (name, bcp_event_id, bcp_url, table_count, admin_token)
+             VALUES (?, ?, ?, ?, ?)",
+            [
+                'Test Tournament Small',
+                'test_small_' . uniqid('', true),
+                'https://www.bestcoastpairings.com/event/small123',
+                $tableCount,
+                bin2hex(random_bytes(8)),
+            ]
+        );
 
-        try {
+        $tournamentId = Connection::lastInsertId();
+
+        for ($i = 1; $i <= $tableCount; $i++) {
             Connection::execute(
-                "INSERT INTO tournaments (name, bcp_event_id, bcp_url, table_count, admin_token)
-                 VALUES (?, ?, ?, ?, ?)",
-                [
-                    'Test Tournament Small',
-                    'test_small_' . uniqid('', true),
-                    'https://www.bestcoastpairings.com/event/small123',
-                    $tableCount,
-                    bin2hex(random_bytes(8)),
-                ]
+                "INSERT INTO tables (tournament_id, table_number, terrain_type_id)
+                 VALUES (?, ?, ?)",
+                [$tournamentId, $i, null]
             );
-
-            $tournamentId = Connection::lastInsertId();
-
-            for ($i = 1; $i <= $tableCount; $i++) {
-                Connection::execute(
-                    "INSERT INTO tables (tournament_id, table_number, terrain_type_id)
-                     VALUES (?, ?, ?)",
-                    [$tournamentId, $i, null]
-                );
-            }
-
-            Connection::commit();
-
-            return Tournament::find($tournamentId);
-        } catch (\Exception $e) {
-            Connection::rollBack();
-            throw $e;
         }
+
+        return Tournament::find($tournamentId);
     }
 
     private function createRound1WithAllocations(): Round

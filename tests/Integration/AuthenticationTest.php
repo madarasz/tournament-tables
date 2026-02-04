@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace TournamentTables\Tests\Integration;
 
-use PHPUnit\Framework\TestCase;
+use TournamentTables\Tests\DatabaseTestCase;
 use TournamentTables\Services\AuthService;
 use TournamentTables\Services\TournamentService;
 use TournamentTables\Middleware\AdminAuthMiddleware;
@@ -16,7 +16,7 @@ use TournamentTables\Database\Connection;
  *
  * Reference: specs/001-table-allocation/tasks.md T034
  */
-class AuthenticationTest extends TestCase
+class AuthenticationTest extends DatabaseTestCase
 {
     /** @var AuthService */
     private $authService;
@@ -26,19 +26,7 @@ class AuthenticationTest extends TestCase
 
     protected function setUp(): void
     {
-        // Skip if no database config available
-        $configPath = dirname(__DIR__, 2) . '/config/database.php';
-        if (!file_exists($configPath)) {
-            $this->markTestSkipped('Database configuration not found');
-        }
-
-        // Skip if database is not reachable
-        if (!$this->isDatabaseAvailable()) {
-            $this->markTestSkipped('Database not available');
-        }
-
-        // Clean up any leftover test data from previous runs
-        $this->cleanupTestData();
+        parent::setUp();
 
         $this->authService = new AuthService();
         $this->tournamentService = new TournamentService();
@@ -54,8 +42,7 @@ class AuthenticationTest extends TestCase
 
     protected function tearDown(): void
     {
-        // Clean up all test data (pattern-based cleanup is more robust)
-        $this->cleanupTestData();
+        parent::tearDown();
 
         // Reset global state
         global $authenticatedTournament;
@@ -64,42 +51,6 @@ class AuthenticationTest extends TestCase
         // Clear superglobals
         unset($_SERVER['HTTP_X_ADMIN_TOKEN']);
         unset($_COOKIE['admin_token']);
-
-        Connection::reset();
-    }
-
-    /**
-     * Clean up test tournaments by name pattern.
-     * This is more robust than tracking IDs since it catches leftover data
-     * from failed tests or tests that threw unexpected exceptions.
-     */
-    private function cleanupTestData(): void
-    {
-        try {
-            // Delete test tournaments by name pattern
-            // Covers all test names used in this test suite
-            Connection::execute(
-                "DELETE FROM tournaments WHERE name LIKE '%Test%'
-                 OR bcp_event_id LIKE 'authtest%'
-                 OR bcp_event_id LIKE 'datatest%'
-                 OR bcp_event_id LIKE 'middleware%'
-                 OR bcp_event_id LIKE 'priority%'
-                 OR bcp_event_id LIKE 'store%'
-                 OR bcp_event_id LIKE 'cookieflow%'"
-            );
-        } catch (\Exception $e) {
-            // Ignore cleanup errors
-        }
-    }
-
-    private function isDatabaseAvailable(): bool
-    {
-        try {
-            Connection::getInstance();
-            return true;
-        } catch (\Exception $e) {
-            return false;
-        }
     }
 
     // ========== AuthService Integration Tests ==========
@@ -138,6 +89,28 @@ class AuthenticationTest extends TestCase
         $result = $this->authService->validateToken('InvalidToken12345');
 
         $this->assertFalse($result['valid']);
+        $this->assertArrayHasKey('error', $result);
+    }
+
+    public function testValidateTokenRejectsNonExistentValidFormatToken(): void
+    {
+        // A token with correct format (16 chars) but doesn't exist in database
+        $result = $this->authService->validateToken('Abc123XyzDef456G');
+
+        $this->assertFalse($result['valid']);
+        $this->assertArrayHasKey('error', $result);
+    }
+
+    public function testValidateTokenTrimsWhitespace(): void
+    {
+        // Token with whitespace that becomes 16 chars after trim
+        // Should still fail because trimmed token won't be found in DB
+        // But the validation should process it correctly
+        $result = $this->authService->validateToken('  abc123xyz45678  ');
+
+        // After trim, token is 16 chars but won't exist in DB
+        $this->assertFalse($result['valid']);
+        // Error should be about invalid token (not found), not format
         $this->assertArrayHasKey('error', $result);
     }
 

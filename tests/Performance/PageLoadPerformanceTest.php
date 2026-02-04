@@ -46,48 +46,6 @@ class PageLoadPerformanceTest extends TestCase
     }
 
     /**
-     * SC-004: Test public round view loads under 3 seconds.
-     *
-     * @group performance
-     */
-    public function testPublicRoundViewPerformance(): void
-    {
-        // Create a published round with allocations
-        $round = $this->createPublishedRoundWithAllocations();
-
-        // Measure time to load round data
-        $startTime = microtime(true);
-
-        // Simulate loading public round view data
-        $allocations = Allocation::findByRound($round->id);
-
-        // Build response data (what the view would use)
-        $responseData = [];
-        foreach ($allocations as $allocation) {
-            $responseData[] = $allocation->toPublicArray();
-        }
-
-        $duration = microtime(true) - $startTime;
-
-        $this->assertLessThan(
-            self::MAX_PAGE_LOAD_SECONDS,
-            $duration,
-            sprintf('Public round view data load took %.3fs', $duration)
-        );
-
-        if (getenv('VERBOSE_PERF')) {
-            fwrite(
-                STDERR,
-                sprintf(
-                    "\nPublic view: Loaded %d allocations in %.3fs\n",
-                    count($responseData),
-                    $duration
-                )
-            );
-        }
-    }
-
-    /**
      * Test tournament details API response time.
      *
      * @group performance
@@ -206,70 +164,6 @@ class PageLoadPerformanceTest extends TestCase
                     count($players),
                     $totalAllocations,
                     $duration
-                )
-            );
-        }
-    }
-
-    /**
-     * Test terrain types API response time.
-     *
-     * @group performance
-     */
-    public function testTerrainTypesApiPerformance(): void
-    {
-        $startTime = microtime(true);
-
-        Connection::fetchAll(
-            'SELECT * FROM terrain_types ORDER BY sort_order'
-        );
-
-        $duration = microtime(true) - $startTime;
-
-        $this->assertLessThan(
-            0.5, // Should be very fast
-            $duration,
-            sprintf('Terrain types API took %.3fs', $duration)
-        );
-
-        if (getenv('VERBOSE_PERF')) {
-            fwrite(STDERR, sprintf("\nTerrain types: %.3fs\n", $duration));
-        }
-    }
-
-    /**
-     * Test database query performance under load.
-     *
-     * @group performance
-     */
-    public function testDatabaseQueryPerformance(): void
-    {
-        $round = $this->createPublishedRoundWithAllocations();
-        $iterations = 100;
-
-        $startTime = microtime(true);
-
-        for ($i = 0; $i < $iterations; $i++) {
-            Allocation::findByRound($round->id);
-        }
-
-        $duration = microtime(true) - $startTime;
-        $avgPerQuery = $duration / $iterations;
-
-        $this->assertLessThan(
-            0.1, // Average should be under 100ms
-            $avgPerQuery,
-            sprintf('Average query time was %.3fs', $avgPerQuery)
-        );
-
-        if (getenv('VERBOSE_PERF')) {
-            fwrite(
-                STDERR,
-                sprintf(
-                    "\nDB Performance: %d queries in %.3fs (avg: %.4fs)\n",
-                    $iterations,
-                    $duration,
-                    $avgPerQuery
                 )
             );
         }

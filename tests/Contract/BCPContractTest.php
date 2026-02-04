@@ -6,7 +6,6 @@ namespace TournamentTables\Tests\Contract;
 
 use JsonSchema\Validator;
 use PHPUnit\Framework\TestCase;
-use TournamentTables\Services\BCPApiService;
 
 /**
  * Contract tests for BCP API integration.
@@ -17,6 +16,9 @@ use TournamentTables\Services\BCPApiService;
  *
  * IMPORTANT: These tests require network access to BCP servers.
  * They should be run sparingly to avoid excessive load on BCP.
+ *
+ * Parsing logic is tested separately in Unit/BCPApiServiceParsingTest
+ * using fixture data for fast, deterministic, network-independent tests.
  */
 class BCPContractTest extends TestCase
 {
@@ -35,17 +37,11 @@ class BCPContractTest extends TestCase
     /** @var array|null Cached API response for player placings (total scores) */
     private static $placingsData = null;
 
-    /** @var BCPApiService */
-    private $apiService;
-
     /** @var bool Track if fetch was successful */
     private static $fetchSuccess = false;
 
     /** @var string|null Error message if fetch failed */
     private static $fetchError = null;
-
-    /** @var string|false Original mock URL (saved for restoration) */
-    private $originalMockUrl;
 
     /**
      * Fetch BCP data once before all tests in this class.
@@ -177,20 +173,6 @@ class BCPContractTest extends TestCase
                 '. This may be due to network issues or BCP availability.'
             );
         }
-
-        // Save and clear mock URL to ensure we test against real BCP API
-        $this->originalMockUrl = getenv('BCP_MOCK_API_URL');
-        putenv('BCP_MOCK_API_URL');
-
-        $this->apiService = new BCPApiService();
-    }
-
-    protected function tearDown(): void
-    {
-        // Restore original mock URL
-        if ($this->originalMockUrl !== false) {
-            putenv('BCP_MOCK_API_URL=' . $this->originalMockUrl);
-        }
     }
 
     // -------------------------------------------------------------------------
@@ -261,126 +243,6 @@ class BCPContractTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
-    // Functional Tests (verify our parsing logic works with real data)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Test that we can parse pairings from the API response.
-     */
-    public function testCanParsePairings(): void
-    {
-        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
-
-        $this->assertTrue(is_array($pairings), 'Parsed pairings should be an array');
-        $this->assertNotEmpty($pairings, 'Should have at least one pairing');
-    }
-
-    /**
-     * Test that each pairing has valid player 1 data after parsing.
-     */
-    public function testParsedPairingsHaveValidPlayer1Data(): void
-    {
-        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
-
-        foreach ($pairings as $index => $pairing) {
-            $this->assertNotEmpty(
-                $pairing->player1BcpId,
-                "Pairing $index should have player1 BCP ID"
-            );
-            $this->assertNotEmpty(
-                $pairing->player1Name,
-                "Pairing $index should have player1 name"
-            );
-            $this->assertTrue(
-                is_int($pairing->player1Score),
-                "Pairing $index should have player1 score as int"
-            );
-        }
-    }
-
-    /**
-     * Test that each pairing has valid player 2 data after parsing.
-     */
-    public function testParsedPairingsHaveValidPlayer2Data(): void
-    {
-        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
-
-        foreach ($pairings as $index => $pairing) {
-            $this->assertNotEmpty(
-                $pairing->player2BcpId,
-                "Pairing $index should have player2 BCP ID"
-            );
-            $this->assertNotEmpty(
-                $pairing->player2Name,
-                "Pairing $index should have player2 name"
-            );
-            $this->assertTrue(
-                is_int($pairing->player2Score),
-                "Pairing $index should have player2 score as int"
-            );
-        }
-    }
-
-    /**
-     * Test that pairings have faction data when available.
-     */
-    public function testParsedPairingsHaveFactionData(): void
-    {
-        $pairings = $this->apiService->parseApiResponse(self::$pairingsData);
-
-        // At least one pairing should have faction data (BCP typically includes this)
-        $hasFaction = false;
-        foreach ($pairings as $pairing) {
-            if ($pairing->player1Faction !== null || $pairing->player2Faction !== null) {
-                $hasFaction = true;
-                break;
-            }
-        }
-
-        $this->assertTrue(
-            $hasFaction,
-            'At least one pairing should have faction data from BCP API'
-        );
-
-        // Verify faction is string or null for all pairings
-        foreach ($pairings as $index => $pairing) {
-            $this->assertTrue(
-                $pairing->player1Faction === null || is_string($pairing->player1Faction),
-                "Pairing $index player1Faction should be string or null"
-            );
-            $this->assertTrue(
-                $pairing->player2Faction === null || is_string($pairing->player2Faction),
-                "Pairing $index player2Faction should be string or null"
-            );
-        }
-    }
-
-    /**
-     * Test that we can parse total scores from the cached placings response.
-     */
-    public function testCanParseTotalScores(): void
-    {
-        $scores = $this->parsePlacingsData(self::$placingsData);
-
-        $this->assertTrue(is_array($scores), 'Parsed scores should be an array');
-        $this->assertNotEmpty($scores, 'Should have at least one player score');
-    }
-
-    /**
-     * Test that parsed total scores are non-negative integers.
-     */
-    public function testParsedTotalScoresAreValid(): void
-    {
-        $scores = $this->parsePlacingsData(self::$placingsData);
-
-        foreach ($scores as $playerId => $score) {
-            $this->assertTrue(is_string($playerId), 'Player ID key should be string');
-            $this->assertTrue(is_int($score), 'Score should be integer');
-            $this->assertGreaterThanOrEqual(0, $score, 'Score should be non-negative');
-        }
-    }
-
-    // -------------------------------------------------------------------------
     // Helper Methods
     // -------------------------------------------------------------------------
 
@@ -417,44 +279,5 @@ class BCPContractTest extends TestCase
             $errors[] = $path . $error['message'];
         }
         return implode('; ', $errors);
-    }
-
-    /**
-     * Parse placings data to extract total scores.
-     *
-     * Mirrors BCPApiService::parsePlacingsResponse() to avoid additional API calls.
-     *
-     * @param array $data Cached placings API response
-     * @return array<string, int> Map of BCP player ID to total score
-     */
-    private function parsePlacingsData(array $data): array
-    {
-        $scores = [];
-        $players = $data['active'] ?? $data;
-
-        if (!is_array($players)) {
-            return $scores;
-        }
-
-        foreach ($players as $player) {
-            $bcpPlayerId = $player['id'] ?? null;
-            if ($bcpPlayerId === null) {
-                continue;
-            }
-
-            $totalScore = 0;
-            $overallMetrics = $player['overall_metrics'] ?? [];
-
-            foreach ($overallMetrics as $metric) {
-                if (isset($metric['name']) && $metric['name'] === 'Overall Score') {
-                    $totalScore = (int) ($metric['value'] ?? 0);
-                    break;
-                }
-            }
-
-            $scores[$bcpPlayerId] = $totalScore;
-        }
-
-        return $scores;
     }
 }

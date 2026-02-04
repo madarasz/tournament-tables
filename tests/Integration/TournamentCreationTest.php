@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace TournamentTables\Tests\Integration;
 
-use PHPUnit\Framework\TestCase;
+use TournamentTables\Tests\DatabaseTestCase;
 use TournamentTables\Services\TournamentService;
 use TournamentTables\Models\Tournament;
 use TournamentTables\Models\Table;
@@ -15,65 +15,16 @@ use TournamentTables\Database\Connection;
  *
  * Reference: specs/001-table-allocation/tasks.md T023
  */
-class TournamentCreationTest extends TestCase
+class TournamentCreationTest extends DatabaseTestCase
 {
     /** @var TournamentService */
     private $service;
 
     protected function setUp(): void
     {
-        // Skip if no database config available
-        $configPath = dirname(__DIR__, 2) . '/config/database.php';
-        if (!file_exists($configPath)) {
-            $this->markTestSkipped('Database configuration not found');
-        }
-
-        // Skip if database is not reachable
-        if (!$this->isDatabaseAvailable()) {
-            $this->markTestSkipped('Database not available');
-        }
-
-        // Clean up any leftover test data from previous runs
-        $this->cleanupTestData();
+        parent::setUp();
 
         $this->service = new TournamentService();
-    }
-
-    private function isDatabaseAvailable(): bool
-    {
-        try {
-            Connection::getInstance();
-            return true;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    protected function tearDown(): void
-    {
-        // Clean up all test data (pattern-based cleanup is more robust)
-        $this->cleanupTestData();
-
-        Connection::reset();
-    }
-
-    /**
-     * Clean up test tournaments by name pattern.
-     * This is more robust than tracking IDs since it catches leftover data
-     * from failed tests or tests that threw unexpected exceptions.
-     */
-    private function cleanupTestData(): void
-    {
-        try {
-            // Delete test tournaments by name pattern
-            Connection::execute(
-                "DELETE FROM tournaments WHERE name LIKE '%Test%'
-                 OR bcp_event_id IN ('test123', 'persist123', 'tables123', 'token123',
-                                      'abc123xyz', 'fullurl123', 'count123', 'trans123', 'duplicate123')"
-            );
-        } catch (\Exception $e) {
-            // Ignore cleanup errors
-        }
     }
 
     public function testCreateTournamentReturnsValidResult(): void

@@ -25,7 +25,7 @@ class DatabaseConnectionTest extends TestCase
 
     protected function tearDown(): void
     {
-        Connection::reset();
+        Connection::resetConfig();
     }
 
     public function testConnectionReturnsValidPdoInstance(): void
