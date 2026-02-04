@@ -263,9 +263,9 @@ class TournamentService
 
         if ($requiredCount > $existingCount) {
             // Need more tables - add them
-            for ($i = $existingCount + 1; $i <= $requiredCount; $i++) {
-                $newTable = new Table(null, $tournamentId, $i, null, false);
-                $newTable->save();
+            $tablesToAdd = $requiredCount - $existingCount;
+            for ($i = 0; $i < $tablesToAdd; $i++) {
+                $this->addTable($tournamentId);
             }
             return Table::findVisibleByTournament($tournamentId);
         }
