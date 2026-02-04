@@ -8,6 +8,7 @@ use TournamentTables\Models\Tournament;
 use TournamentTables\Models\Round;
 use TournamentTables\Models\Allocation;
 use TournamentTables\Models\Table;
+use TournamentTables\Models\Player;
 use TournamentTables\Models\TerrainType;
 use TournamentTables\Database\Connection;
 
@@ -49,8 +50,13 @@ class ViewController extends BaseController
         }
 
         $rounds = Round::findByTournament($tournamentId);
-        $tables = Table::findByTournament($tournamentId);
+        $tables = Table::findVisibleByTournament($tournamentId);
         $terrainTypes = TerrainType::all();
+
+        // Calculate minimum table count for UI
+        // floor because odd player count = 1 bye (no table needed)
+        $playerCount = count(Player::findByTournament($tournamentId));
+        $minimumTables = $playerCount > 0 ? (int) floor($playerCount / 2) : 0;
 
         // Check if this tournament was just created
         $this->ensureSession();

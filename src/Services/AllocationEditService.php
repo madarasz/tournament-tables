@@ -148,8 +148,11 @@ class AllocationEditService
             throw new RuntimeException('Round not found');
         }
 
-        // Perform swap in transaction
-        $this->db->beginTransaction();
+        // Perform swap in transaction (skip if already in one, e.g. test isolation)
+        $ownTransaction = !$this->db->inTransaction();
+        if ($ownTransaction) {
+            $this->db->beginTransaction();
+        }
 
         try {
             $table1 = $allocation1['table_id'];
@@ -177,7 +180,9 @@ class AllocationEditService
             $stmt->execute([$table2, $this->encodeAllocationReason($conflicts1), $allocationId1]);
             $stmt->execute([$table1, $this->encodeAllocationReason($conflicts2), $allocationId2]);
 
-            $this->db->commit();
+            if ($ownTransaction) {
+                $this->db->commit();
+            }
 
             return [
                 'success' => true,
@@ -193,7 +198,9 @@ class AllocationEditService
                 ],
             ];
         } catch (\Exception $e) {
-            $this->db->rollBack();
+            if ($ownTransaction && $this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             throw new RuntimeException('Failed to swap tables: ' . $e->getMessage());
         }
     }

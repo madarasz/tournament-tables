@@ -55,6 +55,15 @@ class Connection
     }
 
     /**
+     * Reset configuration (for testing).
+     */
+    public static function resetConfig(): void
+    {
+        self::$config = [];
+        self::$instance = null;
+    }
+
+    /**
      * Create a new PDO connection.
      */
     private static function createConnection(): PDO
@@ -199,20 +208,30 @@ class Connection
      * If the callback throws an exception, the transaction is rolled back
      * and the exception is re-thrown.
      *
+     * If already inside a transaction (e.g., from test isolation), this
+     * method will skip begin/commit and just execute the callback.
+     *
      * @param callable $callback The function to execute within the transaction
      * @return mixed The return value of the callback
      * @throws \Exception Any exception thrown by the callback
      */
     public static function executeInTransaction(callable $callback)
     {
-        self::beginTransaction();
+        // If already in a transaction (e.g., test isolation), just run callback
+        $alreadyInTransaction = self::inTransaction();
+
+        if (!$alreadyInTransaction) {
+            self::beginTransaction();
+        }
 
         try {
             $result = $callback();
-            self::commit();
+            if (!$alreadyInTransaction) {
+                self::commit();
+            }
             return $result;
         } catch (\Throwable $e) {
-            if (self::inTransaction()) {
+            if (!$alreadyInTransaction && self::inTransaction()) {
                 self::rollBack();
             }
             throw $e;

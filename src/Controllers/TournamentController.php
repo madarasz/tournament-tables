@@ -213,4 +213,97 @@ class TournamentController extends BaseController
             $this->error('internal_error', 'Failed to update tables', 500);
         }
     }
+
+    /**
+     * POST /api/tournaments/{id}/tables/add - Add one table.
+     */
+    public function addTable(array $params, ?array $body): void
+    {
+        $tournamentId = (int) ($params['id'] ?? 0);
+
+        if (!$this->verifyTournamentAuth($tournamentId)) {
+            return;
+        }
+
+        try {
+            $table = $this->service->addTable($tournamentId);
+
+            $this->success([
+                'table' => $table->toArray(),
+                'visibleCount' => \TournamentTables\Models\Table::countVisibleByTournament($tournamentId),
+                'minimumCount' => $this->service->getMinimumTableCount($tournamentId),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            $this->notFound('Tournament');
+        } catch (\RuntimeException $e) {
+            $this->error('conflict', $e->getMessage(), 409);
+        } catch (\Exception $e) {
+            $this->error('internal_error', 'Failed to add table', 500);
+        }
+    }
+
+    /**
+     * POST /api/tournaments/{id}/tables/remove - Remove (hide) one table.
+     */
+    public function removeTable(array $params, ?array $body): void
+    {
+        $tournamentId = (int) ($params['id'] ?? 0);
+
+        if (!$this->verifyTournamentAuth($tournamentId)) {
+            return;
+        }
+
+        try {
+            $table = $this->service->removeTable($tournamentId);
+
+            $this->success([
+                'table' => $table->toArray(),
+                'visibleCount' => \TournamentTables\Models\Table::countVisibleByTournament($tournamentId),
+                'minimumCount' => $this->service->getMinimumTableCount($tournamentId),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            $this->notFound('Tournament');
+        } catch (\RuntimeException $e) {
+            $this->error('conflict', $e->getMessage(), 409);
+        } catch (\Exception $e) {
+            $this->error('internal_error', 'Failed to remove table', 500);
+        }
+    }
+
+    /**
+     * PUT /api/tournaments/{id}/tables/count - Set table count to specific number.
+     */
+    public function setTableCount(array $params, ?array $body): void
+    {
+        $tournamentId = (int) ($params['id'] ?? 0);
+
+        if (!$this->verifyTournamentAuth($tournamentId)) {
+            return;
+        }
+
+        if (!isset($body['count']) || !is_numeric($body['count'])) {
+            $this->validationError(['count' => ['Table count is required and must be a number']]);
+            return;
+        }
+
+        $targetCount = (int) $body['count'];
+
+        try {
+            $result = $this->service->setTableCount($tournamentId, $targetCount);
+
+            $this->success([
+                'added' => $result['added'],
+                'removed' => $result['removed'],
+                'visibleCount' => $result['visibleCount'],
+                'minimumCount' => $this->service->getMinimumTableCount($tournamentId),
+                'tables' => $this->toArrayMap($result['tables']),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            $this->validationError(['count' => [$e->getMessage()]]);
+        } catch (\RuntimeException $e) {
+            $this->error('conflict', $e->getMessage(), 409);
+        } catch (\Exception $e) {
+            $this->error('internal_error', 'Failed to set table count', 500);
+        }
+    }
 }

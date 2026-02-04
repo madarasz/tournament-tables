@@ -154,6 +154,11 @@ SQL;
             'column' => 'faction',
             'sql' => 'ALTER TABLE players ADD COLUMN faction VARCHAR(100) DEFAULT NULL AFTER name'
         ],
+        [
+            'table' => 'tables',
+            'column' => 'is_hidden',
+            'sql' => 'ALTER TABLE tables ADD COLUMN is_hidden BOOLEAN NOT NULL DEFAULT FALSE'
+        ],
     ];
 
     foreach ($alterStatements as $alter) {

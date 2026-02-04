@@ -44,8 +44,8 @@ class AllocationGenerationService
         // Build pairings from existing allocations
         $pairings = $this->reconstructPairings($existingAllocations, $bcpTableLookup);
 
-        // Get tables and format for allocation service
-        $tables = Table::findByTournament($tournamentId);
+        // Get visible tables (non-hidden) and format for allocation service
+        $tables = Table::findVisibleByTournament($tournamentId);
         $tablesArray = $this->formatTableData($tables);
 
         // Generate allocations using the allocation algorithm
@@ -177,7 +177,11 @@ class AllocationGenerationService
         AllocationResult $result,
         array $bcpTableLookup
     ): array {
-        Connection::beginTransaction();
+        // Skip transaction if already in one (e.g., test isolation)
+        $ownTransaction = !Connection::inTransaction();
+        if ($ownTransaction) {
+            Connection::beginTransaction();
+        }
 
         try {
             // Clear existing allocations
@@ -252,7 +256,9 @@ class AllocationGenerationService
                 $savedAllocations[] = $allocation->toArray();
             }
 
-            Connection::commit();
+            if ($ownTransaction) {
+                Connection::commit();
+            }
 
             return [
                 'allocations' => $savedAllocations,
@@ -260,7 +266,9 @@ class AllocationGenerationService
                 'summary' => $result->summary,
             ];
         } catch (\Exception $e) {
-            Connection::rollBack();
+            if ($ownTransaction && Connection::inTransaction()) {
+                Connection::rollBack();
+            }
             throw $e;
         }
     }

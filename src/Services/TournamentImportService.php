@@ -21,9 +21,13 @@ class TournamentImportService
     /** @var BCPApiService */
     private $bcpService;
 
-    public function __construct(?BCPApiService $bcpService = null)
+    /** @var TournamentService */
+    private $tournamentService;
+
+    public function __construct(?BCPApiService $bcpService = null, ?TournamentService $tournamentService = null)
     {
         $this->bcpService = $bcpService ?? new BCPApiService();
+        $this->tournamentService = $tournamentService ?? new TournamentService();
     }
 
     /**
@@ -132,14 +136,15 @@ class TournamentImportService
         array $totalScores,
         int $tableCount
     ): array {
-        Connection::beginTransaction();
+        // Skip transaction if already in one (e.g., test isolation)
+        $ownTransaction = !Connection::inTransaction();
+        if ($ownTransaction) {
+            Connection::beginTransaction();
+        }
 
         try {
-            // Create tables only if none exist
-            $existingTables = Table::findByTournament($tournament->id);
-            if (empty($existingTables)) {
-                Table::createForTournament($tournament->id, $tableCount);
-            }
+            // Ensure we have enough tables (adds if needed, never reduces)
+            $this->tournamentService->ensureTableCount($tournament->id, $tableCount);
 
             // Create round
             $round = Round::findOrCreate($tournament->id, 1);
@@ -237,7 +242,9 @@ class TournamentImportService
                 }
             }
 
-            Connection::commit();
+            if ($ownTransaction) {
+                Connection::commit();
+            }
 
             return [
                 'success' => true,
@@ -245,7 +252,9 @@ class TournamentImportService
                 'pairingsImported' => $pairingsImported,
             ];
         } catch (\Exception $e) {
-            Connection::rollBack();
+            if ($ownTransaction && Connection::inTransaction()) {
+                Connection::rollBack();
+            }
             throw $e;
         }
     }

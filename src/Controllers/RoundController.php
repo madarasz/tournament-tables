@@ -12,6 +12,7 @@ use TournamentTables\Models\Allocation;
 use TournamentTables\Database\Connection;
 use TournamentTables\Services\BCPApiService;
 use TournamentTables\Services\AllocationGenerationService;
+use TournamentTables\Services\TournamentService;
 
 /**
  * Round management controller.
@@ -23,9 +24,13 @@ class RoundController extends BaseController
     /** @var AllocationGenerationService */
     private $generationService;
 
+    /** @var TournamentService */
+    private $tournamentService;
+
     public function __construct()
     {
         $this->generationService = new AllocationGenerationService();
+        $this->tournamentService = new TournamentService();
     }
 
     /**
@@ -92,17 +97,20 @@ class RoundController extends BaseController
                 $playersImported = 0;
                 $pairingsImported = 0;
 
-                // Get all tables for this tournament
-                $tables = Table::findByTournament($tournamentId);
-
-                // If no tables exist (first import), create them from pairing count
-                if (empty($tables)) {
-                    $regularPairings = array_filter($pairings, function ($pairing) {
-                        return !$pairing->isBye();
-                    });
-                    $tableCount = count($regularPairings);
-                    $tables = Table::createForTournament($tournamentId, $tableCount);
+                // Calculate required table count from pairings
+                $regularPairings = array_filter($pairings, function ($pairing) {
+                    return !$pairing->isBye();
+                });
+                $requiredTableCount = count($regularPairings);
+                // Also consider max BCP table number
+                foreach ($regularPairings as $pairing) {
+                    if ($pairing->bcpTableNumber !== null && $pairing->bcpTableNumber > $requiredTableCount) {
+                        $requiredTableCount = $pairing->bcpTableNumber;
+                    }
                 }
+
+                // Ensure we have enough tables (adds if needed, never reduces)
+                $tables = $this->tournamentService->ensureTableCount($tournamentId, $requiredTableCount);
 
                 $tableIndex = 0;
 
