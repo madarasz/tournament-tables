@@ -19,11 +19,13 @@
 use TournamentTables\Services\CsrfService;
 
 $title = $tournament->name;
-$tableCount = count($tables); // Use actual table count from database
+$tableCount = count($tables); // Use actual visible table count from database
 $hasRounds = !empty($rounds);
 $justCreated = $justCreated ?? false;
 $adminToken = $adminToken ?? null;
 $autoImport = $autoImport ?? null;
+$playerCount = $playerCount ?? 0;
+$minimumTables = $minimumTables ?? 0;
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
@@ -209,6 +211,7 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
 <!-- Tables Tab Panel -->
 <section role="tabpanel" id="panel-tables" class="dashboard-tab-panel" aria-labelledby="tab-tables" hidden>
     <h2>Table Configuration</h2>
+
     <article>
         <p>Assign terrain types to tables. Players will preferentially be assigned to terrain types they haven't experienced.</p>
 
@@ -287,6 +290,62 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
         </form>
 
         <div id="terrain-result" style="margin-top: 1rem;"></div>
+    </article>
+
+    <!-- Table Count Management -->
+    <article style="margin-top: 1.5rem;">
+        <h3>Table Count</h3>
+        <div class="table-count-management">
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <strong>Tables:</strong>
+                    <span id="table-count-display" style="font-size: 1.25rem; min-width: 2rem; text-align: center;"><?= $tableCount ?></span>
+                </div>
+
+                <div style="display: flex; gap: 0.5rem;">
+                    <button
+                        type="button"
+                        id="remove-table-button"
+                        <?= $tableCount <= $minimumTables ? 'disabled' : '' ?>
+                        title="Remove one table"
+                    >- Remove</button>
+                    <button
+                        type="button"
+                        id="add-table-button"
+                        title="Add one table"
+                    >+ Add</button>
+                </div>
+
+                <span style="color: var(--pico-muted-color);">or</span>
+
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input
+                        type="number"
+                        id="set-table-count-input"
+                        min="<?= $minimumTables ?>"
+                        max="100"
+                        value="<?= $tableCount ?>"
+                        style="width: 5rem; margin-bottom: 0;"
+                    >
+                    <button
+                        type="button"
+                        id="set-table-count-button"
+                    >Set</button>
+                </div>
+            </div>
+
+            <div id="table-count-result" style="margin-top: 0.75rem;"></div>
+
+            <?php if ($minimumTables > 0): ?>
+                <small class="text-small-muted" style="display: block; margin-top: 0.5rem;">
+                    Minimum <?= $minimumTables ?> tables required for <?= $playerCount ?> players<?= $playerCount % 2 === 1 ? ' (1 player gets a bye)' : '' ?>.
+                </small>
+            <?php else: ?>
+                <small class="text-small-muted" style="display: block; margin-top: 0.5rem;">
+                    Add tables manually, or import Round 1 to auto-detect table count.
+                </small>
+            <?php endif; ?>
+        </div>
     </article>
 </section>
 
@@ -640,6 +699,159 @@ document.getElementById('clear-all-button').addEventListener('click', function()
         );
     }
 });
+
+// Table count management
+(function() {
+    var tournamentId = <?= $tournament->id ?>;
+    var minimumTables = <?= $minimumTables ?>;
+    var countDisplay = document.getElementById('table-count-display');
+    var removeButton = document.getElementById('remove-table-button');
+    var addButton = document.getElementById('add-table-button');
+    var countInput = document.getElementById('set-table-count-input');
+    var setButton = document.getElementById('set-table-count-button');
+
+    function updateUI(visibleCount, minimumCount) {
+        countDisplay.textContent = visibleCount;
+        countInput.value = visibleCount;
+        countInput.min = minimumCount;
+        minimumTables = minimumCount;
+        removeButton.disabled = visibleCount <= minimumCount;
+    }
+
+    function getCsrfToken() {
+        var csrfToken = document.querySelector('meta[name="csrf-token"]');
+        return csrfToken ? csrfToken.getAttribute('content') : '';
+    }
+
+    // Add table
+    addButton.addEventListener('click', function() {
+        addButton.disabled = true;
+        addButton.textContent = 'Adding...';
+
+        fetch('/api/tournaments/' + tournamentId + '/tables/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': getCsrfToken()
+            }
+        })
+        .then(function(response) {
+            return response.json().then(function(data) {
+                return { status: response.status, data: data, ok: response.ok };
+            });
+        })
+        .then(function(response) {
+            addButton.disabled = false;
+            addButton.textContent = '+ Add';
+
+            if (response.ok) {
+                updateUI(response.data.visibleCount, response.data.minimumCount);
+                showAlert('table-count-result', 'success', 'Added table ' + response.data.table.tableNumber, 3000);
+                // Reload page to update terrain table
+                setTimeout(function() { location.reload(); }, 1500);
+            } else {
+                showAlert('table-count-result', 'error', 'Error: ' + escapeHtml(response.data.message || 'Failed to add table'));
+            }
+        })
+        .catch(function(error) {
+            addButton.disabled = false;
+            addButton.textContent = '+ Add';
+            showAlert('table-count-result', 'error', 'Network error: ' + escapeHtml(error.message));
+        });
+    });
+
+    // Remove table
+    removeButton.addEventListener('click', function() {
+        removeButton.disabled = true;
+        removeButton.textContent = 'Removing...';
+
+        fetch('/api/tournaments/' + tournamentId + '/tables/remove', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': getCsrfToken()
+            }
+        })
+        .then(function(response) {
+            return response.json().then(function(data) {
+                return { status: response.status, data: data, ok: response.ok };
+            });
+        })
+        .then(function(response) {
+            removeButton.textContent = '- Remove';
+
+            if (response.ok) {
+                updateUI(response.data.visibleCount, response.data.minimumCount);
+                showAlert('table-count-result', 'success', 'Removed table ' + response.data.table.tableNumber, 3000);
+                // Reload page to update terrain table
+                setTimeout(function() { location.reload(); }, 1500);
+            } else {
+                removeButton.disabled = false;
+                showAlert('table-count-result', 'error', 'Error: ' + escapeHtml(response.data.message || 'Failed to remove table'));
+            }
+        })
+        .catch(function(error) {
+            removeButton.disabled = parseInt(countDisplay.textContent) <= minimumTables;
+            removeButton.textContent = '- Remove';
+            showAlert('table-count-result', 'error', 'Network error: ' + escapeHtml(error.message));
+        });
+    });
+
+    // Set table count
+    setButton.addEventListener('click', function() {
+        var targetCount = parseInt(countInput.value);
+        if (isNaN(targetCount) || targetCount < minimumTables) {
+            showAlert('table-count-result', 'error', 'Count must be at least ' + minimumTables);
+            return;
+        }
+
+        setButton.disabled = true;
+        setButton.textContent = 'Setting...';
+
+        fetch('/api/tournaments/' + tournamentId + '/tables/count', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': getCsrfToken()
+            },
+            body: JSON.stringify({ count: targetCount })
+        })
+        .then(function(response) {
+            return response.json().then(function(data) {
+                return { status: response.status, data: data, ok: response.ok };
+            });
+        })
+        .then(function(response) {
+            setButton.disabled = false;
+            setButton.textContent = 'Set';
+
+            if (response.ok) {
+                updateUI(response.data.visibleCount, response.data.minimumCount);
+                var msg = 'Table count set to ' + response.data.visibleCount;
+                if (response.data.added > 0) msg += ' (added ' + response.data.added + ')';
+                if (response.data.removed > 0) msg += ' (removed ' + response.data.removed + ')';
+                showAlert('table-count-result', 'success', msg, 3000);
+                // Reload page to update terrain table
+                setTimeout(function() { location.reload(); }, 1500);
+            } else {
+                showAlert('table-count-result', 'error', 'Error: ' + escapeHtml(response.data.message || 'Failed to set table count'));
+            }
+        })
+        .catch(function(error) {
+            setButton.disabled = false;
+            setButton.textContent = 'Set';
+            showAlert('table-count-result', 'error', 'Network error: ' + escapeHtml(error.message));
+        });
+    });
+
+    // Enter key in input triggers set
+    countInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            setButton.click();
+        }
+    });
+})();
 
 // Delete tournament functionality
 (function() {
