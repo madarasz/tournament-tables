@@ -430,13 +430,13 @@ function abbreviatePlayerName($fullName) {
                     <td class="terrain-type bye-no-table">—</td>
                     <td class="player-name">
                         <span class="player-name-full"><?= $p1Name ?></span>
-                        <span class="player-name-short"><?= $p1Short ?> (<?= $player1 ? $player1->totalScore : 0 ?>)</span>
+                        <span class="player-name-short"><?= $p1Short ?> (<?= $allocation->player1Score ?>)</span>
                         <?php if ($player1 && $player1->faction): ?>
                         <span class="player-faction"><?= htmlspecialchars($player1->faction) ?></span>
                         <?php endif; ?>
                         <span class="bye-indicator">(Bye - no game this round)</span>
                     </td>
-                    <td class="player-score"><?= $player1 ? $player1->totalScore : 0 ?></td>
+                    <td class="player-score"><?= $allocation->player1Score ?></td>
                     <td class="vs-separator"></td>
                     <td class="player-score"></td>
                     <td class="player-name bye-no-table">—</td>
@@ -445,17 +445,17 @@ function abbreviatePlayerName($fullName) {
                     <td class="terrain-type"><?= $terrainType ? htmlspecialchars($terrainType->name) : '-' ?></td>
                     <td class="player-name">
                         <span class="player-name-full"><?= $p1Name ?></span>
-                        <span class="player-name-short"><?= $p1Short ?> (<?= $player1 ? $player1->totalScore : 0 ?>)</span>
+                        <span class="player-name-short"><?= $p1Short ?> (<?= $allocation->player1Score ?>)</span>
                         <?php if ($player1 && $player1->faction): ?>
                         <span class="player-faction"><?= htmlspecialchars($player1->faction) ?></span>
                         <?php endif; ?>
                     </td>
-                    <td class="player-score"><?= $player1 ? $player1->totalScore : 0 ?></td>
+                    <td class="player-score"><?= $allocation->player1Score ?></td>
                     <td class="vs-separator">vs</td>
-                    <td class="player-score"><?= $player2 ? $player2->totalScore : 0 ?></td>
+                    <td class="player-score"><?= $allocation->player2Score ?></td>
                     <td class="player-name">
                         <span class="player-name-full"><?= $p2Name ?></span>
-                        <span class="player-name-short"><?= $p2Short ?> (<?= $player2 ? $player2->totalScore : 0 ?>)</span>
+                        <span class="player-name-short"><?= $p2Short ?> (<?= $allocation->player2Score ?>)</span>
                         <?php if ($player2 && $player2->faction): ?>
                         <span class="player-faction"><?= htmlspecialchars($player2->faction) ?></span>
                         <?php endif; ?>

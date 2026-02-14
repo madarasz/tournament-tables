@@ -20,6 +20,16 @@ nav {
   background: var(--primary);
   padding: 1rem;
   margin-bottom: 0;
+  /* Match width of nav-page-name and dashboard-tabs */
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+nav .container {
+  /* Remove nested container constraint since nav is already constrained */
+  max-width: none;
+  padding: 0;
 }
 
 nav ul {
@@ -679,8 +689,14 @@ button.is-loading {
   margin-top: 1rem;
 }
 
-/* Mobile: Ensure tabs and title remain full-width */
+/* Mobile: Ensure nav, tabs and title remain full-width */
 @media (max-width: 576px) {
+  nav {
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
   .nav-page-name {
     width: 100vw;
     max-width: none;

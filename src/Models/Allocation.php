@@ -182,6 +182,24 @@ class Allocation extends BaseModel
     }
 
     /**
+     * Update scores for an existing allocation by ID.
+     *
+     * @param int $allocationId Allocation ID
+     * @param int $player1Score New player 1 score
+     * @param int $player2Score New player 2 score
+     * @return bool True if a row was updated
+     */
+    public static function updateScores(int $allocationId, int $player1Score, int $player2Score): bool
+    {
+        $stmt = Connection::execute(
+            'UPDATE allocations SET player1_score = ?, player2_score = ? WHERE id = ?',
+            [$player1Score, $player2Score, $allocationId]
+        );
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
      * Serialize allocation reason to JSON.
      */
     private function serializeReason(): ?string

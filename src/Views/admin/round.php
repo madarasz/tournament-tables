@@ -388,14 +388,14 @@ $hasTableCollisions = !empty($tableCollisions);
                             <?php endif; ?>
                         </td>
 
-                        <!-- Player 1 with total score and faction -->
+                        <!-- Player 1 with round score and faction -->
                         <?php $p1TerrainReuse = playerHasTerrainReuse($player1Name, $allocationConflicts); ?>
-                        <td title="<?= $player1Name ?><?= $player1 && $player1->faction ? ' (' . htmlspecialchars($player1->faction) . ')' : '' ?> - Score: <?= $player1 ? $player1->totalScore : 0 ?><?= $p1TerrainReuse ? ' - Already experienced this terrain' : '' ?>">
+                        <td title="<?= $player1Name ?><?= $player1 && $player1->faction ? ' (' . htmlspecialchars($player1->faction) . ')' : '' ?> - Round Score: <?= $allocation->player1Score ?><?= $p1TerrainReuse ? ' - Already experienced this terrain' : '' ?>">
                             <span class="player-name">
                                 <span class="player-name-full"><?= $player1Name ?><?= $p1TerrainReuse ? ' <span title="Already experienced this terrain">😑</span>' : '' ?></span>
                                 <span class="player-name-short"><?= $player1Short ?><?= $p1TerrainReuse ? ' 😑' : '' ?></span>
                             </span>
-                            <span class="player-score">(<?= $player1 ? $player1->totalScore : 0 ?>)</span>
+                            <span class="player-score">(<?= $allocation->player1Score ?>)</span>
                             <?php if ($player1 && $player1->faction): ?>
                             <span class="player-faction"><?= htmlspecialchars($player1->faction) ?></span>
                             <?php endif; ?>
@@ -407,12 +407,12 @@ $hasTableCollisions = !empty($tableCollisions);
                         </td>
                         <?php else: ?>
                         <?php $p2TerrainReuse = playerHasTerrainReuse($player2Name, $allocationConflicts); ?>
-                        <td title="<?= $player2Name ?><?= $player2 && $player2->faction ? ' (' . htmlspecialchars($player2->faction) . ')' : '' ?> - Score: <?= $player2 ? $player2->totalScore : 0 ?><?= $p2TerrainReuse ? ' - Already experienced this terrain' : '' ?>">
+                        <td title="<?= $player2Name ?><?= $player2 && $player2->faction ? ' (' . htmlspecialchars($player2->faction) . ')' : '' ?> - Round Score: <?= $allocation->player2Score ?><?= $p2TerrainReuse ? ' - Already experienced this terrain' : '' ?>">
                             <span class="player-name">
                                 <span class="player-name-full"><?= $player2Name ?><?= $p2TerrainReuse ? ' <span title="Already experienced this terrain">😑</span>' : '' ?></span>
                                 <span class="player-name-short"><?= $player2Short ?><?= $p2TerrainReuse ? ' 😑' : '' ?></span>
                             </span>
-                            <span class="player-score">(<?= $player2 ? $player2->totalScore : 0 ?>)</span>
+                            <span class="player-score">(<?= $allocation->player2Score ?>)</span>
                             <?php if ($player2 && $player2->faction): ?>
                             <span class="player-faction"><?= htmlspecialchars($player2->faction) ?></span>
                             <?php endif; ?>

@@ -226,11 +226,25 @@ class RoundController extends BaseController
 
                 Connection::commit();
 
+                // Refresh scores for the previous round (games should be completed)
+                $scoreRefreshMessages = [];
+                if ($roundNumber > 1) {
+                    try {
+                        $scoreRefreshService = new \TournamentTables\Services\ScoreRefreshService($scraper);
+                        $refreshResult = $scoreRefreshService->refreshScoresForRound($tournamentId, $roundNumber - 1);
+                        if ($refreshResult['updated'] > 0) {
+                            $scoreRefreshMessages[] = $refreshResult['message'];
+                        }
+                    } catch (\Exception $e) {
+                        error_log("Warning: Could not refresh scores for round " . ($roundNumber - 1) . ": " . $e->getMessage());
+                    }
+                }
+
                 // For round 2+, automatically run allocation generation to optimize table assignments
                 if ($roundNumber > 1) {
                     $generationResult = $this->generationService->generate($tournamentId, $roundNumber, $round);
 
-                    $this->success([
+                    $response = [
                         'roundNumber' => $roundNumber,
                         'pairingsImported' => $pairingsImported,
                         'playersImported' => $playersImported,
@@ -238,7 +252,11 @@ class RoundController extends BaseController
                         'allocations' => $generationResult['allocations'],
                         'conflicts' => $generationResult['conflicts'],
                         'summary' => $generationResult['summary'],
-                    ]);
+                    ];
+                    if (!empty($scoreRefreshMessages)) {
+                        $response['scoreRefresh'] = $scoreRefreshMessages;
+                    }
+                    $this->success($response);
                 } else {
                     $this->success([
                         'roundNumber' => $roundNumber,

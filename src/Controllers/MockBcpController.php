@@ -88,6 +88,11 @@ class MockBcpController extends BaseController
             // Simulate scores based on round (higher rounds = accumulated points)
             $baseScore = ($round - 1);
 
+            // Simulate realistic per-round scores
+            // Player on lower table numbers tend to score higher
+            $p1RoundScore = max(0, 20 - ($tableNumber * 2) + $round);
+            $p2RoundScore = max(0, 15 - ($tableNumber * 2) + $round);
+
             $pairings[] = [
                 'id' => 'pairing_' . $tableNumber . '_round_' . $round,
                 'table' => $tableNumber,
@@ -108,8 +113,8 @@ class MockBcpController extends BaseController
                     ],
                     'faction' => $player2['faction'],
                 ],
-                'player1Game' => ['points' => $baseScore],
-                'player2Game' => ['points' => $baseScore],
+                'player1Game' => ['points' => $p1RoundScore, 'result' => 2],
+                'player2Game' => ['points' => $p2RoundScore, 'result' => 0],
             ];
 
             $tableNumber++;
