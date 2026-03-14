@@ -9,12 +9,12 @@ Build a web application that generates table allocations for BCP tournaments, en
 
 ## Technical Context
 
-**Language/Version**: PHP 7.1 (strict compatibility required per constitution)
+**Language/Version**: PHP 8.5 (runtime baseline)
 **Primary Dependencies**:
 - Frontend: HTMX 1.9.x + Pico CSS 1.5.x (no build step, server-rendered)
-- Testing: PHPUnit 7.5
-**Storage**: MySQL 5.7+
-**Testing**: PHPUnit 7.5 (per constitution)
+- Testing: PHPUnit 12
+**Storage**: MySQL 8.0+
+**Testing**: PHPUnit 12 (per constitution)
 **Target Platform**: Web-based, accessible from tournament venue devices
 **Project Type**: Web application (frontend + backend)
 **Performance Goals**:
@@ -22,7 +22,7 @@ Build a web application that generates table allocations for BCP tournaments, en
 - Page load < 3 seconds (SC-004)
 - First allocation < 5 minutes from tournament creation (SC-001)
 **Constraints**:
-- PHP 7.1 compatibility (no PHP 7.4+ features)
+- PHP 8.5 runtime baseline
 - Tournament data retained indefinitely
 - BCP API access requires internet connectivity
 **Scale/Scope**:

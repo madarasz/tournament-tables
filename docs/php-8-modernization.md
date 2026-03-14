@@ -1,4 +1,4 @@
-# PHP 7.1 to 8.5 Modernization Plan
+# PHP 8.5 Modernization Plan
 
 ## Summary
 This migration is mainly blocked by runtime and tooling constraints, not core app syntax.
@@ -14,7 +14,7 @@ All deprecation checks below are based on official PHP migration docs.
 
 | Jump | Key deprecations to consider | Repo impact (current scan) |
 |---|---|---|
-| 7.1 -> 7.2 | `__autoload()` deprecation | Not found |
+| legacy baseline -> 7.2 | `__autoload()` deprecation | Not found |
 | 7.2 -> 7.3 | Case-insensitive constants via `define()` deprecation | Not found |
 | 7.3 -> 7.4 | Unparenthesized nested ternary, `{}` offset syntax deprecations | Not found |
 | 7.4 -> 8.0 | Required-after-optional params, `${}` interpolation forms, static-call behavior tightening | No direct hits found |
@@ -44,11 +44,11 @@ Selected strategy:
 ### Phase 3: Targeted modernization (positive code changes)
 1. Add typed properties to stable model/value classes where low-risk.
 2. Use constructor property promotion and `readonly` where data is immutable.
-3. Replace legacy cookie-header compatibility logic (kept for PHP 7.x) with modern cookie options.
+3. Replace legacy cookie-header compatibility logic with modern cookie options.
 4. Apply modern built-ins selectively (`str_contains`, nullsafe usage) where behavior is unchanged.
 
 ### Phase 4: Docs and workflow updates
-1. Update docs that currently state PHP 7.1-only constraints.
+1. Update docs that currently state legacy-only constraints.
 2. Update CI/dev commands to use PHP 8.5.
 3. Keep public API contracts and endpoint behavior unchanged during migration.
 
@@ -61,7 +61,7 @@ Selected strategy:
 6. CI blocks new deprecation warnings from app code.
 
 ## Assumptions
-1. PHP 7.1 backward compatibility is intentionally dropped.
+1. Legacy backward compatibility is intentionally dropped.
 2. This is a stability-first migration, not a full architectural rewrite.
 3. External API behavior remains stable.
 
@@ -93,7 +93,7 @@ Findings and fixes:
 4. Step 4 complete: Selective built-in modernization (`str_starts_with`, `str_contains`) in routing/validation/conflict parsing paths.
 
 ### Phase 4: Docs and workflow updates
-1. Step 1 complete: Docs updated away from PHP 7.1-only guidance (`README`, `AGENTS.md`, compatibility notes, planning docs).
+1. Step 1 complete: Docs updated away from legacy-only guidance (`README`, `AGENTS.md`, compatibility notes, planning docs).
 2. Step 2 complete: CI/dev workflow updated to PHP 8.5 (`.github/workflows/tests.yml` + Composer scripts).
 3. Step 3 complete: API contract behavior preserved; only runtime/tooling and internal hardening changed.
 

@@ -4,8 +4,8 @@
 
 ## Prerequisites
 
-- PHP 7.1
-- MySQL 5.7+
+- PHP 8.5
+- MySQL 8.0+
 - Composer
 - Chrome/Chromium browser (for BCP scraping)
 

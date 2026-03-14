@@ -66,7 +66,7 @@ mid-tournament would disrupt the event with no recovery path.
 Implementation MUST prefer simple, direct solutions:
 - No configuration options unless explicitly required by a user story
 - No abstraction layers until proven necessary by code duplication
-- Plain PHP with minimal framework overhead (compatible with PHP 7.1)
+- Plain PHP with minimal framework overhead (aligned with PHP 8.5 baseline)
 - MySQL queries should be straightforward; avoid ORM complexity
 
 **Rationale**: This is a focused tool, not a platform. Over-engineering increases
@@ -86,7 +86,7 @@ if questions arise. Black-box allocation erodes trust.
 ## Technical Standards
 
 **Runtime Environment**:
-- PHP 7.1 (MUST maintain compatibility; no features from PHP 7.4+)
+- PHP 8.5 runtime baseline
 - MySQL database for persistent storage
 - Web-based interface accessible from tournament venue devices
 
