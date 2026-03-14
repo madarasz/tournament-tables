@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TournamentTables\Services;
 
+use JsonException;
+
 /**
  * Service for fetching data from Best Coast Pairings (BCP) REST API.
  *
@@ -49,7 +51,7 @@ class BCPApiService
             throw new \RuntimeException("Tournament name not found in BCP API response.");
         }
 
-        $name = trim($eventData['name']);
+        $name = trim((string) $eventData['name']);
         $name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
 
         // Truncate if too long (database VARCHAR 255 limit)
@@ -192,16 +194,21 @@ class BCPApiService
             throw new \RuntimeException("Failed to fetch URL: {$url}");
         }
 
-        // Check HTTP status code
-        if (isset($http_response_header[0])) {
-            if (!preg_match('/HTTP\/\d\.\d\s+2\d{2}/', $http_response_header[0])) {
-                throw new \RuntimeException("HTTP error: {$http_response_header[0]}");
+        // Check HTTP status code.
+        $headers = http_get_last_response_headers();
+        if (is_array($headers) && isset($headers[0])) {
+            if (!preg_match('/HTTP\/\d\.\d\s+2\d{2}/', $headers[0])) {
+                throw new \RuntimeException("HTTP error: {$headers[0]}");
             }
         }
 
-        $data = json_decode($response, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException("Invalid JSON response: " . json_last_error_msg());
+        try {
+            $data = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw new \RuntimeException('Invalid JSON response: ' . $e->getMessage(), 0, $e);
+        }
+        if (!is_array($data)) {
+            throw new \RuntimeException('Invalid JSON response: expected object or array root');
         }
 
         return $data;

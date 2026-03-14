@@ -76,7 +76,14 @@ class AllocationEditServiceTest extends TestCase
             // 4. getAllocationByRoundAndTable - null (no existing allocation)
             false,
             // 5. getTable again for calculateConflicts
-            $tableRow
+            $tableRow,
+            // 6. getTable for recalculateConflictsForTable(oldTableId)
+            [
+                'id' => 3,
+                'tournament_id' => 1,
+                'table_number' => 3,
+                'terrain_type_id' => null,
+            ]
         );
 
         // fetchAll() is used by TournamentHistory::queryPlayerHistory()
@@ -157,7 +164,14 @@ class AllocationEditServiceTest extends TestCase
                 'table_id' => $newTableId,
             ],
             // 5. getTable for calculateConflicts
-            $tableRow
+            $tableRow,
+            // 6. getTable for recalculateConflictsForTable(oldTableId)
+            [
+                'id' => 3,
+                'tournament_id' => 1,
+                'table_number' => 3,
+                'terrain_type_id' => null,
+            ]
         );
 
         // fetchAll() is used by TournamentHistory::queryPlayerHistory()

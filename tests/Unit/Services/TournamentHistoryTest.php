@@ -55,7 +55,7 @@ class TournamentHistoryTest extends TestCase
     {
         $history = $this->getMockBuilder(TournamentHistory::class)
             ->setConstructorArgs([1, 3])
-            ->setMethods(['queryPlayerTableHistory'])
+            ->onlyMethods(['queryPlayerTableHistory'])
             ->getMock();
 
         $mockData = [
@@ -79,7 +79,7 @@ class TournamentHistoryTest extends TestCase
     {
         $history = $this->getMockBuilder(TournamentHistory::class)
             ->setConstructorArgs([1, 3])
-            ->setMethods(['queryPlayerTableHistory'])
+            ->onlyMethods(['queryPlayerTableHistory'])
             ->getMock();
 
         $mockData = [
@@ -107,7 +107,7 @@ class TournamentHistoryTest extends TestCase
     {
         $history = $this->getMockBuilder(TournamentHistory::class)
             ->setConstructorArgs([1, 3])
-            ->setMethods(['queryPlayerTerrainHistory'])
+            ->onlyMethods(['queryPlayerTerrainHistory'])
             ->getMock();
 
         $mockData = [
@@ -131,7 +131,7 @@ class TournamentHistoryTest extends TestCase
     {
         $history = $this->getMockBuilder(TournamentHistory::class)
             ->setConstructorArgs([1, 3])
-            ->setMethods(['queryPlayerTerrainHistory'])
+            ->onlyMethods(['queryPlayerTerrainHistory'])
             ->getMock();
 
         $mockData = [
@@ -159,7 +159,7 @@ class TournamentHistoryTest extends TestCase
     {
         $history = $this->getMockBuilder(TournamentHistory::class)
             ->setConstructorArgs([1, 3])
-            ->setMethods(['queryPlayerTerrainHistory'])
+            ->onlyMethods(['queryPlayerTerrainHistory'])
             ->getMock();
 
         $history->method('queryPlayerTerrainHistory')
@@ -176,7 +176,7 @@ class TournamentHistoryTest extends TestCase
     {
         $history = $this->getMockBuilder(TournamentHistory::class)
             ->setConstructorArgs([1, 3])
-            ->setMethods(['queryPlayerTableHistory', 'queryPlayerTerrainHistory'])
+            ->onlyMethods(['queryPlayerTableHistory', 'queryPlayerTerrainHistory'])
             ->getMock();
 
         // Should only be called once per player (cached)
@@ -204,7 +204,7 @@ class TournamentHistoryTest extends TestCase
     {
         $history = $this->getMockBuilder(TournamentHistory::class)
             ->setConstructorArgs([1, 3])
-            ->setMethods(['queryPlayerTableHistory'])
+            ->onlyMethods(['queryPlayerTableHistory'])
             ->getMock();
 
         // Should be called twice - once for each player
@@ -223,7 +223,7 @@ class TournamentHistoryTest extends TestCase
     {
         $history = $this->getMockBuilder(TournamentHistory::class)
             ->setConstructorArgs([1, 3])
-            ->setMethods(['queryPlayerTableHistory', 'queryPlayerTerrainHistory'])
+            ->onlyMethods(['queryPlayerTableHistory', 'queryPlayerTerrainHistory'])
             ->getMock();
 
         $history->method('queryPlayerTableHistory')->willReturn([]);

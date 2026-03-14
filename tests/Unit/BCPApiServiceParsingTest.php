@@ -194,7 +194,6 @@ class BCPApiServiceParsingTest extends TestCase
     {
         $reflection = new \ReflectionClass($this->apiService);
         $method = $reflection->getMethod('parsePlacingsResponse');
-        $method->setAccessible(true);
 
         return $method->invoke($this->apiService, $data);
     }
