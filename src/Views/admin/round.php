@@ -100,6 +100,9 @@ $tableUsage = [];
 $tableCollisions = [];
 foreach ($allocations as $allocation) {
     $tableId = $allocation->tableId;
+    if ($tableId === null) {
+        continue;
+    }
     if (!isset($tableUsage[$tableId])) {
         $tableUsage[$tableId] = [];
     }
@@ -353,13 +356,13 @@ $hasTableCollisions = !empty($tableCollisions);
                     <tr class="<?= $rowClass ?>" data-allocation-id="<?= $allocation->id ?>">
                         <!-- Checkbox for swap selection (T074) - disabled for bye -->
                         <td class="select-cell">
-                            <?php if ($isBye): ?>
+                            <?php if ($isBye || $table === null): ?>
                             <input
                                 type="checkbox"
                                 class="swap-checkbox"
                                 disabled
-                                title="Cannot swap bye allocations"
-                                aria-label="Cannot swap bye allocations"
+                                title="Cannot swap allocations without assigned tables"
+                                aria-label="Cannot swap allocations without assigned tables"
                             />
                             <?php else: ?>
                             <input
@@ -378,10 +381,12 @@ $hasTableCollisions = !empty($tableCollisions);
                             <?php if ($isBye): ?>
                                 <span class="bye-indicator">BYE</span>
                             <?php elseif ($table): ?>
-                                <span><?= $bcpDiff['emoji'] ?> Table <?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?></span>
-                                <?php if ($terrainName): ?>
-                                    <span class="terrain-suffix header-full">(<?= $terrainName ?>)</span>
-                                <?php endif; ?>
+                                <span class="table-main">
+                                    <span><?= $bcpDiff['emoji'] ?> Table <?= $table->tableNumber ?><?= $terrainEmoji ? ' ' . $terrainEmoji : '' ?></span>
+                                    <?php if ($terrainName): ?>
+                                        <span class="terrain-suffix header-full">(<?= $terrainName ?>)</span>
+                                    <?php endif; ?>
+                                </span>
                                 <?= $bcpDiff['detail'] ?>
                             <?php else: ?>
                                 N/A

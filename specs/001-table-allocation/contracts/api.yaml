@@ -464,6 +464,9 @@ components:
         terrainTypeId:
           type: integer
           nullable: true
+        optional:
+          type: boolean
+          description: When true, table is excluded from automatic assignments
 
     UpdateTablesRequest:
       type: object
@@ -545,6 +548,8 @@ components:
           type: integer
         terrainType:
           $ref: '#/components/schemas/TerrainType'
+        isOptional:
+          type: boolean
 
     TerrainType:
       type: object

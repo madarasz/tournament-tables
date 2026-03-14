@@ -44,8 +44,8 @@ class AllocationGenerationService
         // Build pairings from existing allocations
         $pairings = $this->reconstructPairings($existingAllocations, $bcpTableLookup);
 
-        // Get visible tables (non-hidden) and format for allocation service
-        $tables = Table::findVisibleByTournament($tournamentId);
+        // Get auto-assignable tables (non-hidden, non-optional) and format for allocation service
+        $tables = Table::findAutoAssignableByTournament($tournamentId);
         $tablesArray = $this->formatTableData($tables);
 
         // Generate allocations using the allocation algorithm
@@ -232,7 +232,7 @@ class AllocationGenerationService
                 $player2Id = $playerLookup[$allocData['player2']['bcpId']] ?? null;
                 $tableId = $tableLookup[$allocData['tableNumber']] ?? null;
 
-                if ($player2Id === null || $tableId === null) {
+                if ($player2Id === null) {
                     continue;
                 }
 

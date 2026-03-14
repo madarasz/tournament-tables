@@ -25,6 +25,7 @@ export interface Tournament {
 export interface Table {
   id: number;
   tableNumber: number;
+  isOptional?: boolean;
   terrainType?: {
     id: number;
     name: string;
@@ -139,7 +140,7 @@ export class ApiClient {
   async updateTables(
     tournamentId: number,
     adminToken: string,
-    tables: Array<{ tableNumber: number; terrainTypeId: number | null }>
+    tables: Array<{ tableNumber: number; terrainTypeId: number | null; optional?: boolean }>
   ): Promise<{ tables: Table[] }> {
     const response = await this.request.put(
       `${this.baseURL}/api/tournaments/${tournamentId}/tables`,

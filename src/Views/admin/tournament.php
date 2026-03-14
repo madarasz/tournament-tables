@@ -214,6 +214,7 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
 
     <article>
         <p>Assign terrain types to tables. Players will preferentially be assigned to terrain types they haven't experienced.</p>
+        <p class="text-small-muted">Optional tables are excluded from automatic assignments and remain available for manual table assignment.</p>
 
         <form id="terrain-form">
             <!-- Quick Setup: Set All Tables -->
@@ -247,6 +248,7 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
                     <tr>
                         <th style="width: 20%;">Table</th>
                         <th>Terrain Type</th>
+                        <th style="width: 20%;">Optional</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -275,6 +277,21 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
                                 </option>
                                 <?php endforeach; ?>
                             </select>
+                        </td>
+                        <td>
+                            <?php if ($table->tableNumber > $minimumTables): ?>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    data-table-optional="true"
+                                    data-table-number="<?= $table->tableNumber ?>"
+                                    <?= $table->isOptional ? 'checked' : '' ?>
+                                >
+                                Optional
+                            </label>
+                            <?php else: ?>
+                            <small class="text-small-muted">Required</small>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -580,10 +597,14 @@ document.getElementById('terrain-form').addEventListener('submit', function(e) {
     selects.forEach(function(select) {
         var tableNumber = parseInt(select.getAttribute('data-table-number'));
         var terrainTypeId = select.value ? parseInt(select.value) : null;
+        var row = select.closest('tr');
+        var optionalCheckbox = row ? row.querySelector('input[data-table-optional="true"]') : null;
+        var isOptional = optionalCheckbox ? optionalCheckbox.checked : false;
 
         tables.push({
             tableNumber: tableNumber,
-            terrainTypeId: terrainTypeId
+            terrainTypeId: terrainTypeId,
+            optional: isOptional
         });
     });
 

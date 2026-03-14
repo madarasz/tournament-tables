@@ -1011,6 +1011,14 @@ button.is-loading {
   font-weight: 600;
 }
 
+.table-main {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
 /* Change table - dropdown on desktop, button on mobile */
 .change-cell {
   width: 120px;

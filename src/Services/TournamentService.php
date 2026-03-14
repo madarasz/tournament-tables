@@ -211,7 +211,7 @@ class TournamentService
      * Update table terrain types.
      *
      * @param int $tournamentId Tournament ID
-     * @param array $tableConfigs Array of {tableNumber: int, terrainTypeId: int|null}
+      * @param array $tableConfigs Array of {tableNumber: int, terrainTypeId: int|null, optional?: bool}
      */
     public function updateTables(int $tournamentId, array $tableConfigs): array
     {
@@ -224,6 +224,7 @@ class TournamentService
             foreach ($tableConfigs as $config) {
                 $tableNumber = $config['tableNumber'] ?? null;
                 $terrainTypeId = $config['terrainTypeId'] ?? null;
+                $isOptional = !empty($config['optional']);
 
                 if ($tableNumber === null) {
                     continue;
@@ -232,6 +233,7 @@ class TournamentService
                 $table = Table::findByTournamentAndNumber($tournamentId, (int) $tableNumber);
                 if ($table !== null) {
                     $table->terrainTypeId = $terrainTypeId;
+                    $table->isOptional = $isOptional;
                     $table->save();
                 }
             }

@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS tables (
     tournament_id INT NOT NULL,
     table_number INT NOT NULL,
     terrain_type_id INT,
+    optional BOOLEAN NOT NULL DEFAULT FALSE,
     UNIQUE INDEX idx_tournament_table (tournament_id, table_number),
     FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE,
     FOREIGN KEY (terrain_type_id) REFERENCES terrain_types(id) ON DELETE SET NULL
@@ -158,6 +159,11 @@ SQL;
             'table' => 'tables',
             'column' => 'is_hidden',
             'sql' => 'ALTER TABLE tables ADD COLUMN is_hidden BOOLEAN NOT NULL DEFAULT FALSE'
+        ],
+        [
+            'table' => 'tables',
+            'column' => 'optional',
+            'sql' => 'ALTER TABLE tables ADD COLUMN optional BOOLEAN NOT NULL DEFAULT FALSE'
         ],
     ];
 

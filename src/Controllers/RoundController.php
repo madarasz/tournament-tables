@@ -109,9 +109,17 @@ class RoundController extends BaseController
                     }
                 }
 
-                // Ensure we have enough tables (adds if needed, never reduces)
-                $tables = $this->tournamentService->ensureTableCount($tournamentId, $requiredTableCount);
+                // Ensure we have enough visible tables (adds if needed, never reduces)
+                $this->tournamentService->ensureTableCount($tournamentId, $requiredTableCount);
 
+                // Automatic assignments use only non-optional tables
+                $autoAssignableTables = Table::findAutoAssignableByTournament($tournamentId);
+                $autoAssignableByNumber = [];
+                foreach ($autoAssignableTables as $autoTable) {
+                    $autoAssignableByNumber[$autoTable->tableNumber] = $autoTable;
+                }
+
+                $assignedAutoTableIds = [];
                 $tableIndex = 0;
 
                 foreach ($pairings as $pairing) {
@@ -172,53 +180,105 @@ class RoundController extends BaseController
                     // Determine table assignment
                     $table = null;
                     $reason = [];
+                    $pairingConflicts = [];
+                    $reasonMessage = '';
 
-                    if ($roundNumber === 1 && $pairing->bcpTableNumber !== null) {
-                        // Round 1: Use BCP's table assignment
-                        $table = Table::findByTournamentAndNumber($tournamentId, $pairing->bcpTableNumber);
-                        $reason = [
-                            'timestamp' => date('c'),
-                            'totalCost' => 0,
-                            'costBreakdown' => ['tableReuse' => 0, 'terrainReuse' => 0, 'tableNumber' => 0],
-                            'reasons' => ['Round 1 - BCP original assignment'],
-                            'alternativesConsidered' => [],
-                            'isRound1' => true,
-                            'conflicts' => [],
-                        ];
-                    } else {
-                        // Round 2+: Assign tables sequentially as placeholders
-                        // Allocation generation runs automatically after import to optimize assignments
-                        if ($tableIndex < count($tables)) {
-                            $table = $tables[$tableIndex];
-                            $tableIndex++;
+                    if ($roundNumber === 1) {
+                        // Round 1: Use BCP table assignment when the target table is auto-assignable
+                        if (
+                            $pairing->bcpTableNumber !== null &&
+                            isset($autoAssignableByNumber[$pairing->bcpTableNumber]) &&
+                            !isset($assignedAutoTableIds[$autoAssignableByNumber[$pairing->bcpTableNumber]->id])
+                        ) {
+                            $table = $autoAssignableByNumber[$pairing->bcpTableNumber];
+                            $reasonMessage = 'Round 1 - BCP original assignment';
+                        } else {
+                            // Fallback to next available non-optional table
+                            while ($tableIndex < count($autoAssignableTables)) {
+                                $candidate = $autoAssignableTables[$tableIndex];
+                                $tableIndex++;
+                                if (!isset($assignedAutoTableIds[$candidate->id])) {
+                                    $table = $candidate;
+                                    break;
+                                }
+                            }
+
+                            if ($table !== null) {
+                                if ($pairing->bcpTableNumber === null) {
+                                    $reasonMessage = 'Round 1 - BCP table number missing, assigned next available auto-assignable table';
+                                } else {
+                                    $reasonMessage = 'Round 1 - BCP table unavailable in auto-assignable tables, assigned next available';
+                                }
+                            } else {
+                                $reasonMessage = 'Round 1 - no auto-assignable table available, manual assignment required';
+                                $pairingConflicts[] = [
+                                    'type' => 'NO_TABLE_AVAILABLE',
+                                    'message' => 'No auto-assignable table available for pairing ' .
+                                        $pairing->player1Name . ' vs ' . $pairing->player2Name,
+                                ];
+                            }
                         }
 
                         $reason = [
                             'timestamp' => date('c'),
                             'totalCost' => 0,
                             'costBreakdown' => ['tableReuse' => 0, 'terrainReuse' => 0, 'tableNumber' => 0],
-                            'reasons' => ['Imported from BCP - pending optimization'],
+                            'reasons' => [$reasonMessage],
+                            'alternativesConsidered' => [],
+                            'isRound1' => true,
+                            'conflicts' => $pairingConflicts,
+                        ];
+                    } else {
+                        // Round 2+: Assign non-optional tables sequentially as placeholders
+                        // Allocation generation runs automatically after import to optimize assignments
+                        while ($tableIndex < count($autoAssignableTables)) {
+                            $candidate = $autoAssignableTables[$tableIndex];
+                            $tableIndex++;
+                            if (!isset($assignedAutoTableIds[$candidate->id])) {
+                                $table = $candidate;
+                                break;
+                            }
+                        }
+
+                        if ($table === null) {
+                            $pairingConflicts[] = [
+                                'type' => 'NO_TABLE_AVAILABLE',
+                                'message' => 'No auto-assignable table available for pairing ' .
+                                    $pairing->player1Name . ' vs ' . $pairing->player2Name,
+                            ];
+                            $reasonMessage = 'Imported from BCP - no auto-assignable table available, manual assignment required';
+                        } else {
+                            $reasonMessage = 'Imported from BCP - pending optimization';
+                        }
+
+                        $reason = [
+                            'timestamp' => date('c'),
+                            'totalCost' => 0,
+                            'costBreakdown' => ['tableReuse' => 0, 'terrainReuse' => 0, 'tableNumber' => 0],
+                            'reasons' => [$reasonMessage],
                             'alternativesConsidered' => [],
                             'isRound1' => false,
-                            'conflicts' => [],
+                            'conflicts' => $pairingConflicts,
                         ];
                     }
 
-                    // Create allocation if we have a valid table
                     if ($table !== null) {
-                        $allocation = new Allocation(
-                            null,
-                            $round->id,
-                            $table->id,
-                            $player1->id,
-                            $player2->id,
-                            $pairing->player1Score,
-                            $pairing->player2Score,
-                            $reason,
-                            $pairing->bcpTableNumber
-                        );
-                        $allocation->save();
+                        $assignedAutoTableIds[$table->id] = true;
                     }
+
+                    // Always persist pairing allocation; table may be null when auto-assignment is not possible
+                    $allocation = new Allocation(
+                        null,
+                        $round->id,
+                        $table !== null ? $table->id : null,
+                        $player1->id,
+                        $player2->id,
+                        $pairing->player1Score,
+                        $pairing->player2Score,
+                        $reason,
+                        $pairing->bcpTableNumber
+                    );
+                    $allocation->save();
 
                     $playersImported += 2;
                     $pairingsImported++;

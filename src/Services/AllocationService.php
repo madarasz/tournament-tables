@@ -77,7 +77,9 @@ class AllocationService
             $result = $this->allocatePairing($pairing, $tables, $usedTables, $history);
 
             $allocations[] = $result['allocation'];
-            $usedTables[] = $result['allocation']['tableNumber'];
+            if ($result['allocation']['tableNumber'] !== null) {
+                $usedTables[] = $result['allocation']['tableNumber'];
+            }
 
             // Collect conflicts
             foreach ($result['allocation']['reason']['conflicts'] as $conflict) {
@@ -187,13 +189,12 @@ class AllocationService
                         'message' => "No available tables for pairing {$pairing->player1Name} vs {$pairing->player2Name}",
                     ];
                     $conflicts[] = $pairingConflicts[0];
-                    // Use 0 as placeholder for unassigned
-                    $tableNumber = 0;
+                    $tableNumber = null;
                 }
             }
 
             // Mark table as assigned (if valid)
-            if ($tableNumber > 0) {
+            if ($tableNumber !== null) {
                 $assignedTableNumbers[$tableNumber] = true;
             }
 
@@ -270,7 +271,40 @@ class AllocationService
 
         // Should not happen if tables > pairings, but handle gracefully
         if ($bestTable === null) {
-            throw new \RuntimeException('No available tables for allocation');
+            $conflict = [
+                'type' => 'NO_TABLE_AVAILABLE',
+                'message' => "No available auto-assignable tables for pairing {$pairing->player1Name} vs {$pairing->player2Name}",
+            ];
+
+            return [
+                'allocation' => [
+                    'tableNumber' => null,
+                    'terrainType' => null,
+                    'player1' => [
+                        'bcpId' => $pairing->player1BcpId,
+                        'name' => $pairing->player1Name,
+                        'score' => $pairing->player1Score,
+                    ],
+                    'player2' => [
+                        'bcpId' => $pairing->player2BcpId,
+                        'name' => $pairing->player2Name,
+                        'score' => $pairing->player2Score,
+                    ],
+                    'reason' => [
+                        'timestamp' => $timestamp,
+                        'totalCost' => 0,
+                        'costBreakdown' => [
+                            'tableReuse' => 0,
+                            'terrainReuse' => 0,
+                            'bcpTableMismatch' => 0,
+                        ],
+                        'reasons' => ['No auto-assignable table available; manual assignment required'],
+                        'alternativesConsidered' => $alternatives,
+                        'isRound1' => false,
+                        'conflicts' => [$conflict],
+                    ],
+                ],
+            ];
         }
 
         // Calculate final cost for selected table
@@ -399,12 +433,15 @@ class AllocationService
 
         $tableReuseCount = 0;
         $terrainReuseCount = 0;
+        $otherConflictCount = 0;
 
         foreach ($conflicts as $conflict) {
             if ($conflict['type'] === 'TABLE_REUSE') {
                 $tableReuseCount++;
             } elseif ($conflict['type'] === 'TERRAIN_REUSE') {
                 $terrainReuseCount++;
+            } else {
+                $otherConflictCount++;
             }
         }
 
@@ -414,6 +451,14 @@ class AllocationService
         }
         if ($terrainReuseCount > 0) {
             $parts[] = "{$terrainReuseCount} terrain reuse conflict(s)";
+        }
+
+        if ($otherConflictCount > 0) {
+            $parts[] = "{$otherConflictCount} assignment conflict(s)";
+        }
+
+        if (empty($parts)) {
+            return 'Best effort allocation with conflicts.';
         }
 
         return 'Best effort allocation with ' . implode(', ', $parts) . '.';

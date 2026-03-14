@@ -142,6 +142,10 @@ class AllocationEditService
             throw new RuntimeException('Both allocations must be in the same round');
         }
 
+        if ($allocation1['table_id'] === null || $allocation2['table_id'] === null) {
+            throw new RuntimeException('Cannot swap allocations without assigned tables');
+        }
+
         // Get round info for conflict calculation
         $round = $this->getRound($allocation1['round_id']);
         if (!$round) {

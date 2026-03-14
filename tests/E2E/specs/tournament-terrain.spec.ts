@@ -155,11 +155,10 @@ test.describe('Terrain Type Configuration (US2)', () => {
     await saveButton.click();
 
     // Wait for success message
-    await expect(
-      page.locator('.alert-success', {
-        hasText: 'Terrain configuration saved successfully',
-      })
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#terrain-result')).toContainText(
+      'Terrain configuration saved successfully',
+      { timeout: 5000 }
+    );
 
     // Reload the page to verify persistence
     await page.reload();
@@ -198,11 +197,10 @@ test.describe('Terrain Type Configuration (US2)', () => {
     await saveButton.click();
 
     // Wait for success message
-    await expect(
-      page.locator('.alert-success', {
-        hasText: 'Terrain configuration saved successfully',
-      })
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#terrain-result')).toContainText(
+      'Terrain configuration saved successfully',
+      { timeout: 5000 }
+    );
 
     // Reload again to verify update persisted
     await page.reload();
@@ -218,5 +216,82 @@ test.describe('Terrain Type Configuration (US2)', () => {
     await expect(page.locator('select[data-table-number="2"]')).toHaveValue(
       '2'
     ); // Tomb World (unchanged)
+  });
+
+  test('should allow optional toggle only for extra tables and persist it', async ({
+    page,
+    request,
+    baseURL,
+  }) => {
+    // With mock BCP data: 8 players -> minimum 4 tables needed.
+    // Create 5 tables so exactly one table is eligible for the optional toggle.
+    const { tournamentId, adminToken } = await createAndRegisterTournament(
+      request,
+      cleanupContext,
+      baseURL!,
+      {
+        tableCount: 5,
+      }
+    );
+
+    await setAdminTokenCookie(
+      page.context(),
+      adminToken,
+      baseURL!,
+      tournamentId,
+      'Test Tournament'
+    );
+
+    await page.goto(`/admin/tournament/${tournamentId}`);
+    await expect(page.locator('h1')).toContainText('Test Tournament');
+
+    await page.click('[data-tab="tables"]');
+
+    // Guard precondition shown in UI
+    await expect(page.locator('body')).toContainText(
+      'Minimum 4 tables required for 8 players.'
+    );
+
+    // Optional toggle should be available only for table 5 (> minimum)
+    await expect(
+      page.locator('input[data-table-optional="true"][data-table-number="1"]')
+    ).toHaveCount(0);
+    await expect(
+      page.locator('input[data-table-optional="true"][data-table-number="2"]')
+    ).toHaveCount(0);
+    await expect(
+      page.locator('input[data-table-optional="true"][data-table-number="3"]')
+    ).toHaveCount(0);
+    await expect(
+      page.locator('input[data-table-optional="true"][data-table-number="4"]')
+    ).toHaveCount(0);
+
+    const table5Optional = page.locator(
+      'input[data-table-optional="true"][data-table-number="5"]'
+    );
+    await expect(table5Optional).toBeVisible();
+    await table5Optional.check();
+    await expect(table5Optional).toBeChecked();
+
+    const saveButton = page.locator('button[type="submit"]', {
+      has: page.locator('text=Save Terrain Configuration'),
+    });
+    await saveButton.click();
+
+    await expect(page.locator('#terrain-result')).toContainText(
+      'Terrain configuration saved successfully',
+      { timeout: 5000 }
+    );
+
+    await page.reload();
+    await page.click('[data-tab="tables"]');
+
+    // Persisted optional value remains checked for table 5 only
+    await expect(
+      page.locator('input[data-table-optional="true"][data-table-number="5"]')
+    ).toBeChecked();
+    await expect(
+      page.locator('input[data-table-optional="true"][data-table-number="4"]')
+    ).toHaveCount(0);
   });
 });

@@ -23,6 +23,7 @@ class TableCollisionDetector
             'SELECT COUNT(*) FROM (
                 SELECT table_id FROM allocations
                 WHERE round_id = ?
+                AND table_id IS NOT NULL
                 GROUP BY table_id
                 HAVING COUNT(*) > 1
             ) AS duplicates',
@@ -43,6 +44,7 @@ class TableCollisionDetector
              FROM allocations a
              JOIN tables t ON a.table_id = t.id
              WHERE a.round_id = ?
+             AND a.table_id IS NOT NULL
              GROUP BY a.table_id, t.table_number
              HAVING COUNT(*) > 1',
             [$roundId]

@@ -199,7 +199,9 @@ function abbreviatePlayerName($fullName) {
             font-weight: 700;
             color: var(--primary);
             text-align: center;
-            width: 100px;
+            width: 130px;
+            min-width: 130px;
+            white-space: nowrap;
         }
 
         /* Terrain type */

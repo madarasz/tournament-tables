@@ -26,18 +26,23 @@ class Table extends BaseModel
     /** @var bool */
     public $isHidden;
 
+    /** @var bool */
+    public $isOptional;
+
     public function __construct(
         ?int $id = null,
         int $tournamentId = 0,
         int $tableNumber = 0,
         ?int $terrainTypeId = null,
-        bool $isHidden = false
+        bool $isHidden = false,
+        bool $isOptional = false
     ) {
         $this->id = $id;
         $this->tournamentId = $tournamentId;
         $this->tableNumber = $tableNumber;
         $this->terrainTypeId = $terrainTypeId;
         $this->isHidden = $isHidden;
+        $this->isOptional = $isOptional;
     }
 
     protected static function getTableName(): string
@@ -55,7 +60,8 @@ class Table extends BaseModel
             (int) $row['tournament_id'],
             (int) $row['table_number'],
             isset($row['terrain_type_id']) ? (int) $row['terrain_type_id'] : null,
-            !empty($row['is_hidden'])
+            !empty($row['is_hidden']),
+            !empty($row['optional'])
         );
     }
 
@@ -78,6 +84,21 @@ class Table extends BaseModel
     {
         $rows = Connection::fetchAll(
             'SELECT * FROM tables WHERE tournament_id = ? AND is_hidden = FALSE ORDER BY table_number ASC',
+            [$tournamentId]
+        );
+
+        return array_map([self::class, 'fromRow'], $rows);
+    }
+
+    /**
+     * Find visible, non-optional tables for automatic assignment.
+     *
+     * @return Table[]
+     */
+    public static function findAutoAssignableByTournament(int $tournamentId): array
+    {
+        $rows = Connection::fetchAll(
+            'SELECT * FROM tables WHERE tournament_id = ? AND is_hidden = FALSE AND `optional` = FALSE ORDER BY table_number ASC',
             [$tournamentId]
         );
 
@@ -171,13 +192,14 @@ class Table extends BaseModel
     protected function insert(): bool
     {
         Connection::execute(
-            'INSERT INTO tables (tournament_id, table_number, terrain_type_id, is_hidden)
-             VALUES (?, ?, ?, ?)',
+            'INSERT INTO tables (tournament_id, table_number, terrain_type_id, is_hidden, `optional`)
+             VALUES (?, ?, ?, ?, ?)',
             [
                 $this->tournamentId,
                 $this->tableNumber,
                 $this->terrainTypeId,
                 $this->isHidden ? 1 : 0,
+                $this->isOptional ? 1 : 0,
             ]
         );
 
@@ -191,10 +213,11 @@ class Table extends BaseModel
     protected function update(): bool
     {
         Connection::execute(
-            'UPDATE tables SET terrain_type_id = ?, is_hidden = ? WHERE id = ?',
+            'UPDATE tables SET terrain_type_id = ?, is_hidden = ?, `optional` = ? WHERE id = ?',
             [
                 $this->terrainTypeId,
                 $this->isHidden ? 1 : 0,
+                $this->isOptional ? 1 : 0,
                 $this->id,
             ]
         );
@@ -224,6 +247,7 @@ class Table extends BaseModel
             'tableNumber' => $this->tableNumber,
             'terrainType' => $terrainType ? $terrainType->toArray() : null,
             'isHidden' => $this->isHidden,
+            'isOptional' => $this->isOptional,
         ];
     }
 }
