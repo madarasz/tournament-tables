@@ -197,7 +197,7 @@ class TournamentWorkflowTest extends TestCase
         // Create tournament with only 2 tables for 4 players - forces unavoidable conflicts
         // With 2 tables, cross-pairings in R2 guarantee each pairing has players who
         // together have used BOTH tables, so any assignment causes a conflict
-        $uniqueId = str_replace('.', '', microtime(true)) . bin2hex(random_bytes(4));
+        $uniqueId = $this->createUniqueId();
         $result = $this->tournamentService->createTournament(
             'E2E Edge Case Test ' . $uniqueId,
             'https://www.bestcoastpairings.com/event/e2eedge' . $uniqueId,
@@ -301,12 +301,17 @@ class TournamentWorkflowTest extends TestCase
     private function createTournament(): array
     {
         // Use microtime and uniqid to ensure unique BCP event IDs even with process isolation
-        $uniqueId = str_replace('.', '', microtime(true)) . bin2hex(random_bytes(4));
+        $uniqueId = $this->createUniqueId();
         return $this->tournamentService->createTournament(
             'E2E Test Tournament ' . $uniqueId,
             'https://www.bestcoastpairings.com/event/e2e' . $uniqueId,
             self::TABLE_COUNT
         );
+    }
+
+    private function createUniqueId(): string
+    {
+        return sprintf('%d%s', (int) (microtime(true) * 1000000), bin2hex(random_bytes(4)));
     }
 
     private function createRound1WithPairings(Tournament $tournament): Round

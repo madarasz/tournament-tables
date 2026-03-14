@@ -192,15 +192,15 @@ class PageLoadPerformanceTest extends TestCase
 
     private function createTestTournament(): Tournament
     {
-        Connection::beginTransaction();
+        return Connection::executeInTransaction(function (): Tournament {
+            $uniqueId = $this->createUniqueId();
 
-        try {
             Connection::execute(
                 "INSERT INTO tournaments (name, bcp_event_id, bcp_url, table_count, admin_token)
                  VALUES (?, ?, ?, ?, ?)",
                 [
-                    'Page Load Test ' . time(),
-                    'pageload' . str_replace('.', '', microtime(true)) . bin2hex(random_bytes(4)),
+                    'Page Load Test ' . $uniqueId,
+                    'pageload' . $uniqueId,
                     'https://www.bestcoastpairings.com/event/pageload123',
                     20,
                     bin2hex(random_bytes(8)),
@@ -227,13 +227,13 @@ class PageLoadPerformanceTest extends TestCase
                 );
             }
 
-            Connection::commit();
-
             return Tournament::find($tournamentId);
-        } catch (\Exception $e) {
-            Connection::rollBack();
-            throw $e;
-        }
+        });
+    }
+
+    private function createUniqueId(): string
+    {
+        return sprintf('%d%s', (int) (microtime(true) * 1000000), bin2hex(random_bytes(4)));
     }
 
     private function createPublishedRoundWithAllocations(): Round
