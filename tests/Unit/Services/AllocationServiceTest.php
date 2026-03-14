@@ -80,7 +80,7 @@ class AllocationServiceTest extends TestCase
         $tables = $this->createTables(3);
 
         // Player 1 previously used table 1
-        $history = $this->createMock(TournamentHistory::class);
+        $history = $this->createStub(TournamentHistory::class);
         $history->method('hasPlayerUsedTable')
             ->willReturnCallback(function ($playerId, $tableNumber) {
                 return $playerId === 'p1' && $tableNumber === 1;
@@ -117,7 +117,7 @@ class AllocationServiceTest extends TestCase
         ];
 
         // Player 1 previously experienced Volkus
-        $history = $this->createMock(TournamentHistory::class);
+        $history = $this->createStub(TournamentHistory::class);
         $history->method('hasPlayerUsedTable')
             ->willReturn(false);
         $history->method('hasPlayerExperiencedTerrain')
@@ -212,7 +212,7 @@ class AllocationServiceTest extends TestCase
         $tables = $this->createTables(1); // Only 1 table
 
         // Player 1 already used table 1
-        $history = $this->createMock(TournamentHistory::class);
+        $history = $this->createStub(TournamentHistory::class);
         $history->method('hasPlayerUsedTable')
             ->willReturnCallback(function ($playerId, $tableNumber) {
                 return $playerId === 'p1' && $tableNumber === 1;
@@ -396,7 +396,7 @@ class AllocationServiceTest extends TestCase
      */
     private function createMockHistoryEmpty(): TournamentHistory
     {
-        $mock = $this->createMock(TournamentHistory::class);
+        $mock = $this->createStub(TournamentHistory::class);
         $mock->method('hasPlayerUsedTable')->willReturn(false);
         $mock->method('hasPlayerExperiencedTerrain')->willReturn(false);
         return $mock;

@@ -63,7 +63,8 @@ class TournamentHistoryTest extends TestCase
             ['table_number' => 5, 'terrain_type' => 'Tomb World', 'round_number' => 2],
         ];
 
-        $history->method('queryPlayerTableHistory')
+        $history->expects($this->once())
+            ->method('queryPlayerTableHistory')
             ->willReturn($mockData);
 
         $result = $history->getPlayerTableHistory('player123');
@@ -87,7 +88,8 @@ class TournamentHistoryTest extends TestCase
             ['table_number' => 5, 'terrain_type' => 'Tomb World', 'round_number' => 2],
         ];
 
-        $history->method('queryPlayerTableHistory')
+        $history->expects($this->once())
+            ->method('queryPlayerTableHistory')
             ->willReturn($mockData);
 
         // Player has used table 1
@@ -115,7 +117,8 @@ class TournamentHistoryTest extends TestCase
             ['id' => 2, 'name' => 'Tomb World'],
         ];
 
-        $history->method('queryPlayerTerrainHistory')
+        $history->expects($this->once())
+            ->method('queryPlayerTerrainHistory')
             ->willReturn($mockData);
 
         $result = $history->getPlayerTerrainHistory('player123');
@@ -139,7 +142,8 @@ class TournamentHistoryTest extends TestCase
             ['id' => 3, 'name' => 'Octarius'],
         ];
 
-        $history->method('queryPlayerTerrainHistory')
+        $history->expects($this->once())
+            ->method('queryPlayerTerrainHistory')
             ->willReturn($mockData);
 
         // Player has experienced terrain type 1 (Volkus)
@@ -162,7 +166,8 @@ class TournamentHistoryTest extends TestCase
             ->onlyMethods(['queryPlayerTerrainHistory'])
             ->getMock();
 
-        $history->method('queryPlayerTerrainHistory')
+        $history->expects($this->never())
+            ->method('queryPlayerTerrainHistory')
             ->willReturn([['id' => 1, 'name' => 'Volkus']]);
 
         // Null terrain type should always return false
@@ -226,8 +231,8 @@ class TournamentHistoryTest extends TestCase
             ->onlyMethods(['queryPlayerTableHistory', 'queryPlayerTerrainHistory'])
             ->getMock();
 
-        $history->method('queryPlayerTableHistory')->willReturn([]);
-        $history->method('queryPlayerTerrainHistory')->willReturn([]);
+        $history->expects($this->once())->method('queryPlayerTableHistory')->willReturn([]);
+        $history->expects($this->once())->method('queryPlayerTerrainHistory')->willReturn([]);
 
         $this->assertFalse($history->hasPlayerUsedTable('newPlayer', 1));
         $this->assertFalse($history->hasPlayerExperiencedTerrain('newPlayer', 1));
