@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TournamentTables\Models;
 
+use JsonException;
 use TournamentTables\Database\Connection;
 
 /**
@@ -80,7 +81,12 @@ class Allocation extends BaseModel
     {
         $reason = null;
         if (!empty($row['allocation_reason'])) {
-            $reason = json_decode($row['allocation_reason'], true);
+            try {
+                $reason = json_decode($row['allocation_reason'], true, 512, JSON_THROW_ON_ERROR);
+            } catch (JsonException $e) {
+                error_log('Failed to decode allocation_reason for allocation ' . (isset($row['id']) ? (string) $row['id'] : 'unknown') . ': ' . $e->getMessage());
+                $reason = null;
+            }
         }
 
         $bcpTableNumber = isset($row['bcp_table_number']) && $row['bcp_table_number'] !== null
@@ -204,9 +210,16 @@ class Allocation extends BaseModel
      */
     private function serializeReason(): ?string
     {
-        return $this->allocationReason !== null
-            ? json_encode($this->allocationReason)
-            : null;
+        if ($this->allocationReason === null) {
+            return null;
+        }
+
+        try {
+            return json_encode($this->allocationReason, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            error_log('Failed to encode allocation_reason for allocation ' . ($this->id !== null ? (string) $this->id : 'new') . ': ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**

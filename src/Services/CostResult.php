@@ -11,19 +11,9 @@ namespace TournamentTables\Services;
  */
 class CostResult
 {
-    /** @var int */
-    public $totalCost;
-
-    /** @var array */
-    public $costBreakdown;
-
-    /** @var array */
-    public $reasons;
-
-    public function __construct(int $totalCost, array $costBreakdown, array $reasons)
-    {
-        $this->totalCost = $totalCost;
-        $this->costBreakdown = $costBreakdown;
-        $this->reasons = $reasons;
-    }
+    public function __construct(
+        public readonly int $totalCost,
+        public readonly array $costBreakdown,
+        public readonly array $reasons
+    ) {}
 }

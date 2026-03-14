@@ -11,64 +11,19 @@ namespace TournamentTables\Services;
  */
 class Pairing
 {
-    /** @var string */
-    public $player1BcpId;
-
-    /** @var string */
-    public $player1Name;
-
-    /** @var int */
-    public $player1Score;
-
-    /** @var string|null */
-    public $player2BcpId;
-
-    /** @var string|null */
-    public $player2Name;
-
-    /** @var int */
-    public $player2Score;
-
-    /** @var int|null */
-    public $bcpTableNumber;
-
-    /** @var int */
-    public $player1TotalScore;
-
-    /** @var int */
-    public $player2TotalScore;
-
-    /** @var string|null */
-    public $player1Faction;
-
-    /** @var string|null */
-    public $player2Faction;
-
     public function __construct(
-        string $player1BcpId,
-        string $player1Name,
-        int $player1Score,
-        ?string $player2BcpId,
-        ?string $player2Name,
-        int $player2Score,
-        ?int $bcpTableNumber,
-        int $player1TotalScore = 0,
-        int $player2TotalScore = 0,
-        ?string $player1Faction = null,
-        ?string $player2Faction = null
-    ) {
-        $this->player1BcpId = $player1BcpId;
-        $this->player1Name = $player1Name;
-        $this->player1Score = $player1Score;
-        $this->player2BcpId = $player2BcpId;
-        $this->player2Name = $player2Name;
-        $this->player2Score = $player2Score;
-        $this->bcpTableNumber = $bcpTableNumber;
-        $this->player1TotalScore = $player1TotalScore;
-        $this->player2TotalScore = $player2TotalScore;
-        $this->player1Faction = $player1Faction;
-        $this->player2Faction = $player2Faction;
-    }
+        public readonly string $player1BcpId,
+        public readonly string $player1Name,
+        public readonly int $player1Score,
+        public readonly ?string $player2BcpId,
+        public readonly ?string $player2Name,
+        public readonly int $player2Score,
+        public readonly ?int $bcpTableNumber,
+        public readonly int $player1TotalScore = 0,
+        public readonly int $player2TotalScore = 0,
+        public readonly ?string $player1Faction = null,
+        public readonly ?string $player2Faction = null
+    ) {}
 
     /**
      * Check if this pairing is a bye (no opponent).

@@ -11,19 +11,9 @@ namespace TournamentTables\Services;
  */
 class AllocationResult
 {
-    /** @var array */
-    public $allocations;
-
-    /** @var array */
-    public $conflicts;
-
-    /** @var string */
-    public $summary;
-
-    public function __construct(array $allocations, array $conflicts, string $summary)
-    {
-        $this->allocations = $allocations;
-        $this->conflicts = $conflicts;
-        $this->summary = $summary;
-    }
+    public function __construct(
+        public readonly array $allocations,
+        public readonly array $conflicts,
+        public readonly string $summary
+    ) {}
 }
