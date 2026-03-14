@@ -11,6 +11,7 @@ use TournamentTables\Models\Round;
 use TournamentTables\Models\Table;
 use TournamentTables\Models\Player;
 use TournamentTables\Models\Allocation;
+use TournamentTables\Tests\TestUtilityTrait;
 
 /**
  * Performance tests for page load times.
@@ -20,6 +21,8 @@ use TournamentTables\Models\Allocation;
  */
 class PageLoadPerformanceTest extends TestCase
 {
+    use TestUtilityTrait;
+
     private const MAX_PAGE_LOAD_SECONDS = 3;
     private const MAX_API_RESPONSE_SECONDS = 2;
 
@@ -229,11 +232,6 @@ class PageLoadPerformanceTest extends TestCase
 
             return Tournament::find($tournamentId);
         });
-    }
-
-    private function createUniqueId(): string
-    {
-        return sprintf('%d%s', (int) (microtime(true) * 1000000), bin2hex(random_bytes(4)));
     }
 
     private function createPublishedRoundWithAllocations(): Round

@@ -16,6 +16,7 @@ use TournamentTables\Services\AllocationService;
 use TournamentTables\Services\CostCalculator;
 use TournamentTables\Services\TournamentHistory;
 use TournamentTables\Services\Pairing;
+use TournamentTables\Tests\TestUtilityTrait;
 
 /**
  * End-to-end tests for the complete tournament workflow.
@@ -25,6 +26,8 @@ use TournamentTables\Services\Pairing;
  */
 class TournamentWorkflowTest extends TestCase
 {
+    use TestUtilityTrait;
+
     private const MAX_WORKFLOW_TIME_SECONDS = 300; // 5 minutes
     private const PLAYER_COUNT = 24;
     private const TABLE_COUNT = 12;
@@ -307,11 +310,6 @@ class TournamentWorkflowTest extends TestCase
             'https://www.bestcoastpairings.com/event/e2e' . $uniqueId,
             self::TABLE_COUNT
         );
-    }
-
-    private function createUniqueId(): string
-    {
-        return sprintf('%d%s', (int) (microtime(true) * 1000000), bin2hex(random_bytes(4)));
     }
 
     private function createRound1WithPairings(Tournament $tournament): Round
