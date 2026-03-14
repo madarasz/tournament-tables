@@ -2,7 +2,7 @@
 This is project "Tournament Tables" I'm a tournament organiser for BCP tournaments. During a tournament we have multiple tables set up with different terrain layouts, so our players get to play on a different layout each round. The organising of the tournament, with its score tracking and pairing, is done by the BestCoastPairings.com website, it works well. The only thing missing that its table allocation does not take it into account that each player should play on different tables each round during the tournament.
 
 # Technical Requirements
-I want to make a web app that generates new table allocations based on the pairings available on the Best Coast Pairings (BCP) website. Tech stack should be PHP (version 7.1 is available) with MySQL.
+I want to make a web app that generates new table allocations based on the pairings available on the Best Coast Pairings (BCP) website. Tech stack should be PHP with MySQL (current runtime baseline: PHP 8.5).
 
 The frontend framework is not yet decided, suggest something minimalistic 
 
@@ -27,4 +27,3 @@ The organiser should be able to edit the table number for a player pair. The org
 
 ## User access
 The users (without any authentication) should be able to view the table allocations published.
-

@@ -7,14 +7,14 @@
 - Review exponential backoff retry logs
 
 ## Database Connection Issues
-- Verify MySQL is running: `docker-compose ps`
+- Verify MySQL is running: `docker compose ps`
 - Check credentials in `config/database.php`
 - Ensure database exists
 - Check port 3306 is not already in use
 
 ## E2E Tests Fail
-- Ensure test environment is running: `docker-compose -f docker-compose.yml -f docker-compose.test.yml ps`
-- Run migrations for test DB: `docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm migrate`
+- Ensure test environment is running: `docker compose -f docker-compose.yml -f docker-compose.test.yml ps`
+- Run migrations for test DB: `docker compose -f docker-compose.yml -f docker-compose.test.yml run --rm migrate`
 - Check Playwright browser installation: `npx playwright install`
 - Review test artifacts in `playwright-report/`
 

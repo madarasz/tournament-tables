@@ -127,19 +127,19 @@ test('should display terrain options', async () => {
 
 ```bash
 # Start test environment
-docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
 
 # Run all tests
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test
 
 # Run a single test file
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test specs/authentication.spec.ts
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test specs/authentication.spec.ts
 
 # Run a specific test by name pattern
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test -g "should authenticate with valid admin token"
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test -g "should authenticate with valid admin token"
 
 # Stop environment
-docker-compose -f docker-compose.yml -f docker-compose.test.yml down
+docker compose -f docker-compose.yml -f docker-compose.test.yml down
 ```
 
 ### Test Artifacts
@@ -194,13 +194,13 @@ npx playwright show-trace tests/E2E/test-results/<test-name>/trace.zip
 
 ```bash
 # Run with Playwright Inspector (step through test)
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test --debug
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test --debug
 
 # Run with UI mode (interactive test explorer)
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test --ui
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test --ui
 
 # Generate test code by recording browser actions
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright codegen http://php:80
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright codegen http://php:80
 ```
 
 ## Developing E2E Tests

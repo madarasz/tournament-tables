@@ -19,7 +19,7 @@
 1. Edit `bin/migrate.php`
 2. Add new tables or ALTER statements
 3. Test locally: `php bin/migrate.php`
-4. Test in Docker: `docker-compose exec php php bin/migrate.php`
+4. Test in Docker: `docker compose exec php php bin/migrate.php`
 5. Update data model documentation if schema changes
 
 ## Writing E2E Tests

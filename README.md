@@ -13,13 +13,13 @@ A web app for tournament organizers to generate table allocations that ensure pl
 ## Requirements
 
 - Docker & Docker Compose
-- (Optional for local dev) PHP 7.1, MySQL 5.7+, Composer
+- (Optional for local dev) PHP 8.5, MySQL 8.0+, Composer
 
 ## Quick Setup with Docker
 
 ```bash
 # Start development environment
-docker-compose up -d
+docker compose up -d
 
 # Run database migrations and seed data
 composer migrate
@@ -94,7 +94,7 @@ composer seed        # Seed terrain types
 
 ```bash
 # Start development environment
-docker-compose up -d
+docker compose up -d
 
 # Run PHP unit tests (recommended)
 composer test:unit
@@ -103,9 +103,9 @@ composer test:unit
 composer test:unit:all
 
 # Or manually run specific test suites
-docker-compose exec php ./vendor/bin/phpunit --testsuite unit
-docker-compose exec php ./vendor/bin/phpunit --testsuite integration
-docker-compose exec php ./vendor/bin/phpunit --testsuite performance
+docker compose exec php ./vendor/bin/phpunit --testsuite unit
+docker compose exec php ./vendor/bin/phpunit --testsuite integration
+docker compose exec php ./vendor/bin/phpunit --testsuite performance
 ```
 
 ### E2E Tests with Playwright (Docker)
@@ -118,28 +118,28 @@ composer test:e2e
 
 # Or manually:
 # Start test environment (layered config)
-docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
 
 # Run database migrations for test environment
-docker-compose -f docker-compose.yml -f docker-compose.test.yml run --rm migrate
+docker compose -f docker-compose.yml -f docker-compose.test.yml run --rm migrate
 
 # Install Playwright dependencies (first time only)
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npm install
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npm install
 
 # Run E2E tests
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test
 
 # Run specific test file
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test tournament-creation.spec.ts
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test tournament-creation.spec.ts
 
 # Run tests with UI (headed mode) - requires X11 forwarding
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test --headed
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test --headed
 
 # View test report
-docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright show-report --host 0.0.0.0
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright show-report --host 0.0.0.0
 
 # Stop test environment
-docker-compose -f docker-compose.yml -f docker-compose.test.yml down
+docker compose -f docker-compose.yml -f docker-compose.test.yml down
 ```
 
 ### E2E Tests Locally (without Docker)
@@ -170,7 +170,7 @@ npx playwright test --headed
 
 The test configuration layers on top of the base, so you use both files together:
 ```bash
-docker-compose -f docker-compose.yml -f docker-compose.test.yml <command>
+docker compose -f docker-compose.yml -f docker-compose.test.yml <command>
 ```
 
 ## License

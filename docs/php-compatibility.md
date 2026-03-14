@@ -1,6 +1,7 @@
-# PHP 7.4 to PHP 7.1 Porting Guide
+# PHP 7.4 to PHP 7.1 Porting Guide (Archived)
 
-This document lists all features introduced in PHP 7.2, 7.3, and 7.4 that are incompatible with PHP 7.1, along with detection patterns and substitution strategies.
+This document is historical reference material from before the PHP 8.5 migration.
+Current runtime baseline is PHP 8.5; use `docs/php-8-modernization.md` for active migration notes.
 
 ---
 
