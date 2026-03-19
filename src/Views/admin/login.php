@@ -11,6 +11,15 @@ ob_start();
 ?>
 
 <article>
+    <?php if (isset($autoLoginError) && $autoLoginError !== null): ?>
+    <article class="alert-error" style="margin-top: 0;">
+        <header>
+            <strong>Auto-login failed</strong>
+        </header>
+        <p><?= htmlspecialchars((string) $autoLoginError) ?></p>
+    </article>
+    <?php endif; ?>
+
     <p>Enter your 16-character admin token to access tournament management.</p>
 
     <form id="loginForm" hx-post="/api/auth" hx-target="#result" hx-swap="innerHTML">

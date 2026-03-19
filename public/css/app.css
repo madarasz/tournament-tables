@@ -177,6 +177,23 @@ th {
   user-select: all;
 }
 
+.icon-copy-button {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  padding: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fixed-copy-button {
+  width: 6.5rem;
+  min-width: 6.5rem;
+  padding: 0.5rem 0.65rem;
+  white-space: nowrap;
+  text-align: center;
+}
+
 /* Footer */
 footer {
   margin-top: 3rem;

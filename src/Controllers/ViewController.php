@@ -11,6 +11,7 @@ use TournamentTables\Models\Table;
 use TournamentTables\Models\Player;
 use TournamentTables\Models\TerrainType;
 use TournamentTables\Database\Connection;
+use TournamentTables\Services\AuthService;
 
 /**
  * View controller for HTML page rendering.
@@ -215,6 +216,23 @@ class ViewController extends BaseController
      */
     public function login(array $params, ?array $body): void
     {
+        $autoLoginError = null;
+        $token = isset($_GET['token']) ? trim((string) $_GET['token']) : '';
+
+        if ($token !== '') {
+            $authService = new AuthService();
+            $result = $authService->validateToken($token);
+
+            if ($result['valid']) {
+                $tournament = $result['tournament'];
+                $this->addTournamentToken($tournament->id, $token, $tournament->name);
+                header('Location: /admin/tournament/' . $tournament->id . '?loginSuccess=1');
+                return;
+            }
+
+            $autoLoginError = $result['error'] ?? 'Invalid token';
+        }
+
         include __DIR__ . '/../Views/admin/login.php';
     }
 

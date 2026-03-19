@@ -26,6 +26,13 @@ $adminToken = $adminToken ?? null;
 $autoImport = $autoImport ?? null;
 $playerCount = $playerCount ?? 0;
 $minimumTables = $minimumTables ?? 0;
+$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = $_SERVER['HTTP_HOST'] ?? '';
+$effectiveAdminToken = $adminToken ?? $tournament->adminToken;
+$relativeCreationLoginLink = '/admin/login?token=' . rawurlencode($effectiveAdminToken);
+$creationAdminLoginLink = $host !== '' ? ($scheme . '://' . $host . $relativeCreationLoginLink) : $relativeCreationLoginLink;
+$relativeAdminLoginLink = '/admin/login?token=' . rawurlencode($tournament->adminToken);
+$adminLoginLink = $host !== '' ? ($scheme . '://' . $host . $relativeAdminLoginLink) : $relativeAdminLoginLink;
 ?>
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
@@ -133,18 +140,18 @@ setTimeout(function() {
         <p>You can manually import Round 1 using the button in the Rounds table below.</p>
     <?php endif; ?>
 
-    <p><strong>Important:</strong> Save your admin token. You'll need it to manage this tournament from other devices or browsers.</p>
+    <p><strong>Important:</strong> Save your admin login link. You'll need it to manage this tournament from other devices or browsers.</p>
     <div style="display: flex; align-items: center; gap: 1rem; margin: 1rem 0;">
         <div class="token-display" id="admin-token-display" style="flex: 1;">
-            <?= htmlspecialchars($adminToken) ?>
+            <?= htmlspecialchars($creationAdminLoginLink) ?>
         </div>
-        <button type="button" id="copy-token-btn" onclick="copyAdminToken()" style="white-space: nowrap;">
-            Copy Token
+        <button type="button" id="copy-token-btn" class="fixed-copy-button" onclick="copyAdminToken()">
+            Copy Link
         </button>
     </div>
     <p class="text-small-muted">
-        This token has been saved in your browser cookies for 30 days.
-        You can dismiss this message - the token will remain accessible from your cookies.
+        This link includes your admin token and grants access to this tournament.
+        Keep it private.
     </p>
 </article>
 <?php endif; ?>
@@ -393,6 +400,29 @@ $nextRoundNumber = $hasRounds ? max(array_map(function($r) { return $r->roundNum
         </div>
     </article>
 
+    <article style="margin-bottom: 1.5rem;">
+        <h3 style="margin-top: 0;">Admin Login Link</h3>
+        <p class="text-small-muted">Open this link to auto-login with this tournament's admin token.</p>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="token-display" id="manage-admin-login-link-display" style="flex: 1;">
+                <?= htmlspecialchars($adminLoginLink) ?>
+            </div>
+            <button
+                type="button"
+                id="manage-copy-token-btn"
+                class="outline icon-copy-button"
+                aria-label="Copy admin login link to clipboard"
+                title="Copy admin login link"
+                onclick="copyTokenToClipboard('manage-admin-login-link-display', 'manage-copy-token-btn')"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+            </button>
+        </div>
+    </article>
+
     <section class="danger-zone">
         <h3 style="color: var(--pico-del-color, #c62828); margin-top: 0;">Delete Tournament</h3>
         <p>Deleting a tournament will permanently remove all rounds, tables, players, and allocations. This action cannot be undone.</p>
@@ -528,22 +558,51 @@ document.body.addEventListener('htmx:configRequest', function(event) {
     window.addEventListener('hashchange', handleHash);
 })();
 
-// Copy admin token to clipboard
-function copyAdminToken() {
-    var tokenDisplay = document.getElementById('admin-token-display');
-    var button = document.getElementById('copy-token-btn');
+// Copy token to clipboard by source/trigger element IDs
+function copyTokenToClipboard(tokenDisplayId, buttonId) {
+    var tokenDisplay = document.getElementById(tokenDisplayId);
+    var button = document.getElementById(buttonId);
+    if (!tokenDisplay || !button) {
+        return;
+    }
+
     var originalText = button.textContent;
+    var originalHtml = button.innerHTML;
+    var hasSvg = button.querySelector('svg') !== null;
+    var copiedLabel = hasSvg ? '✓' : 'Copied!';
+    var setButtonLabel = function(value) {
+        if (hasSvg) {
+            button.textContent = value;
+        } else {
+            button.textContent = value;
+        }
+    };
+    var restoreButton = function() {
+        if (hasSvg) {
+            button.innerHTML = originalHtml;
+        } else {
+            button.textContent = originalText;
+        }
+        button.style.background = '';
+        button.style.color = '';
+        button.style.paddingLeft = '';
+        button.style.paddingRight = '';
+    };
 
     // Copy to clipboard
     navigator.clipboard.writeText(tokenDisplay.textContent.trim()).then(function() {
         // Show success feedback
-        button.textContent = 'Copied!';
+        setButtonLabel(copiedLabel);
         button.style.background = '#4caf50';
+        button.style.color = '#fff';
+        if (hasSvg) {
+            button.style.paddingLeft = '0.45rem';
+            button.style.paddingRight = '0.45rem';
+        }
 
         // Reset button after 2 seconds
         setTimeout(function() {
-            button.textContent = originalText;
-            button.style.background = '';
+            restoreButton();
         }, 2000);
     }).catch(function(err) {
         // Fallback for older browsers
@@ -555,20 +614,29 @@ function copyAdminToken() {
         textArea.select();
         try {
             document.execCommand('copy');
-            button.textContent = 'Copied!';
+            setButtonLabel(copiedLabel);
             button.style.background = '#4caf50';
+            button.style.color = '#fff';
+            if (hasSvg) {
+                button.style.paddingLeft = '0.45rem';
+                button.style.paddingRight = '0.45rem';
+            }
             setTimeout(function() {
-                button.textContent = originalText;
-                button.style.background = '';
+                restoreButton();
             }, 2000);
         } catch (err) {
             button.textContent = 'Failed to copy';
             setTimeout(function() {
-                button.textContent = originalText;
+                restoreButton();
             }, 2000);
         }
         document.body.removeChild(textArea);
     });
+}
+
+// Legacy entry point used by creation-success banner button
+function copyAdminToken() {
+    copyTokenToClipboard('admin-token-display', 'copy-token-btn');
 }
 
 // Import round button handler
