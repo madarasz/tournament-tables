@@ -39,7 +39,7 @@ Store multiple tokens in a JSON-formatted cookie with tournament metadata:
 - **Sufficient capacity** - ~100 tournaments possible within 4KB limit, 20-limit provides safety margin
 
 ### Key Constraints
-- **PHP 7.1 compatibility** - No PHP 7.2+ features
+- **PHP 8.5 compatibility** - Prefer modern PHP 8.x language features when low-risk
 - **Cookie size limit** - 4KB maximum (20 tournaments = ~2KB with metadata)
 - **Security** - Maintain HttpOnly, SameSite=Lax, Secure flags
 - **Token format** - Existing 16-character tokens remain unchanged
@@ -621,11 +621,11 @@ After implementation, verify:
 6. **Run All Tests**:
    ```bash
    # PHPUnit tests
-   docker-compose exec php ./vendor/bin/phpunit
+   docker compose exec php ./vendor/bin/phpunit
 
    # E2E tests
-   docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d
-   docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test
+   docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
+   docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test
    ```
 
 ## Implementation Phases

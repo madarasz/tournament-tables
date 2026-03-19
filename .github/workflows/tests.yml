@@ -8,20 +8,20 @@ on:
 
 jobs:
   phpunit:
-    name: PHPUnit Tests (PHP 7.1)
+    name: PHPUnit Tests (PHP 8.5)
     runs-on: ubuntu-22.04
     timeout-minutes: 15
 
     services:
       mysql:
-        image: mysql:5.7
+        image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: tournament_tables
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
@@ -33,8 +33,8 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.1'
-          extensions: pdo, pdo_mysql, json
+          php-version: '8.5'
+          extensions: pdo, pdo_mysql, json, mbstring
           coverage: none
 
       - name: Get Composer cache directory
@@ -50,6 +50,12 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
+
+      - name: Validate Composer
+        run: composer validate
+
+      - name: Check platform requirements
+        run: composer check-platform-reqs
 
       - name: Create database config
         run: |
@@ -70,6 +76,9 @@ jobs:
 
       - name: Seed terrain types
         run: php bin/seed-terrain-types.php
+
+      - name: Lint PHP files
+        run: find src tests bin public config -name '*.php' -print0 | xargs -0 -n1 php -l
 
       - name: Run ALL PHPUnit tests
         run: vendor/bin/phpunit --testsuite unit,integration,performance,contract,e2e

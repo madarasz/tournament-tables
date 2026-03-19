@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace TournamentTables\Controllers;
 
+use JsonException;
+
 /**
  * Base controller with common functionality.
  */
@@ -19,7 +21,12 @@ abstract class BaseController
     {
         http_response_code($statusCode);
         header('Content-Type: application/json');
-        echo json_encode($data);
+        try {
+            echo json_encode($data, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            http_response_code(500);
+            echo '{"error":"serialization_error","message":"Failed to encode JSON response"}';
+        }
     }
 
     /**
@@ -95,27 +102,13 @@ abstract class BaseController
      */
     protected function setCookie(string $name, string $value, int $maxAge = 2592000, bool $httpOnly = true): void
     {
-        $expires = time() + $maxAge;
-        $secure = $this->isHttps();
-
-        // Build Set-Cookie header manually for PHP 7.1-7.4 compatibility
-        // PHP 7.4 validates cookie path and rejects semicolons, so we can't use
-        // the path workaround. Using header() directly allows full control.
-        $cookie = rawurlencode($name) . '=' . rawurlencode($value);
-        $cookie .= '; Expires=' . gmdate('D, d-M-Y H:i:s', $expires) . ' GMT';
-        $cookie .= '; Max-Age=' . $maxAge;
-        $cookie .= '; Path=/';
-        $cookie .= '; SameSite=Lax';
-
-        if ($secure) {
-            $cookie .= '; Secure';
-        }
-
-        if ($httpOnly) {
-            $cookie .= '; HttpOnly';
-        }
-
-        header('Set-Cookie: ' . $cookie, false);
+        setcookie($name, $value, [
+            'expires' => time() + $maxAge,
+            'path' => '/',
+            'secure' => $this->isHttps(),
+            'httponly' => $httpOnly,
+            'samesite' => 'Lax',
+        ]);
     }
 
     /**
@@ -136,25 +129,13 @@ abstract class BaseController
      */
     protected function clearCookie(string $name): void
     {
-        $expires = time() - 3600;
-        $secure = $this->isHttps();
-
-        // Build Set-Cookie header manually for PHP 7.1-7.4 compatibility
-        // PHP 7.4 validates cookie path and rejects semicolons, so we can't use
-        // the path workaround. Using header() directly allows full control.
-        $cookie = rawurlencode($name) . '=';
-        $cookie .= '; Expires=' . gmdate('D, d-M-Y H:i:s', $expires) . ' GMT';
-        $cookie .= '; Max-Age=0';
-        $cookie .= '; Path=/';
-        $cookie .= '; SameSite=Lax';
-
-        if ($secure) {
-            $cookie .= '; Secure';
-        }
-
-        $cookie .= '; HttpOnly';
-
-        header('Set-Cookie: ' . $cookie, false);
+        setcookie($name, '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'secure' => $this->isHttps(),
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
     }
 
     /**
@@ -169,9 +150,10 @@ abstract class BaseController
             return [];
         }
 
-        $decoded = json_decode($cookieValue, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            error_log('Failed to decode admin_token cookie: ' . json_last_error_msg());
+        try {
+            $decoded = json_decode($cookieValue, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            error_log('Failed to decode admin_token cookie: ' . $e->getMessage());
             return [];
         }
 
@@ -189,14 +171,20 @@ abstract class BaseController
      */
     protected function setMultiTokenCookie(array $tournaments): void
     {
-        $cookieValue = json_encode(['tournaments' => $tournaments]);
+        $cookieValue = $this->encodeJson(['tournaments' => $tournaments]);
+        if ($cookieValue === null) {
+            return;
+        }
 
         if (strlen($cookieValue) > 4096) {
             error_log('Cookie size exceeds 4KB limit. Evicting additional tournaments.');
             // Evict until under limit
             while (strlen($cookieValue) > 4096 && count($tournaments) > 1) {
                 $this->evictLRUTournament($tournaments);
-                $cookieValue = json_encode(['tournaments' => $tournaments]);
+                $cookieValue = $this->encodeJson(['tournaments' => $tournaments]);
+                if ($cookieValue === null) {
+                    return;
+                }
             }
         }
 
@@ -273,6 +261,21 @@ abstract class BaseController
     }
 
     /**
+     * Encode data as JSON and log serialization issues.
+     *
+     * @param mixed $data
+     */
+    private function encodeJson($data): ?string
+    {
+        try {
+            return json_encode($data, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            error_log('Failed to encode JSON data: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * Get a request header.
      *
      * @param string $name Header name
@@ -282,7 +285,8 @@ abstract class BaseController
     {
         // Convert header name to $_SERVER key format
         $key = 'HTTP_' . strtoupper(str_replace('-', '_', $name));
-        return $_SERVER[$key] ?? null;
+        $value = $_SERVER[$key] ?? null;
+        return is_string($value) ? $value : null;
     }
 
     /**

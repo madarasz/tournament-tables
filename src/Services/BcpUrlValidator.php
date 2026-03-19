@@ -73,12 +73,12 @@ class BcpUrlValidator
         }
 
         // Check it starts with https://
-        if (strpos($url, 'https://') !== 0) {
+        if (!str_starts_with($url, 'https://')) {
             return ['valid' => false, 'error' => 'URL must use HTTPS'];
         }
 
         // Check domain
-        if (strpos($url, 'bestcoastpairings.com') === false) {
+        if (!str_contains($url, 'bestcoastpairings.com')) {
             return ['valid' => false, 'error' => 'URL must be from bestcoastpairings.com'];
         }
 

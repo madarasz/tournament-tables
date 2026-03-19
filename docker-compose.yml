@@ -1,6 +1,6 @@
 services:
   php:
-    image: php:7.1-apache
+    image: php:8.5-apache
     ports:
       - "8080:80"
     working_dir: /var/www/app
@@ -13,9 +13,12 @@ services:
       mysql:
         condition: service_healthy
     command: >
-      bash -c "a2enmod rewrite && docker-php-ext-install pdo pdo_mysql &&
+      bash -c "a2enmod rewrite &&
+      apt-get update && apt-get install -y --no-install-recommends libonig-dev &&
+      docker-php-ext-install pdo pdo_mysql mbstring &&
       curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer &&
       composer install --no-interaction --prefer-dist &&
+      rm -rf /var/lib/apt/lists/* &&
       echo '<?php declare(strict_types=1); return [\"host\"=>\"mysql\",\"database\"=>\"tournament_tables\",\"username\"=>\"root\",\"password\"=>\"root\",\"charset\"=>\"utf8mb4\"];' > config/database.php &&
       php bin/migrate.php && php bin/seed-terrain-types.php && apache2-foreground"
     healthcheck:

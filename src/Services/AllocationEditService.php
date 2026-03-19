@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TournamentTables\Services;
 
+use JsonException;
 use PDO;
 use RuntimeException;
 use InvalidArgumentException;
@@ -338,7 +339,11 @@ class AllocationEditService
      */
     private function encodeAllocationReason(array $conflicts): string
     {
-        return json_encode(['conflicts' => $conflicts]);
+        try {
+            return json_encode(['conflicts' => $conflicts], JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw new RuntimeException('Failed to encode allocation conflicts: ' . $e->getMessage(), 0, $e);
+        }
     }
 
     // Helper methods using DatabaseQueryHelper trait

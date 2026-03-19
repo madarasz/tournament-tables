@@ -4,13 +4,14 @@
     "type": "project",
     "license": "MIT",
     "require": {
-        "php": "^7.1",
+        "php": "^8.5",
+        "ext-mbstring": "*",
         "ext-pdo": "*",
         "ext-json": "*"
     },
     "require-dev": {
         "justinrainbow/json-schema": "^5.2",
-        "phpunit/phpunit": "^7.5"
+        "phpunit/phpunit": "^12.0"
     },
     "autoload": {
         "psr-4": {
@@ -23,19 +24,16 @@
         }
     },
     "config": {
-        "sort-packages": true,
-        "platform": {
-            "php": "7.1.33"
-        }
+        "sort-packages": true
     },
     "scripts": {
-        "docker:up": "docker-compose up -d",
-        "docker:down": "docker-compose -f docker-compose.yml -f docker-compose.test.yml down",
-        "docker:restart": "docker-compose -f docker-compose.yml -f docker-compose.test.yml down && docker-compose up -d",
-        "test:unit": "docker-compose exec -w /var/www/app php ./vendor/bin/phpunit --testsuite unit,integration",
-        "test:unit:all": "docker-compose exec -w /var/www/app php ./vendor/bin/phpunit --testsuite unit,integration,contract,e2e",
-        "test:e2e": "docker-compose -f docker-compose.yml -f docker-compose.test.yml up -d && docker-compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test",
-        "migrate": "docker-compose exec php php bin/migrate.php",
-        "seed": "docker-compose exec php php bin/seed-terrain-types.php"
+        "docker:up": "docker compose up -d",
+        "docker:down": "docker compose -f docker-compose.yml -f docker-compose.test.yml down",
+        "docker:restart": "docker compose -f docker-compose.yml -f docker-compose.test.yml down && docker compose up -d",
+        "test:unit": "docker compose exec -w /var/www/app php ./vendor/bin/phpunit --testsuite unit,integration",
+        "test:unit:all": "docker compose exec -w /var/www/app php ./vendor/bin/phpunit --testsuite unit,integration,contract,e2e",
+        "test:e2e": "docker compose -f docker-compose.yml -f docker-compose.test.yml up -d && docker compose -f docker-compose.yml -f docker-compose.test.yml exec playwright npx playwright test",
+        "migrate": "docker compose exec php php bin/migrate.php",
+        "seed": "docker compose exec php php bin/seed-terrain-types.php"
     }
 }

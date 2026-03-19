@@ -16,6 +16,7 @@ use TournamentTables\Services\AllocationService;
 use TournamentTables\Services\CostCalculator;
 use TournamentTables\Services\TournamentHistory;
 use TournamentTables\Services\Pairing;
+use TournamentTables\Tests\TestUtilityTrait;
 
 /**
  * End-to-end tests for the complete tournament workflow.
@@ -25,6 +26,8 @@ use TournamentTables\Services\Pairing;
  */
 class TournamentWorkflowTest extends TestCase
 {
+    use TestUtilityTrait;
+
     private const MAX_WORKFLOW_TIME_SECONDS = 300; // 5 minutes
     private const PLAYER_COUNT = 24;
     private const TABLE_COUNT = 12;
@@ -197,7 +200,7 @@ class TournamentWorkflowTest extends TestCase
         // Create tournament with only 2 tables for 4 players - forces unavoidable conflicts
         // With 2 tables, cross-pairings in R2 guarantee each pairing has players who
         // together have used BOTH tables, so any assignment causes a conflict
-        $uniqueId = str_replace('.', '', microtime(true)) . bin2hex(random_bytes(4));
+        $uniqueId = $this->createUniqueId();
         $result = $this->tournamentService->createTournament(
             'E2E Edge Case Test ' . $uniqueId,
             'https://www.bestcoastpairings.com/event/e2eedge' . $uniqueId,
@@ -301,7 +304,7 @@ class TournamentWorkflowTest extends TestCase
     private function createTournament(): array
     {
         // Use microtime and uniqid to ensure unique BCP event IDs even with process isolation
-        $uniqueId = str_replace('.', '', microtime(true)) . bin2hex(random_bytes(4));
+        $uniqueId = $this->createUniqueId();
         return $this->tournamentService->createTournament(
             'E2E Test Tournament ' . $uniqueId,
             'https://www.bestcoastpairings.com/event/e2e' . $uniqueId,

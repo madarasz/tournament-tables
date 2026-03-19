@@ -647,7 +647,7 @@ class ByeHandlingTest extends TestCase
      */
     private function createMockHistoryEmpty(): TournamentHistory
     {
-        $mock = $this->createMock(TournamentHistory::class);
+        $mock = $this->createStub(TournamentHistory::class);
         $mock->method('hasPlayerUsedTable')->willReturn(false);
         $mock->method('hasPlayerExperiencedTerrain')->willReturn(false);
         return $mock;

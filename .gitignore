@@ -25,6 +25,7 @@ Thumbs.db
 # PHPUnit
 .phpunit.result.cache
 /coverage/
+test-results
 
 # Composer
 composer.lock

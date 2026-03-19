@@ -84,7 +84,7 @@ class TournamentController extends BaseController
 
             // Check if this is an API request (JSON) or browser form submission
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-            $isJsonRequest = strpos($contentType, 'application/json') !== false;
+            $isJsonRequest = str_contains($contentType, 'application/json');
 
             if ($isJsonRequest) {
                 // API request - return JSON response (for test helpers and API clients)

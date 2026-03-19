@@ -28,7 +28,7 @@ class TokenGeneratorTest extends TestCase
 
         // Base64 alphabet: A-Z, a-z, 0-9, +, /
         // We use URL-safe base64: A-Z, a-z, 0-9, -, _
-        $this->assertRegExp('/^[A-Za-z0-9_-]+$/', $token);
+        $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]+$/', $token);
     }
 
     public function testGenerateReturnsUniqueTokens(): void
@@ -53,8 +53,8 @@ class TokenGeneratorTest extends TestCase
         }
 
         // Should have a mix of uppercase, lowercase, and numbers
-        $this->assertRegExp('/[A-Z]/', $chars);
-        $this->assertRegExp('/[a-z]/', $chars);
-        $this->assertRegExp('/[0-9]/', $chars);
+        $this->assertMatchesRegularExpression('/[A-Z]/', $chars);
+        $this->assertMatchesRegularExpression('/[a-z]/', $chars);
+        $this->assertMatchesRegularExpression('/[0-9]/', $chars);
     }
 }

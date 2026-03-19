@@ -25,14 +25,27 @@ error_reporting(E_ALL);
 ini_set('display_errors', '0');
 
 // Set content type for API responses
-if (strpos($_SERVER['REQUEST_URI'] ?? '', '/api/') === 0) {
+if (str_starts_with($_SERVER['REQUEST_URI'] ?? '', '/api/')) {
     header('Content-Type: application/json');
 }
 
+/**
+ * Output JSON safely with a fallback payload.
+ */
+function respondJson(array $payload): void
+{
+    try {
+        echo json_encode($payload, JSON_THROW_ON_ERROR);
+    } catch (\JsonException $e) {
+        echo '{"error":"serialization_error","message":"Failed to encode JSON response"}';
+    }
+}
+
 // Parse request
-$method = $_SERVER['REQUEST_METHOD'];
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$uri = rtrim($uri, '/') ?: '/';
+$method = isset($_SERVER['REQUEST_METHOD']) ? (string) $_SERVER['REQUEST_METHOD'] : 'GET';
+$requestUri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '/';
+$parsedPath = parse_url($requestUri, PHP_URL_PATH);
+$uri = is_string($parsedPath) ? (rtrim($parsedPath, '/') ?: '/') : '/';
 
 // Route definitions
 $routes = [
@@ -104,8 +117,8 @@ foreach ($routes as $pattern => $handler) {
 // Handle 404
 if ($matchedRoute === null) {
     http_response_code(404);
-    if (strpos($uri, '/api/') === 0) {
-        echo json_encode(['error' => 'not_found', 'message' => 'Route not found']);
+    if (str_starts_with($uri, '/api/')) {
+        respondJson(['error' => 'not_found', 'message' => 'Route not found']);
     } else {
         echo '<!DOCTYPE html><html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1></body></html>';
     }
@@ -118,8 +131,8 @@ if ($requiresAuth) {
     $authResult = AdminAuthMiddleware::check();
     if ($authResult !== true) {
         http_response_code(401);
-        if (strpos($uri, '/api/') === 0) {
-            echo json_encode(['error' => 'unauthorized', 'message' => $authResult]);
+        if (str_starts_with($uri, '/api/')) {
+            respondJson(['error' => 'unauthorized', 'message' => $authResult]);
         } else {
             header('Location: /admin/login');
         }
@@ -149,7 +162,7 @@ $action = $matchedRoute[1];
 
 if (!isset($controllers[$controllerName])) {
     http_response_code(500);
-    echo json_encode(['error' => 'internal_error', 'message' => 'Controller not found']);
+    respondJson(['error' => 'internal_error', 'message' => 'Controller not found']);
     exit;
 }
 
@@ -160,30 +173,32 @@ try {
     // Get request body for POST/PUT/PATCH
     $body = null;
     if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
-        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        $contentType = isset($_SERVER['CONTENT_TYPE']) ? (string) $_SERVER['CONTENT_TYPE'] : '';
 
         // Handle JSON content type
-        if (strpos($contentType, 'application/json') !== false) {
+        if (str_contains($contentType, 'application/json')) {
             $rawBody = file_get_contents('php://input');
             if (!empty($rawBody)) {
-                $body = json_decode($rawBody, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
+                try {
+                    $body = json_decode($rawBody, true, 512, JSON_THROW_ON_ERROR);
+                } catch (\JsonException $e) {
                     http_response_code(400);
-                    echo json_encode(['error' => 'invalid_json', 'message' => 'Invalid JSON in request body']);
+                    respondJson(['error' => 'invalid_json', 'message' => 'Invalid JSON in request body']);
                     exit;
                 }
             }
         }
         // Handle form-urlencoded content type (HTMX default)
-        elseif (strpos($contentType, 'application/x-www-form-urlencoded') !== false) {
+        elseif (str_contains($contentType, 'application/x-www-form-urlencoded')) {
             $body = $_POST;
         }
         // Fallback: try JSON first, then form data
         else {
             $rawBody = file_get_contents('php://input');
             if (!empty($rawBody)) {
-                $body = json_decode($rawBody, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
+                try {
+                    $body = json_decode($rawBody, true, 512, JSON_THROW_ON_ERROR);
+                } catch (\JsonException $e) {
                     // Not valid JSON, check if we have POST data
                     $body = !empty($_POST) ? $_POST : null;
                 }
@@ -197,8 +212,8 @@ try {
     // Output result (controllers handle their own response formatting)
 } catch (\Throwable $e) {
     http_response_code(500);
-    if (strpos($uri, '/api/') === 0) {
-        echo json_encode([
+    if (str_starts_with($uri, '/api/')) {
+        respondJson([
             'error' => 'internal_error',
             'message' => 'An unexpected error occurred',
             // Only show details in development

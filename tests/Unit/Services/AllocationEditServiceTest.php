@@ -32,7 +32,7 @@ class AllocationEditServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->mockDb = $this->createMock(PDO::class);
+        $this->mockDb = $this->createStub(PDO::class);
         $costCalculator = new CostCalculator();
         $this->service = new AllocationEditService($this->mockDb, $costCalculator);
     }
@@ -46,7 +46,7 @@ class AllocationEditServiceTest extends TestCase
         $newTableId = 5;
 
         // Create statement mock for different calls
-        $stmt = $this->createMock(PDOStatement::class);
+        $stmt = $this->createStub(PDOStatement::class);
 
         $tableRow = [
             'id' => $newTableId,
@@ -76,7 +76,14 @@ class AllocationEditServiceTest extends TestCase
             // 4. getAllocationByRoundAndTable - null (no existing allocation)
             false,
             // 5. getTable again for calculateConflicts
-            $tableRow
+            $tableRow,
+            // 6. getTable for recalculateConflictsForTable(oldTableId)
+            [
+                'id' => 3,
+                'tournament_id' => 1,
+                'table_number' => 3,
+                'terrain_type_id' => null,
+            ]
         );
 
         // fetchAll() is used by TournamentHistory::queryPlayerHistory()
@@ -102,7 +109,7 @@ class AllocationEditServiceTest extends TestCase
         $newTableId = 5;
 
         // Mock allocation not found
-        $stmt = $this->createMock(PDOStatement::class);
+        $stmt = $this->createStub(PDOStatement::class);
         $stmt->method('fetch')->willReturn(false);
         $this->mockDb->method('prepare')->willReturn($stmt);
         $stmt->method('execute')->willReturn(true);
@@ -123,7 +130,7 @@ class AllocationEditServiceTest extends TestCase
         $newTableId = 5;
 
         // Create statement mock for different calls
-        $stmt = $this->createMock(PDOStatement::class);
+        $stmt = $this->createStub(PDOStatement::class);
 
         $tableRow = [
             'id' => $newTableId,
@@ -157,7 +164,14 @@ class AllocationEditServiceTest extends TestCase
                 'table_id' => $newTableId,
             ],
             // 5. getTable for calculateConflicts
-            $tableRow
+            $tableRow,
+            // 6. getTable for recalculateConflictsForTable(oldTableId)
+            [
+                'id' => 3,
+                'tournament_id' => 1,
+                'table_number' => 3,
+                'terrain_type_id' => null,
+            ]
         );
 
         // fetchAll() is used by TournamentHistory::queryPlayerHistory()
@@ -195,7 +209,7 @@ class AllocationEditServiceTest extends TestCase
         $allocationId2 = 2;
 
         // Mock both allocations exist and are in same round
-        $stmt = $this->createMock(PDOStatement::class);
+        $stmt = $this->createStub(PDOStatement::class);
 
         // fetch() is used by fetchById() and getRound()
         $stmt->method('fetch')->willReturnOnConsecutiveCalls(
@@ -252,7 +266,7 @@ class AllocationEditServiceTest extends TestCase
         $allocationId2 = 2;
 
         // Mock allocations in different rounds
-        $stmt = $this->createMock(PDOStatement::class);
+        $stmt = $this->createStub(PDOStatement::class);
         $stmt->method('fetch')->willReturnOnConsecutiveCalls(
             [
                 'id' => $allocationId1,

@@ -280,7 +280,7 @@ class CostCalculatorTest extends TestCase
      */
     private function createMockHistory(bool $hasUsedTable, bool $hasExperiencedTerrain): TournamentHistory
     {
-        $mock = $this->createMock(TournamentHistory::class);
+        $mock = $this->createStub(TournamentHistory::class);
 
         $mock->method('hasPlayerUsedTable')
             ->willReturn($hasUsedTable);
@@ -296,7 +296,7 @@ class CostCalculatorTest extends TestCase
      */
     private function createMockHistoryBothPlayers(bool $hasUsedTable, bool $hasExperiencedTerrain): TournamentHistory
     {
-        $mock = $this->createMock(TournamentHistory::class);
+        $mock = $this->createStub(TournamentHistory::class);
 
         // Both player1 and player2 return true
         $mock->method('hasPlayerUsedTable')

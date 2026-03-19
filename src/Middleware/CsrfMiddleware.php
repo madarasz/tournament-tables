@@ -45,7 +45,7 @@ class CsrfMiddleware
 
         // Skip CSRF for API routes (they use token authentication)
         foreach (self::EXEMPT_ROUTES as $exempt) {
-            if (strpos($uri, $exempt) === 0) {
+            if (str_starts_with($uri, $exempt)) {
                 return true;
             }
         }

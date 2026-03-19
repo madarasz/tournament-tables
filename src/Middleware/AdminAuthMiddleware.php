@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace TournamentTables\Middleware;
 
+use JsonException;
 use TournamentTables\Models\Tournament;
 
 /**
@@ -64,9 +65,11 @@ class AdminAuthMiddleware
     private static function getHeaderToken(): ?string
     {
         $key = 'HTTP_X_ADMIN_TOKEN';
-        return isset($_SERVER[$key]) && !empty($_SERVER[$key])
-            ? $_SERVER[$key]
-            : null;
+        if (!isset($_SERVER[$key]) || empty($_SERVER[$key]) || !is_string($_SERVER[$key])) {
+            return null;
+        }
+
+        return $_SERVER[$key];
     }
 
     /**
@@ -81,7 +84,12 @@ class AdminAuthMiddleware
         }
 
         // Try JSON format (multi-token)
-        $decoded = json_decode($cookieValue, true);
+        try {
+            $decoded = json_decode($cookieValue, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            return null;
+        }
+
         if (is_array($decoded) && isset($decoded['tournaments'])) {
             $tournaments = $decoded['tournaments'];
 
@@ -89,7 +97,7 @@ class AdminAuthMiddleware
             $uri = $_SERVER['REQUEST_URI'] ?? '';
             $tournamentId = self::getTournamentIdFromUri($uri);
 
-            if ($tournamentId !== null && isset($tournaments[$tournamentId])) {
+            if ($tournamentId !== null && isset($tournaments[$tournamentId]['token']) && is_string($tournaments[$tournamentId]['token'])) {
                 return $tournaments[$tournamentId]['token'];
             }
 

@@ -59,11 +59,12 @@ class AllocationService
         // Round 1: Use BCP's original table assignments (FR-007.1)
         if ($isRound1) {
             $result = $this->generateRound1Allocations($regularPairings, $tables);
-            // Append bye allocations
+            $round1Allocations = $result->allocations;
             foreach ($byePairings as $byePairing) {
-                $result->allocations[] = $this->createByeAllocation($byePairing, true);
+                $round1Allocations[] = $this->createByeAllocation($byePairing, true);
             }
-            return $result;
+
+            return new AllocationResult($round1Allocations, $result->conflicts, $result->summary);
         }
 
         // Sort regular pairings by combined score (descending), then by BCP ID (ascending) for stability
@@ -398,7 +399,7 @@ class AllocationService
         // Table reuse conflict
         if ($costResult->costBreakdown['tableReuse'] > 0) {
             foreach ($costResult->reasons as $reason) {
-                if (strpos($reason, 'previously played on table') !== false) {
+                if (str_contains($reason, 'previously played on table')) {
                     $conflicts[] = [
                         'type' => 'TABLE_REUSE',
                         'message' => $reason,
@@ -410,7 +411,7 @@ class AllocationService
         // Terrain reuse conflict (note: this is a soft constraint, less severe)
         if ($costResult->costBreakdown['terrainReuse'] > 0) {
             foreach ($costResult->reasons as $reason) {
-                if (strpos($reason, 'previously experienced') !== false) {
+                if (str_contains($reason, 'previously experienced')) {
                     $conflicts[] = [
                         'type' => 'TERRAIN_REUSE',
                         'message' => $reason,

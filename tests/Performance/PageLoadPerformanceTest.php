@@ -11,6 +11,7 @@ use TournamentTables\Models\Round;
 use TournamentTables\Models\Table;
 use TournamentTables\Models\Player;
 use TournamentTables\Models\Allocation;
+use TournamentTables\Tests\TestUtilityTrait;
 
 /**
  * Performance tests for page load times.
@@ -20,6 +21,8 @@ use TournamentTables\Models\Allocation;
  */
 class PageLoadPerformanceTest extends TestCase
 {
+    use TestUtilityTrait;
+
     private const MAX_PAGE_LOAD_SECONDS = 3;
     private const MAX_API_RESPONSE_SECONDS = 2;
 
@@ -192,15 +195,15 @@ class PageLoadPerformanceTest extends TestCase
 
     private function createTestTournament(): Tournament
     {
-        Connection::beginTransaction();
+        return Connection::executeInTransaction(function (): Tournament {
+            $uniqueId = $this->createUniqueId();
 
-        try {
             Connection::execute(
                 "INSERT INTO tournaments (name, bcp_event_id, bcp_url, table_count, admin_token)
                  VALUES (?, ?, ?, ?, ?)",
                 [
-                    'Page Load Test ' . time(),
-                    'pageload' . str_replace('.', '', microtime(true)) . bin2hex(random_bytes(4)),
+                    'Page Load Test ' . $uniqueId,
+                    'pageload' . $uniqueId,
                     'https://www.bestcoastpairings.com/event/pageload123',
                     20,
                     bin2hex(random_bytes(8)),
@@ -227,13 +230,8 @@ class PageLoadPerformanceTest extends TestCase
                 );
             }
 
-            Connection::commit();
-
             return Tournament::find($tournamentId);
-        } catch (\Exception $e) {
-            Connection::rollBack();
-            throw $e;
-        }
+        });
     }
 
     private function createPublishedRoundWithAllocations(): Round

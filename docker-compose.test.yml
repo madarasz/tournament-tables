@@ -14,8 +14,11 @@ services:
       BCP_MOCK_API_URL: http://localhost/mock-bcp-api
     # Override command to set environment variables for Apache
     command: >
-      bash -c "a2enmod rewrite && docker-php-ext-install pdo pdo_mysql &&
+      bash -c "a2enmod rewrite &&
+      apt-get update && apt-get install -y --no-install-recommends libonig-dev &&
+      docker-php-ext-install pdo pdo_mysql mbstring &&
       echo 'PassEnv APP_ENV BCP_MOCK_BASE_URL BCP_MOCK_API_URL' >> /etc/apache2/apache2.conf &&
+      rm -rf /var/lib/apt/lists/* &&
       echo '<?php declare(strict_types=1); return [\"host\"=>\"mysql\",\"database\"=>\"tournament_tables\",\"username\"=>\"root\",\"password\"=>\"root\",\"charset\"=>\"utf8mb4\"];' > config/database.php &&
       php bin/migrate.php && php bin/seed-terrain-types.php && apache2-foreground"
     healthcheck:
@@ -50,7 +53,7 @@ services:
 
   # Utility service for running migrations before tests
   migrate:
-    image: php:7.1-cli
+    image: php:8.5-cli
     volumes:
       - .:/var/www/app
     working_dir: /var/www/app
@@ -65,8 +68,10 @@ services:
     entrypoint: []
     command: |
       bash -c "
-        docker-php-ext-install pdo pdo_mysql &&
+        apt-get update && apt-get install -y --no-install-recommends libonig-dev &&
+        docker-php-ext-install pdo pdo_mysql mbstring &&
         mkdir -p config &&
+        rm -rf /var/lib/apt/lists/* &&
         cat > config/database.php <<EOF
         <?php
         declare(strict_types=1);
