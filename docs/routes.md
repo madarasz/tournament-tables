@@ -14,18 +14,19 @@ This document describes all available web pages and API endpoints in the Tournam
 
 | Route | Description | Ready |
 |-------|-------------|-------|
-| `GET /` | Home page - landing page with feature overview | Yes |
-| `GET /tournament/create` | Tournament creation form | Yes |
-| `GET /login` | Admin login page | Yes |
-| `GET /public/{id}` | Public tournament view with round selector | Yes |
-| `GET /public/{id}/round/{n}` | Public round allocations display | Yes |
+| `GET /` | Public tournaments list (published tournaments) | Yes |
+| `GET /{id}` | Public tournament display (round/leaderboard controlled by query params) | Yes |
+
+Query parameters for `GET /{id}`:
+- `round={n}`: Show a specific published round
+- `view=leaderboard`: Show leaderboard mode (takes precedence over round mode)
 
 ### Admin Pages (Authentication Required)
 
 | Route | Description | Ready |
 |-------|-------------|-------|
-| `GET /tournament/{id}` | Tournament dashboard | No |
-| `GET /tournament/{id}/round/{n}` | Round management view | Yes |
+| `GET /admin/tournament/{id}` | Tournament dashboard | Yes |
+| `GET /admin/tournament/{id}/round/{n}` | Round management view | Yes |
 
 ---
 
@@ -99,14 +100,15 @@ These endpoints require no authentication and are intended for player-facing dis
 
 ### For Tournament Organizers
 
-1. **Create a tournament**: Visit `/tournament/create`
-2. **Manage rounds**: Navigate to `/tournament/{id}/round/{n}`
-3. **Login with token**: Visit `/login` and enter your admin token
+1. **Create a tournament**: Visit `/admin/tournament/create`
+2. **Manage rounds**: Navigate to `/admin/tournament/{id}/round/{n}`
+3. **Login with token**: Visit `/admin/login` and enter your admin token
 
 ### For Players
 
-1. **View tournament**: Navigate to `/public/{tournamentId}`
-2. **View round allocations**: Click on a round or go to `/public/{tournamentId}/round/{roundNumber}`
+1. **View tournament**: Navigate to `/{tournamentId}`
+2. **View round allocations**: Navigate to `/{tournamentId}?round={roundNumber}`
+3. **View leaderboard**: Navigate to `/{tournamentId}?view=leaderboard`
 
 ### API Examples
 

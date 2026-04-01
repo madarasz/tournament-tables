@@ -9,14 +9,20 @@
  *
  * Expected variables:
  * - $tournament: Tournament model
- * - $round: Round model
+ * - $round: Round model|null
  * - $allocations: Array of Allocation models
  * - $publishedRounds: Array of Round models (for round navigation)
+ * - $rankedPlayers: Array of ranked players (for leaderboard)
+ * - $isLeaderboardView: bool
  */
 
-$pageTitle = htmlspecialchars($tournament->name) . " - Round {$round->roundNumber}";
+$modeTitle = $isLeaderboardView
+    ? 'Leaderboard'
+    : ($round !== null ? "Round {$round->roundNumber}" : 'No Published Rounds');
+$pageTitle = htmlspecialchars($tournament->name) . " - {$modeTitle}";
 $hasAllocations = !empty($allocations);
 $tableCount = count($tournament->getTables());
+$bodyClass = 'tc-page' . ($isLeaderboardView ? ' leaderboard-active' : '');
 
 /**
  * Abbreviate player name for mobile display (UX Improvement #8).
@@ -40,6 +46,15 @@ function abbreviatePlayerName($fullName) {
 function formatTableNumber($number) {
     return (int) $number;
 }
+
+/**
+ * Build public tournament URL with query parameters.
+ */
+function publicTournamentUrl(int $tournamentId, array $params = []): string
+{
+    $query = http_build_query($params);
+    return '/' . $tournamentId . ($query === '' ? '' : ('?' . $query));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -56,7 +71,7 @@ function formatTableNumber($number) {
     <!-- Tactical Theme CSS -->
     <link rel="stylesheet" href="/css/tactical-theme.css">
 </head>
-<body class="tc-page">
+<body class="<?= $bodyClass ?>">
     <!-- Header -->
     <header class="tc-header">
         <a href="/" class="tc-header-brand" data-testid="back-to-list">
@@ -80,18 +95,19 @@ function formatTableNumber($number) {
             <nav class="tc-sidebar-nav" aria-label="Round navigation">
                 <?php foreach ($publishedRounds as $r): ?>
                     <?php
-                    $isActive = $r->roundNumber === $round->roundNumber;
+                    $isActive = !$isLeaderboardView && $round !== null && $r->roundNumber === $round->roundNumber;
                     $linkClass = 'tc-sidebar-nav-link' . ($isActive ? ' active' : '');
                     ?>
-                    <a href="/<?= $tournament->id ?>/round/<?= $r->roundNumber ?>"
+                    <a href="<?= publicTournamentUrl((int) $tournament->id, ['round' => $r->roundNumber]) ?>"
                        class="<?= $linkClass ?>"
+                       data-testid="sidebar-round-link-<?= $r->roundNumber ?>"
                        <?= $isActive ? 'aria-current="page"' : '' ?>>
                         Round <?= $r->roundNumber ?>
                     </a>
                 <?php endforeach; ?>
                 <?php if (!empty($rankedPlayers)): ?>
-                <a href="#leaderboard"
-                   class="tc-sidebar-nav-link"
+                <a href="<?= publicTournamentUrl((int) $tournament->id, ['view' => 'leaderboard']) ?>"
+                   class="tc-sidebar-nav-link<?= $isLeaderboardView ? ' active' : '' ?>"
                    id="sidebar-leaderboard-link">
                     Leaderboard
                 </a>
@@ -107,26 +123,31 @@ function formatTableNumber($number) {
                     <div class="tc-hero-content">
                         <!-- Tournament name (mobile only, desktop shows in sidebar) -->
                         <h2 class="tc-tournament-name"><?= htmlspecialchars($tournament->name) ?></h2>
-                        <h1 class="tc-round-title" id="hero-round-title">Round <?= $round->roundNumber ?></h1>
+                        <h1 class="tc-round-title" id="hero-round-title"><?= $round !== null ? ('Round ' . $round->roundNumber) : 'No Published Rounds' ?></h1>
                         <h1 class="tc-round-title" id="hero-leaderboard-title">Leaderboard</h1>
                     </div>
 
                     <!-- Round Pills (Mobile only) -->
-                    <?php if (count($publishedRounds) > 1): ?>
+                    <?php if (count($publishedRounds) > 1 || !empty($rankedPlayers)): ?>
                     <nav class="tc-round-pills" aria-label="Round navigation">
                         <?php foreach ($publishedRounds as $r): ?>
                             <?php
-                            $isActive = $r->roundNumber === $round->roundNumber;
+                            $isActive = !$isLeaderboardView && $round !== null && $r->roundNumber === $round->roundNumber;
                             $pillClass = 'tc-round-pill' . ($isActive ? ' active' : '');
                             ?>
-                            <a href="/<?= $tournament->id ?>/round/<?= $r->roundNumber ?>"
+                            <a href="<?= publicTournamentUrl((int) $tournament->id, ['round' => $r->roundNumber]) ?>"
                                class="<?= $pillClass ?>"
+                               data-testid="pill-round-link-<?= $r->roundNumber ?>"
                                <?= $isActive ? 'aria-current="page"' : '' ?>>
                                 Round <?= $r->roundNumber ?>
                             </a>
                         <?php endforeach; ?>
                         <?php if (!empty($rankedPlayers)): ?>
-                        <a href="#leaderboard" class="tc-round-pill" id="pill-leaderboard-link">Leaderboard</a>
+                        <a href="<?= publicTournamentUrl((int) $tournament->id, ['view' => 'leaderboard']) ?>"
+                           class="tc-round-pill<?= $isLeaderboardView ? ' active' : '' ?>"
+                           id="pill-leaderboard-link">
+                            Leaderboard
+                        </a>
                         <?php endif; ?>
                     </nav>
                     <?php endif; ?>
@@ -262,8 +283,13 @@ function formatTableNumber($number) {
             <?php else: ?>
             <!-- Empty State -->
             <div class="tc-empty-state">
+                <?php if ($round === null): ?>
+                <p>No published rounds are available yet.</p>
+                <p>Please check back later.</p>
+                <?php else: ?>
                 <p>No table allocations available for this round.</p>
                 <p>Please check back later.</p>
+                <?php endif; ?>
             </div>
             <?php endif; ?>
 
@@ -308,20 +334,24 @@ function formatTableNumber($number) {
         </main>
     </div>
     <script>
-        // Toggle leaderboard visibility and nav active state based on hash
-        function syncLeaderboardActive() {
-            var isLb = window.location.hash === '#leaderboard';
-            document.body.classList.toggle('leaderboard-active', isLb);
-            var sidebar = document.getElementById('sidebar-leaderboard-link');
-            var pill = document.getElementById('pill-leaderboard-link');
-            if (sidebar) { sidebar.classList.toggle('active', isLb); }
-            if (pill) {
-                pill.classList.toggle('active', isLb);
-                if (isLb) { pill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' }); }
+        (function () {
+            var pillsNav = document.querySelector('.tc-round-pills');
+            var leaderboardPill = document.getElementById('pill-leaderboard-link');
+            var isLeaderboardActive = document.body.classList.contains('leaderboard-active');
+            var isMobile = window.matchMedia('(max-width: 1023px)').matches;
+
+            if (!pillsNav || !leaderboardPill || !isLeaderboardActive || !isMobile) {
+                return;
             }
-        }
-        window.addEventListener('hashchange', syncLeaderboardActive);
-        syncLeaderboardActive();
+
+            requestAnimationFrame(function () {
+                leaderboardPill.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'nearest'
+                });
+            });
+        })();
     </script>
 </body>
 </html>

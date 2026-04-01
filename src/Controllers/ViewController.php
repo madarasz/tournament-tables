@@ -114,7 +114,7 @@ class ViewController extends BaseController
     }
 
     /**
-     * GET /public/{id} - Public tournament view (unauthenticated).
+     * GET /{id} - Public tournament display (unauthenticated).
      */
     public function publicTournament(array $params, ?array $body): void
     {
@@ -127,36 +127,59 @@ class ViewController extends BaseController
             return;
         }
 
-        // Get only published rounds
+        // Get only published rounds.
         $publishedRounds = Round::findPublishedByTournament($tournamentId);
 
-        // Get tables for table count display
-        $tables = Table::findByTournament($tournamentId);
+        $requestedView = strtolower(trim((string) ($_GET['view'] ?? '')));
+        $isLeaderboardView = $requestedView === 'leaderboard';
+        $roundQuery = (int) ($_GET['round'] ?? 0);
 
-        // Get players sorted by score for leaderboard
+        $round = null;
+        $allocations = [];
+
+        if (!empty($publishedRounds)) {
+            $latestPublishedRound = $publishedRounds[count($publishedRounds) - 1];
+
+            if ($isLeaderboardView) {
+                $round = $latestPublishedRound;
+            } else {
+                $selectedRound = null;
+
+                if ($roundQuery > 0) {
+                    foreach ($publishedRounds as $publishedRound) {
+                        if ($publishedRound->roundNumber === $roundQuery) {
+                            $selectedRound = $publishedRound;
+                            break;
+                        }
+                    }
+                }
+
+                $round = $selectedRound ?? $latestPublishedRound;
+                $allocations = $round->getAllocations();
+            }
+        }
+
+        // Get players sorted by score for leaderboard.
         $players = $tournament->getPlayers();
-        usort($players, function ($a, $b) {
-            return $b->totalScore <=> $a->totalScore;
-        });
+        usort($players, fn($a, $b) => $b->totalScore <=> $a->totalScore);
 
-        // Calculate ranks with tie handling (standard competition ranking: 1,1,3,4,4,6...)
+        // Calculate ranks with tie handling (standard competition ranking: 1,1,3,4,4,6...).
         $rankedPlayers = [];
         $rank = 1;
         $previousScore = null;
         foreach ($players as $index => $player) {
             if ($previousScore !== null && $player->totalScore < $previousScore) {
-                $rank = $index + 1; // Skip to position-based rank
+                $rank = $index + 1;
             }
             $rankedPlayers[] = ['rank' => $rank, 'player' => $player];
             $previousScore = $player->totalScore;
         }
 
-        // Render the public tournament view
-        include __DIR__ . '/../Views/public/tournament.php';
+        include __DIR__ . '/../Views/public/round.php';
     }
 
     /**
-     * GET /public - Public tournaments list (unauthenticated).
+     * GET / - Public tournaments list (unauthenticated).
      */
     public function publicIndex(array $params, ?array $body): void
     {
@@ -171,58 +194,6 @@ class ViewController extends BaseController
         $tournaments = Connection::fetchAll($sql);
 
         include __DIR__ . '/../Views/public/index.php';
-    }
-
-    /**
-     * GET /public/{id}/round/{n} - Public round view (unauthenticated).
-     */
-    public function publicRound(array $params, ?array $body): void
-    {
-        $tournamentId = (int) ($params['id'] ?? 0);
-        $roundNumber = (int) ($params['n'] ?? 0);
-
-        $tournament = Tournament::find($tournamentId);
-        if ($tournament === null) {
-            http_response_code(404);
-            echo $this->render404('Tournament not found');
-            return;
-        }
-
-        $round = Round::findByTournamentAndNumber($tournamentId, $roundNumber);
-        if ($round === null) {
-            http_response_code(404);
-            echo $this->render404('Round not found');
-            return;
-        }
-
-        // Only show published rounds publicly
-        if (!$round->isPublished) {
-            http_response_code(404);
-            echo $this->render404('Round not published');
-            return;
-        }
-
-        $allocations = $round->getAllocations();
-
-        // Get all published rounds for navigation
-        $publishedRounds = Round::findPublishedByTournament($tournamentId);
-
-        // Get ranked players for leaderboard
-        $players = $tournament->getPlayers();
-        usort($players, fn($a, $b) => $b->totalScore <=> $a->totalScore);
-        $rankedPlayers = [];
-        $rank = 1;
-        $previousScore = null;
-        foreach ($players as $index => $player) {
-            if ($previousScore !== null && $player->totalScore < $previousScore) {
-                $rank = $index + 1;
-            }
-            $rankedPlayers[] = ['rank' => $rank, 'player' => $player];
-            $previousScore = $player->totalScore;
-        }
-
-        // Render the public round view
-        include __DIR__ . '/../Views/public/round.php';
     }
 
     /**

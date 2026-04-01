@@ -78,7 +78,6 @@ $routes = [
     // Public View Routes (HTML) - catch-all routes last
     'GET /' => ['ViewController', 'publicIndex'],
     'GET /{id}' => ['ViewController', 'publicTournament'],
-    'GET /{id}/round/{n}' => ['ViewController', 'publicRound'],
 ];
 
 if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_API_URL')) {

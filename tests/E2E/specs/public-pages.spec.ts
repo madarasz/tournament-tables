@@ -12,67 +12,55 @@ test.describe('Public Pages', () => {
     await cleanupTestData(TEST_TOURNAMENT_ID);
   });
 
-  test('Navigate public pages: list -> tournament -> round -> back', async ({ page }) => {
-    // Step 1: Visit main public page
+  test('Navigate public pages with query-based round and leaderboard views', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    // Verify tournaments list is visible
     await expect(page.getByTestId('tournaments-heading')).toHaveText('Tournaments');
 
-    // Verify our test tournament is listed with player count
     const tournamentLink = page.getByTestId('tournament-link-Public Page Test');
     await expect(tournamentLink).toBeVisible();
     await expect(page.getByTestId('player-count-Public Page Test')).toBeVisible();
 
-    // Step 2: Click tournament to go to tournament page
     await tournamentLink.click();
     await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/\/1001$/);
 
-    // Verify we're on tournament page
-    await expect(page.locator('h1')).toContainText('Public Page Test');
+    await expect(page.locator('.tc-tournament-name')).toContainText('Public Page Test');
+    await expect(page.locator('#hero-round-title')).toContainText('Round 1');
+    await expect(page.locator('body')).not.toHaveClass(/leaderboard-active/);
 
-    // Verify table count is displayed correctly
-    await expect(page.getByTestId('tables-count')).toContainText('8 Tables');
+    await expect(page.locator('.tc-match-row')).toHaveCount(8);
+    await expect(page.locator('.tc-match-list').getByText('Corsair Voidscarred')).toBeVisible();
+    await expect(page.locator('.tc-match-list').getByText('Nemesis Claw')).toBeVisible();
+    await expect(page.getByTestId('sidebar-round-link-1')).toBeVisible();
+    await expect(page.getByTestId('sidebar-round-link-2')).toHaveCount(0);
 
-    // Verify "All Tournaments" back link exists
-    const backToList = page.getByTestId('back-to-list');
-    await expect(backToList).toBeVisible();
-
-    // Verify Round 1 button is visible (published)
-    const round1Button = page.getByTestId('round-button-1');
-    await expect(round1Button).toBeVisible();
-
-    // Verify Round 2 is NOT visible (not published)
-    const round2Button = page.getByTestId('round-button-2');
-    await expect(round2Button).not.toBeVisible();
-
-    // Step 3: Click Round 1 to view allocations
-    await round1Button.click();
+    await page.locator('#sidebar-leaderboard-link').click();
     await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/\/1001\?view=leaderboard$/);
+    await expect(page.locator('body')).toHaveClass(/leaderboard-active/);
+    await expect(page.getByTestId('leaderboard-section')).toBeVisible();
 
-    // Verify we're on round page
-    await expect(page.locator('h1')).toContainText('Public Page Test');
-    await expect(page.locator('.public-round-current')).toContainText('Round 1');
-
-    // Verify allocations table is visible with 8 rows
-    const allocationRows = page.locator('table tbody tr');
-    await expect(allocationRows).toHaveCount(8);
-
-    // Verify player factions are displayed
-    await expect(page.locator('.player-faction').first()).toBeVisible();
-    await expect(page.getByText('Corsair Voidscarred')).toBeVisible();
-    await expect(page.getByText('Nemesis Claw')).toBeVisible();
-
-    // Verify "All Tournaments" back link exists on round page
-    const backFromRound = page.getByTestId('back-to-list');
-    await expect(backFromRound).toBeVisible();
-
-    // Step 4: Navigate back to tournaments list
-    await backFromRound.click();
+    await page.goto('/1001?round=1&view=leaderboard');
     await page.waitForLoadState('networkidle');
+    await expect(page.locator('body')).toHaveClass(/leaderboard-active/);
+    await expect(page.getByTestId('leaderboard-section')).toBeVisible();
 
-    // Verify we're back on the main public list
+    await page.getByTestId('sidebar-round-link-1').click();
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/\/1001\?round=1$/);
+    await expect(page.locator('body')).not.toHaveClass(/leaderboard-active/);
+
+    await page.getByTestId('back-to-list').click();
+    await page.waitForLoadState('networkidle');
     await expect(page.getByTestId('tournaments-heading')).toHaveText('Tournaments');
+  });
+
+  test('Old public round route returns 404', async ({ page }) => {
+    await page.goto('/1001/round/1');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('h1')).toHaveText('404 Not Found');
   });
 });
