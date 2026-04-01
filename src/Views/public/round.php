@@ -1,9 +1,9 @@
 <?php
 /**
- * Public round view.
+ * Public round view - Tactical Command Theme.
  *
  * Displays allocation table for a published round (FR-012).
- * Styled for readability on venue devices (T083).
+ * Styled with "Tactical Command" dark theme for venue displays (T083).
  *
  * Reference: specs/001-table-allocation/tasks.md#T081, T083
  *
@@ -16,18 +16,7 @@
 
 $pageTitle = htmlspecialchars($tournament->name) . " - Round {$round->roundNumber}";
 $hasAllocations = !empty($allocations);
-
-// Calculate prev/next rounds for navigation
-$prevRound = null;
-$nextRound = null;
-foreach ($publishedRounds as $r) {
-    if ($r->roundNumber === $round->roundNumber - 1) {
-        $prevRound = $r;
-    }
-    if ($r->roundNumber === $round->roundNumber + 1) {
-        $nextRound = $r;
-    }
-}
+$tableCount = count($tournament->getTables());
 
 /**
  * Abbreviate player name for mobile display (UX Improvement #8).
@@ -44,374 +33,111 @@ function abbreviatePlayerName($fullName) {
     array_shift($parts);
     return $firstInitial . ' ' . implode(' ', $parts);
 }
+
+/**
+ * Format table number for display (no leading zeros).
+ */
+function formatTableNumber($number) {
+    return (int) $number;
+}
 ?>
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $pageTitle ?> - Tournament Tables</title>
 
-    <!-- Pico CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
-    <!-- App CSS -->
-    <link rel="stylesheet" href="/css/app.css">
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-
-    <style>
-        /*
-         * Public view styling for venue readability (T083)
-         * Large fonts, high contrast for tournament venue displays
-         */
-
-        :root {
-            --primary: #1095c1;
-            --primary-hover: #0d7ea8;
-            --font-size-base: 1.25rem;
-        }
-
-        body {
-            font-size: var(--font-size-base);
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        /* Header styling */
-        .public-header {
-            background: linear-gradient(135deg, var(--primary) 0%, #0d7ea8 100%);
-            color: white;
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .public-header h1 {
-            color: white;
-            margin: 0;
-            font-size: 2.5rem;
-            font-weight: 700;
-            text-align: center;
-        }
-
-        .public-header .subtitle {
-            margin: 0.5rem 0 0 0;
-            font-size: 1.25rem;
-            opacity: 0.9;
-            text-align: center;
-        }
-
-        /* Round navigation */
-        .round-nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .round-nav-buttons {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .round-nav a {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            font-size: 1rem;
-            text-decoration: none;
-            color: white;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-
-        .round-nav a:hover {
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
-        }
-
-        .round-nav a.active {
-            background: white;
-            color: var(--primary);
-            font-weight: 600;
-        }
-
-        .back-link {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            font-size: 1rem;
-            text-decoration: none;
-            color: white;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-        }
-
-        .back-link:hover {
-            background: rgba(255, 255, 255, 0.3);
-            color: white;
-        }
-
-        /* Allocation table - optimized for readability */
-        .allocation-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 1.25rem;
-            margin: 1rem 0;
-        }
-
-        .allocation-table thead {
-            background: #333;
-            color: white;
-        }
-
-        .allocation-table th {
-            padding: 1rem 1.5rem;
-            text-align: left;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .allocation-table td {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e0e0e0;
-            vertical-align: middle;
-        }
-
-        .allocation-table tbody tr:nth-child(even) {
-            background: #f9f9f9;
-        }
-
-        .allocation-table tbody tr:hover {
-            background: #eef7ff;
-        }
-
-        /* Table number - large and bold */
-        .table-number {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-align: center;
-            width: 130px;
-            min-width: 130px;
-            white-space: nowrap;
-        }
-
-        /* Terrain type */
-        .terrain-type {
-            font-style: italic;
-            color: #666;
-        }
-
-        /* Player names - prominent */
-        .player-name {
-            font-weight: 500;
-        }
-
-        /* Score - highlighted */
-        .player-score {
-            font-weight: 700;
-            font-size: 1.4rem;
-            color: #1976d2;
-            text-align: center;
-            width: 80px;
-        }
-
-        /* VS separator */
-        .vs-separator {
-            text-align: center;
-            color: #999;
-            font-weight: bold;
-            width: 60px;
-        }
-
-        /* Player faction styling */
-        .player-faction {
-            display: block;
-            font-size: 0.75em;
-            color: #888;
-            font-style: italic;
-            margin-top: 2px;
-            max-width: 150px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        /* No allocations message */
-        .no-allocations {
-            background: #fff3cd;
-            border: 1px solid #ffeeba;
-            border-radius: 8px;
-            padding: 2rem;
-            text-align: center;
-            font-size: 1.25rem;
-            color: #856404;
-        }
-
-        /* Bye row styling */
-        .bye-row {
-            background-color: #f5f5f5 !important;
-        }
-        .bye-row:hover {
-            background-color: #eeeeee !important;
-        }
-        .bye-indicator {
-            color: #9e9e9e;
-            font-style: italic;
-            font-size: 0.9em;
-        }
-        .bye-no-table {
-            color: #9e9e9e;
-            font-style: italic;
-        }
-
-        /* Footer */
-        .public-footer {
-            margin-top: 3rem;
-            padding: 1.5rem;
-            text-align: center;
-            background: #f5f5f5;
-            font-size: 1rem;
-            color: #666;
-        }
-
-        /* Mobile name display (UX Improvement #8) */
-        .player-name-full { display: inline; }
-        .player-name-short { display: none; }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .public-header h1 {
-                font-size: 1.5rem;
-            }
-
-            .allocation-table {
-                font-size: 1rem;
-            }
-
-            .allocation-table th,
-            .allocation-table td {
-                padding: 0.75rem 0.5rem;
-            }
-
-            .table-number {
-                font-size: 1.25rem;
-                width: 60px;
-            }
-
-            .player-score {
-                font-size: 1.1rem;
-                width: 50px;
-            }
-
-            /* Hide terrain, vs separator, and score columns on mobile */
-            .allocation-table .terrain-type,
-            .allocation-table .vs-separator,
-            .allocation-table .player-score {
-                display: none;
-            }
-            .allocation-table th.terrain-type,
-            .allocation-table th.vs-separator,
-            .allocation-table th.player-score {
-                display: none;
-            }
-
-            /* Show abbreviated names on mobile (UX Improvement #8) */
-            .player-name-full { display: none; }
-            .player-name-short { display: inline; }
-
-            /* Compact player cells on mobile */
-            .player-name {
-                font-size: 0.95rem;
-            }
-        }
-
-        /* Large display mode - for TV/monitor at venue */
-        @media (min-width: 1600px) {
-            :root {
-                --font-size-base: 1.5rem;
-            }
-
-            .public-header h1 {
-                font-size: 3rem;
-            }
-
-            .allocation-table {
-                font-size: 1.5rem;
-            }
-
-            .allocation-table th,
-            .allocation-table td {
-                padding: 1.25rem 2rem;
-            }
-
-            .table-number {
-                font-size: 2.25rem;
-                width: 120px;
-            }
-
-            .player-score {
-                font-size: 1.75rem;
-                width: 100px;
-            }
-        }
-
-        /* Auto-refresh indicator */
-        .refresh-info {
-            text-align: center;
-            color: #666;
-            font-size: 0.9rem;
-            margin-top: 1rem;
-        }
-    </style>
+    <!-- Tactical Theme CSS -->
+    <link rel="stylesheet" href="/css/tactical-theme.css">
 </head>
-<body>
-    <header class="public-header">
-        <nav class="public-back-nav">
-            <a href="/" data-testid="back-to-list">&larr; All Tournaments</a>
-        </nav>
-        <h1><?= htmlspecialchars($tournament->name) ?></h1>
-        <p class="subtitle">Table Allocations</p>
+<body class="tc-page">
+    <!-- Header -->
+    <header class="tc-header">
+        <a href="/" class="tc-header-brand" data-testid="back-to-list">
+            <span class="tc-header-brand-icon">⚔️</span>
+            <span class="tc-header-brand-text">Tournament Tables</span>
+        </a>
+        <a href="/" class="tc-header-back">
+            <span>←</span>
+            <span>Back to Tournaments</span>
+        </a>
     </header>
 
-    <main class="container">
-        <!-- Round navigation -->
-        <nav class="public-round-navigation">
-            <?php if ($prevRound): ?>
-            <a href="/<?= $tournament->id ?>/round/<?= $prevRound->roundNumber ?>" class="public-round-nav-btn">&laquo; Round <?= $prevRound->roundNumber ?></a>
-            <?php else: ?>
-            <span class="public-round-nav-spacer"></span>
-            <?php endif; ?>
-            <span class="public-round-current">Round <?= $round->roundNumber ?></span>
-            <?php if ($nextRound): ?>
-            <a href="/<?= $tournament->id ?>/round/<?= $nextRound->roundNumber ?>" class="public-round-nav-btn">Round <?= $nextRound->roundNumber ?> &raquo;</a>
-            <?php else: ?>
-            <span class="public-round-nav-spacer"></span>
-            <?php endif; ?>
-        </nav>
+    <!-- Layout Wrapper -->
+    <div class="tc-layout">
+        <!-- Sidebar (Desktop only) -->
+        <aside class="tc-sidebar">
+            <div class="tc-sidebar-header">
+                <span class="tc-sidebar-tournament-name"><?= htmlspecialchars($tournament->name) ?></span>
+                <span class="tc-sidebar-table-count"><?= $tableCount ?> Tables</span>
+            </div>
+            <nav class="tc-sidebar-nav" aria-label="Round navigation">
+                <?php foreach ($publishedRounds as $r): ?>
+                    <?php
+                    $isActive = $r->roundNumber === $round->roundNumber;
+                    $linkClass = 'tc-sidebar-nav-link' . ($isActive ? ' active' : '');
+                    ?>
+                    <a href="/<?= $tournament->id ?>/round/<?= $r->roundNumber ?>"
+                       class="<?= $linkClass ?>"
+                       <?= $isActive ? 'aria-current="page"' : '' ?>>
+                        <span>R<?= $r->roundNumber ?></span>
+                        <span>Round <?= $r->roundNumber ?></span>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
+        </aside>
 
-        <?php if ($hasAllocations): ?>
-        <table class="allocation-table" role="grid">
-            <thead>
-                <tr>
-                    <th class="table-number">Table</th>
-                    <th class="terrain-type">Terrain</th>
-                    <th class="player-name">Player 1</th>
-                    <th class="player-score">Score</th>
-                    <th class="vs-separator"></th>
-                    <th class="player-score">Score</th>
-                    <th class="player-name">Player 2</th>
-                </tr>
-            </thead>
-            <tbody>
+        <!-- Main Content -->
+        <main class="tc-main">
+            <!-- Hero Section -->
+            <section class="tc-hero">
+                <div class="tc-hero-inner">
+                    <div class="tc-hero-content">
+                        <!-- Tournament name (mobile only, desktop shows in sidebar) -->
+                        <h2 class="tc-tournament-name"><?= htmlspecialchars($tournament->name) ?></h2>
+                        <h1 class="tc-round-title">Round <?= $round->roundNumber ?></h1>
+                    </div>
+
+                    <!-- Round Pills (Mobile only) -->
+                    <?php if (count($publishedRounds) > 1): ?>
+                    <nav class="tc-round-pills" aria-label="Round navigation">
+                        <?php foreach ($publishedRounds as $r): ?>
+                            <?php
+                            $isActive = $r->roundNumber === $round->roundNumber;
+                            $pillClass = 'tc-round-pill' . ($isActive ? ' active' : '');
+                            ?>
+                            <a href="/<?= $tournament->id ?>/round/<?= $r->roundNumber ?>"
+                               class="<?= $pillClass ?>"
+                               <?= $isActive ? 'aria-current="page"' : '' ?>>
+                                Round <?= $r->roundNumber ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </nav>
+                    <?php endif; ?>
+                </div>
+            </section>
+
+            <?php if ($hasAllocations): ?>
+            <!-- Match List -->
+            <div class="tc-match-list">
+                <!-- Column Headers (Desktop only) -->
+                <div class="tc-match-header">
+                    <span class="tc-match-header-cell">Table</span>
+                    <span class="tc-match-header-cell">Terrain</span>
+                    <span class="tc-match-header-cell">Player 1</span>
+                    <span class="tc-match-header-cell center">Score</span>
+                    <span class="tc-match-header-cell center"></span>
+                    <span class="tc-match-header-cell center">Score</span>
+                    <span class="tc-match-header-cell right">Player 2</span>
+                </div>
+
+                <!-- Match Rows -->
                 <?php foreach ($allocations as $allocation):
                     $isBye = $allocation->isBye();
                     $table = $allocation->getTable();
@@ -419,75 +145,121 @@ function abbreviatePlayerName($fullName) {
                     $player2 = $isBye ? null : $allocation->getPlayer2();
                     $terrainType = $table ? $table->getTerrainType() : null;
                     $emoji = $terrainType ? $terrainType->emoji : '';
+                    $terrainName = $terrainType ? htmlspecialchars($terrainType->name) : '—';
 
-                    // Prepare names (UX Improvement #8)
-                    $p1Name = $player1 ? htmlspecialchars($player1->name) : 'Unknown';
-                    $p2Name = $isBye ? '' : ($player2 ? htmlspecialchars($player2->name) : 'Unknown');
-                    $p1Short = abbreviatePlayerName($p1Name);
-                    $p2Short = $isBye ? '' : abbreviatePlayerName($p2Name);
+                    $p1NameFull = $player1 ? htmlspecialchars($player1->name) : 'Unknown';
+                    $p1NameShort = $player1 ? htmlspecialchars(abbreviatePlayerName($player1->name)) : 'Unknown';
+                    $p2NameFull = $isBye ? '' : ($player2 ? htmlspecialchars($player2->name) : 'Unknown');
+                    $p2NameShort = $isBye ? '' : ($player2 ? htmlspecialchars(abbreviatePlayerName($player2->name)) : 'Unknown');
+                    $p1Faction = $player1 && $player1->faction ? htmlspecialchars($player1->faction) : null;
+                    $p2Faction = $player2 && $player2->faction ? htmlspecialchars($player2->faction) : null;
+
+                    $tableNumber = $table ? formatTableNumber($table->tableNumber) : '—';
+                    $rowClass = 'tc-match-row' . ($isBye ? ' bye' : '');
+
+                    // Score coloring: win = green, loss = red, tie = grey
+                    if (!$isBye) {
+                        $s1 = (int)$allocation->player1Score;
+                        $s2 = (int)$allocation->player2Score;
+                        $p1ScoreClass = $s1 > $s2 ? 'score-win' : ($s1 === $s2 ? 'score-tie' : 'score-loss');
+                        $p2ScoreClass = $s2 > $s1 ? 'score-win' : ($s1 === $s2 ? 'score-tie' : 'score-loss');
+                    } else {
+                        $p1ScoreClass = '';
+                        $p2ScoreClass = '';
+                    }
                 ?>
-                <tr class="<?= $isBye ? 'bye-row' : '' ?>">
+                <div class="<?= $rowClass ?>">
                     <?php if ($isBye): ?>
-                    <td class="table-number bye-no-table">—</td>
-                    <td class="terrain-type bye-no-table">—</td>
-                    <td class="player-name">
-                        <span class="player-name-full"><?= $p1Name ?></span>
-                        <span class="player-name-short"><?= $p1Short ?> (<?= $allocation->player1Score ?>)</span>
-                        <?php if ($player1 && $player1->faction): ?>
-                        <span class="player-faction"><?= htmlspecialchars($player1->faction) ?></span>
-                        <?php endif; ?>
-                        <span class="bye-indicator">(Bye - no game this round)</span>
-                    </td>
-                    <td class="player-score"><?= $allocation->player1Score ?></td>
-                    <td class="vs-separator"></td>
-                    <td class="player-score"></td>
-                    <td class="player-name bye-no-table">—</td>
+                        <!-- Bye Row -->
+                        <div class="tc-table-info">
+                            <span class="tc-table-number">—</span>
+                        </div>
+                        <div class="tc-terrain-name">—</div>
+                        <div class="tc-player tc-player-1">
+                            <span class="tc-player-name">
+                                <span class="tc-name-full"><?= $p1NameFull ?></span>
+                                <span class="tc-name-short"><?= $p1NameShort ?></span>
+                            </span>
+                            <?php if ($p1Faction): ?>
+                            <div class="tc-player-row">
+                                <span class="tc-faction-pill"><?= $p1Faction ?></span>
+                                <span class="tc-score-inline"><?= $allocation->player1Score ?></span>
+                            </div>
+                            <?php endif; ?>
+                            <span class="tc-bye-indicator">Bye - no game this round</span>
+                        </div>
+                        <div class="tc-vs-zone">
+                            <span class="tc-score"><?= $allocation->player1Score ?></span>
+                            <span class="tc-vs"></span>
+                            <span class="tc-score"></span>
+                        </div>
+                        <div class="tc-player tc-player-2">—</div>
                     <?php else: ?>
-                    <td class="table-number"><?= $table ? $table->tableNumber : 'N/A' ?><?= $emoji ? ' ' . $emoji : '' ?></td>
-                    <td class="terrain-type"><?= $terrainType ? htmlspecialchars($terrainType->name) : '-' ?></td>
-                    <td class="player-name">
-                        <span class="player-name-full"><?= $p1Name ?></span>
-                        <span class="player-name-short"><?= $p1Short ?> (<?= $allocation->player1Score ?>)</span>
-                        <?php if ($player1 && $player1->faction): ?>
-                        <span class="player-faction"><?= htmlspecialchars($player1->faction) ?></span>
-                        <?php endif; ?>
-                    </td>
-                    <td class="player-score"><?= $allocation->player1Score ?></td>
-                    <td class="vs-separator">vs</td>
-                    <td class="player-score"><?= $allocation->player2Score ?></td>
-                    <td class="player-name">
-                        <span class="player-name-full"><?= $p2Name ?></span>
-                        <span class="player-name-short"><?= $p2Short ?> (<?= $allocation->player2Score ?>)</span>
-                        <?php if ($player2 && $player2->faction): ?>
-                        <span class="player-faction"><?= htmlspecialchars($player2->faction) ?></span>
-                        <?php endif; ?>
-                    </td>
+                        <!-- Regular Match Row -->
+                        <div class="tc-table-info">
+                            <span class="tc-table-number"><?= $tableNumber ?></span>
+                            <?php if ($emoji): ?>
+                            <span class="tc-terrain-emoji"><?= $emoji ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="tc-terrain-name">
+                            <?php if ($emoji): ?>
+                            <span><?= $emoji ?></span>
+                            <?php endif; ?>
+                            <span><?= $terrainName ?></span>
+                        </div>
+                        <div class="tc-player tc-player-1">
+                            <span class="tc-player-name">
+                                <span class="tc-name-full"><?= $p1NameFull ?></span>
+                                <span class="tc-name-short"><?= $p1NameShort ?></span>
+                            </span>
+                            <div class="tc-player-row">
+                                <?php if ($p1Faction): ?>
+                                <span class="tc-faction-pill"><?= $p1Faction ?></span>
+                                <?php endif; ?>
+                                <span class="tc-score-inline <?= $p1ScoreClass ?>"><?= $allocation->player1Score ?></span>
+                            </div>
+                        </div>
+                        <div class="tc-vs-zone">
+                            <span class="tc-score <?= $p1ScoreClass ?>"><?= $allocation->player1Score ?></span>
+                            <span class="tc-vs">VS</span>
+                            <span class="tc-score <?= $p2ScoreClass ?>"><?= $allocation->player2Score ?></span>
+                        </div>
+                        <div class="tc-player tc-player-2">
+                            <span class="tc-player-name">
+                                <span class="tc-name-full"><?= $p2NameFull ?></span>
+                                <span class="tc-name-short"><?= $p2NameShort ?></span>
+                            </span>
+                            <div class="tc-player-row">
+                                <span class="tc-score-inline <?= $p2ScoreClass ?>"><?= $allocation->player2Score ?></span>
+                                <?php if ($p2Faction): ?>
+                                <span class="tc-faction-pill"><?= $p2Faction ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
                     <?php endif; ?>
-                </tr>
+                </div>
                 <?php endforeach; ?>
-            </tbody>
-        </table>
+            </div>
+            <?php else: ?>
+            <!-- Empty State -->
+            <div class="tc-empty-state">
+                <p>No table allocations available for this round.</p>
+                <p>Please check back later.</p>
+            </div>
+            <?php endif; ?>
 
-        <p class="refresh-info">
-            <?= count($allocations) ?> game(s) &bull;
-            Last updated: <?= date('g:i A') ?>
-        </p>
-        <?php else: ?>
-        <div class="no-allocations">
-            <p>No table allocations available for this round.</p>
-            <p>Please check back later.</p>
-        </div>
-        <?php endif; ?>
-    </main>
-
-    <footer class="public-footer">
-        Tournament Tables - Tournament Table Allocation System
-    </footer>
-
-    <script>
-        // Optional: Auto-refresh every 60 seconds for live updates
-        // Uncomment to enable auto-refresh
-        // setTimeout(function() { location.reload(); }, 60000);
-    </script>
+            <!-- Footer -->
+            <footer class="tc-footer">
+                <div class="tc-footer-meta">
+                    <?php if ($hasAllocations): ?>
+                    <span class="tc-footer-update">
+                        <?= count($allocations) ?> game(s) • Last updated: <?= date('g:i A') ?>
+                    </span>
+                    <?php endif; ?>
+                </div>
+            </footer>
+        </main>
+    </div>
 </body>
 </html>

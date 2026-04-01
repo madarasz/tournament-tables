@@ -1,0 +1,879 @@
+/**
+ * Tactical Command Theme
+ * Design system for Tournament Tables public round view
+ *
+ * Based on "The Tactical Command" design philosophy:
+ * - Deep navy backgrounds with green accents
+ * - Tonal depth instead of borders
+ * - Professional venue display aesthetic
+ */
+
+/* ============================================
+   CSS Custom Properties (Design Tokens)
+   ============================================ */
+:root {
+  /* Surface colors - layered depth */
+  --tc-surface: #0b1326;
+  --tc-surface-dim: #0b1326;
+  --tc-surface-container-lowest: #060e20;
+  --tc-surface-container-low: #131b2e;
+  --tc-surface-container: #171f33;
+  --tc-surface-container-high: #222a3d;
+  --tc-surface-container-highest: #2d3449;
+  --tc-surface-bright: #31394d;
+  --tc-surface-variant: #2d3449;
+
+  /* Primary colors */
+  --tc-primary: #8bd6b6;
+  --tc-primary-container: #065f46;
+  --tc-primary-fixed-dim: #8bd6b6;
+
+  /* Secondary colors */
+  --tc-secondary: #4de082;
+  --tc-secondary-container: #00b55d;
+
+  /* Tertiary colors */
+  --tc-tertiary: #b9c8de;
+  --tc-tertiary-container: #465467;
+
+  /* Text colors */
+  --tc-on-surface: #dae2fd;
+  --tc-on-surface-variant: #bec9c2;
+  --tc-on-primary: #003828;
+  --tc-on-secondary: #003919;
+  --tc-on-tertiary-container: #b9c8de;
+
+  /* Utility colors */
+  --tc-outline: #89938d;
+  --tc-outline-variant: #3f4944;
+  --tc-error: #ffb4ab;
+
+  /* Typography */
+  --tc-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Spacing */
+  --tc-spacing-1: 0.25rem;
+  --tc-spacing-2: 0.5rem;
+  --tc-spacing-3: 0.75rem;
+  --tc-spacing-4: 1rem;
+  --tc-spacing-6: 1.5rem;
+  --tc-spacing-8: 2rem;
+
+  /* Border radius */
+  --tc-radius-sm: 0.125rem;
+  --tc-radius-md: 0.25rem;
+  --tc-radius-lg: 0.5rem;
+  --tc-radius-full: 9999px;
+
+  /* Transitions */
+  --tc-transition-fast: 150ms ease;
+  --tc-transition-normal: 200ms ease;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body.tc-page {
+  margin: 0;
+  padding: 0;
+  font-family: var(--tc-font-family);
+  background-color: var(--tc-surface);
+  color: var(--tc-on-surface);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.tc-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 4rem;
+  padding: 0 var(--tc-spacing-6);
+  background-color: var(--tc-primary-container);
+}
+
+.tc-header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--tc-spacing-3);
+  text-decoration: none;
+  color: var(--tc-on-surface);
+}
+
+.tc-header-brand-icon {
+  font-size: 1.5rem;
+}
+
+.tc-header-brand-text {
+  font-size: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.tc-header-back {
+  display: none;
+  align-items: center;
+  gap: var(--tc-spacing-2);
+  color: rgba(218, 226, 253, 0.6);
+  text-decoration: none;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: color var(--tc-transition-fast);
+}
+
+@media (min-width: 1024px) {
+  .tc-header-back {
+    display: flex;
+  }
+}
+
+.tc-header-back:hover {
+  color: var(--tc-on-surface);
+}
+
+/* ============================================
+   Layout
+   ============================================ */
+.tc-layout {
+  display: flex;
+  min-height: calc(100vh - 4rem);
+  padding-top: 4rem;
+}
+
+/* ============================================
+   Sidebar (Desktop only)
+   ============================================ */
+.tc-sidebar {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 4rem;
+  width: 16rem;
+  height: calc(100vh - 4rem);
+  background-color: var(--tc-surface-container-low);
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+@media (min-width: 1024px) {
+  .tc-sidebar {
+    display: flex;
+  }
+}
+
+.tc-sidebar-header {
+  padding: var(--tc-spacing-6);
+  border-bottom: 1px solid rgba(63, 73, 68, 0.1);
+}
+
+.tc-sidebar-tournament-name {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--tc-primary);
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.tc-sidebar-phase {
+  display: block;
+  margin-top: var(--tc-spacing-1);
+  font-size: 0.65rem;
+  color: rgba(218, 226, 253, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tc-sidebar-table-count {
+  display: block;
+  margin-top: var(--tc-spacing-2);
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: var(--tc-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tc-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.tc-sidebar-nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--tc-spacing-4);
+  padding: var(--tc-spacing-4) var(--tc-spacing-6);
+  color: rgba(218, 226, 253, 0.4);
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all var(--tc-transition-normal);
+}
+
+.tc-sidebar-nav-link:hover {
+  background-color: var(--tc-surface-container-highest);
+  color: var(--tc-on-surface);
+}
+
+.tc-sidebar-nav-link.active {
+  background-color: var(--tc-surface-container-high);
+  color: var(--tc-secondary);
+  border-left: 4px solid var(--tc-secondary);
+}
+
+.tc-sidebar-nav-link.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tc-sidebar-nav-link.disabled:hover {
+  background-color: transparent;
+  color: rgba(218, 226, 253, 0.4);
+}
+
+/* ============================================
+   Main Content
+   ============================================ */
+.tc-main {
+  flex: 1;
+  width: 100%;
+  padding: var(--tc-spacing-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .tc-main {
+    padding: var(--tc-spacing-8);
+    margin-left: 16rem;
+  }
+}
+
+/* ============================================
+   Hero Section
+   ============================================ */
+.tc-hero {
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: var(--tc-spacing-4);
+}
+
+@media (min-width: 1024px) {
+  .tc-hero {
+    margin-bottom: var(--tc-spacing-8);
+  }
+}
+
+.tc-hero-inner {
+  background-color: var(--tc-surface-container-low);
+  border-radius: var(--tc-radius-lg);
+  overflow: hidden;
+}
+
+.tc-hero-content {
+  padding: var(--tc-spacing-6);
+  padding-bottom: 0;
+}
+
+/* Tournament name - hidden on desktop (shown in sidebar) */
+.tc-tournament-name {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--tc-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (min-width: 1024px) {
+  .tc-tournament-name {
+    display: none;
+  }
+}
+
+.tc-round-title {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .tc-round-title {
+    display: block;
+    margin: 0;
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--tc-on-surface);
+    text-transform: uppercase;
+  }
+}
+
+/* ============================================
+   Round Pills (Mobile only)
+   ============================================ */
+.tc-round-pills {
+  display: flex;
+  gap: var(--tc-spacing-3);
+  padding: var(--tc-spacing-4);
+  background-color: var(--tc-surface-container-low);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tc-round-pills::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .tc-round-pills {
+    display: none;
+  }
+}
+
+.tc-round-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--tc-spacing-3) var(--tc-spacing-6);
+  border-radius: var(--tc-radius-full);
+  background-color: var(--tc-surface-container-high);
+  color: var(--tc-on-surface-variant);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all var(--tc-transition-fast);
+}
+
+.tc-round-pill:hover {
+  background-color: var(--tc-surface-container-highest);
+}
+
+.tc-round-pill.active {
+  background-color: var(--tc-secondary);
+  color: var(--tc-on-secondary);
+  box-shadow: 0 0 12px rgba(77, 224, 130, 0.3);
+}
+
+.tc-round-pill.disabled {
+  background-color: rgba(11, 19, 38, 0.5);
+  color: rgba(190, 201, 194, 0.3);
+  cursor: not-allowed;
+}
+
+/* ============================================
+   Match List
+   ============================================ */
+.tc-match-list {
+  width: 100%;
+  max-width: 1200px;
+  background-color: rgba(63, 73, 68, 0.1);
+  border-radius: var(--tc-radius-lg);
+  overflow: hidden;
+  border: 1px solid rgba(63, 73, 68, 0.15);
+}
+
+/* ============================================
+   Match Header (Desktop only)
+   ============================================ */
+.tc-match-header {
+  display: none;
+  padding: var(--tc-spacing-2) var(--tc-spacing-6);
+  background-color: rgba(45, 52, 73, 0.5);
+}
+
+@media (min-width: 1024px) {
+  .tc-match-header {
+    display: grid;
+    grid-template-columns: 80px 160px 1fr 100px 40px 100px 1fr;
+    align-items: center;
+  }
+}
+
+.tc-match-header-cell {
+  font-size: 0.6rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(218, 226, 253, 0.3);
+}
+
+.tc-match-header-cell.center {
+  text-align: center;
+}
+
+.tc-match-header-cell.right {
+  text-align: right;
+}
+
+/* ============================================
+   Match Row
+   ============================================ */
+.tc-match-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: var(--tc-spacing-4) var(--tc-spacing-3);
+  min-height: 100px;
+  transition: background-color var(--tc-transition-fast);
+}
+
+@media (min-width: 1024px) {
+  .tc-match-row {
+    padding: var(--tc-spacing-4) var(--tc-spacing-6);
+  }
+}
+
+/* Left accent bar (desktop only) */
+.tc-match-row::before {
+  content: none;
+}
+
+@media (min-width: 1024px) {
+  .tc-match-row::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--tc-primary);
+  }
+}
+
+/* Zebra striping - account for header row */
+.tc-match-row:nth-child(odd) {
+  background-color: var(--tc-surface-container-low);
+}
+
+.tc-match-row:nth-child(even) {
+  background-color: var(--tc-surface-container-lowest);
+}
+
+.tc-match-row:hover {
+  background-color: var(--tc-surface-container-high);
+}
+
+/* Mobile: center children vertically */
+@media (max-width: 1023px) {
+  .tc-match-row {
+    align-items: center;
+  }
+}
+
+/* Desktop: 7-column grid */
+@media (min-width: 1024px) {
+  .tc-match-row {
+    display: grid;
+    grid-template-columns: 80px 160px 1fr 100px 40px 100px 1fr;
+  }
+}
+
+/* Bye row styling */
+.tc-match-row.bye {
+  opacity: 0.7;
+}
+
+/* ============================================
+   Table Info
+   ============================================ */
+.tc-table-info {
+  display: flex;
+  align-items: center;
+  gap: var(--tc-spacing-2);
+  width: 3.5rem;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+@media (min-width: 1024px) {
+  .tc-table-info {
+    width: 80px;
+    gap: var(--tc-spacing-2);
+  }
+}
+
+.tc-table-number {
+  font-size: 1.875rem;
+  font-weight: 900;
+  color: var(--tc-secondary);
+  line-height: 1;
+}
+
+/* Terrain emoji in table-info column: shown only on mobile */
+.tc-terrain-emoji {
+  font-size: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .tc-terrain-emoji {
+    display: none;
+  }
+}
+
+/* Terrain name column (desktop only) */
+.tc-terrain-name {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .tc-terrain-name {
+    display: flex;
+    align-items: center;
+    gap: var(--tc-spacing-3);
+    color: rgba(218, 226, 253, 0.8);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Larger emoji in the terrain name column */
+  .tc-terrain-name span:first-child {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+}
+
+/* ============================================
+   Player Info
+   ============================================ */
+.tc-player {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-spacing-1);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Desktop: children align to their edge */
+.tc-player-1 {
+  align-items: flex-start;
+}
+
+.tc-player-2 {
+  align-items: flex-end;
+  text-align: right;
+}
+
+/* Mobile: stretch children to full column width */
+@media (max-width: 1023px) {
+  .tc-player-1 {
+    align-items: stretch;
+  }
+
+  .tc-player-2 {
+    align-items: stretch;
+    text-align: right;
+  }
+
+  .tc-player-2 .tc-player-name {
+    text-align: right;
+  }
+
+  /* Re-center table-info since match-row is now stretch */
+  .tc-table-info {
+    align-self: center;
+  }
+}
+
+.tc-player-name {
+  font-size: 1rem;
+  font-weight: 900;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+@media (min-width: 1024px) {
+  .tc-player-name {
+    font-size: 1rem;
+    font-weight: 500;
+    text-transform: none;
+  }
+}
+
+/* Name switching: show short on mobile, full on desktop */
+.tc-name-full {
+  display: none;
+}
+
+.tc-name-short {
+  display: inline;
+}
+
+@media (min-width: 1024px) {
+  .tc-name-full {
+    display: inline;
+  }
+  .tc-name-short {
+    display: none;
+  }
+}
+
+/* Mobile: player info row with faction + score */
+.tc-player-row {
+  display: flex;
+  align-items: center;
+  gap: var(--tc-spacing-2);
+}
+
+/* Desktop: natural alignment */
+.tc-player-1 .tc-player-row {
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.tc-player-2 .tc-player-row {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+/* Mobile: faction pill alignment */
+@media (max-width: 1023px) {
+  .tc-player-1 .tc-player-row {
+    justify-content: flex-start;
+  }
+
+  .tc-player-2 .tc-player-row {
+    justify-content: flex-end;
+  }
+}
+
+/* Score stays on its line, doesn't shrink */
+.tc-player-row .tc-score-inline {
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* Faction pill: constrained width on mobile only */
+@media (max-width: 1023px) {
+  .tc-player-row .tc-faction-pill {
+    max-width: 5.5rem;
+    text-align: center;
+  }
+}
+
+/* ============================================
+   Faction Pills
+   ============================================ */
+.tc-faction-pill {
+  display: inline-block;
+  padding: 0.125rem var(--tc-spacing-2);
+  border-radius: var(--tc-radius-full);
+  background-color: rgba(70, 84, 103, 0.4);
+  color: var(--tc-on-tertiary-container);
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+  /* Allow text to wrap at natural word boundaries */
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+@media (min-width: 1024px) {
+  .tc-faction-pill {
+    font-size: 0.6rem;
+    white-space: nowrap;
+  }
+}
+
+/* ============================================
+   Scores
+   ============================================ */
+/* Scores: hidden by default, shown inside vs-zone on both breakpoints */
+.tc-score {
+  display: none;
+  font-size: 1.875rem;
+  font-weight: 900;
+  color: var(--tc-primary-fixed-dim);
+  text-align: center;
+}
+
+/* Desktop: shown as grid items */
+@media (min-width: 1024px) {
+  .tc-score {
+    display: block;
+  }
+}
+
+/* Mobile: shown inside tc-vs-zone flex row */
+@media (max-width: 1023px) {
+  .tc-vs-zone .tc-score {
+    display: block;
+    font-size: 1.5rem;
+  }
+}
+
+/* Mobile inline scores: hidden — scores now live in tc-vs-zone */
+.tc-score-inline {
+  display: none;
+}
+
+/* Score outcome colors — same luminosity/saturation as primary-fixed-dim (#8bd6b6 = HSL 160,47%,69%) */
+.score-win  { color: var(--tc-primary-fixed-dim); }         /* teal   HSL(160,47%,69%) */
+.score-loss { color: #d58b8b; }                             /* red    HSL(  0,47%,69%) */
+.score-tie  { color: var(--tc-outline); }                   /* grey   #89938d          */
+
+@media (min-width: 1024px) {
+  .tc-score-inline {
+    display: none;
+  }
+}
+
+/* ============================================
+   VS Zone (mobile: groups score1 VS score2)
+   ============================================ */
+
+/* Desktop: transparent to grid — children become grid items as if wrapper didn't exist */
+.tc-vs-zone {
+  display: contents;
+}
+
+/* Mobile: flex row so scores sit beside VS */
+@media (max-width: 1023px) {
+  .tc-vs-zone {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--tc-spacing-1);
+    margin: 0 var(--tc-spacing-2);
+    flex-shrink: 0;
+    align-self: center;
+  }
+}
+
+/* ============================================
+   VS Separator
+   ============================================ */
+.tc-vs {
+  padding: 0 var(--tc-spacing-1);
+  font-size: 0.625rem;
+  font-weight: 900;
+  color: rgba(190, 201, 194, 0.4);
+  text-align: center;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+@media (min-width: 1024px) {
+  .tc-vs {
+    padding: 0;
+    font-size: 0.6rem;
+    color: rgba(137, 147, 141, 0.4);
+  }
+}
+
+/* ============================================
+   Bye Indicator
+   ============================================ */
+.tc-bye-indicator {
+  display: inline-block;
+  margin-top: var(--tc-spacing-1);
+  font-size: 0.75rem;
+  color: rgba(218, 226, 253, 0.5);
+  font-style: italic;
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+.tc-footer {
+  width: 100%;
+  max-width: 1200px;
+  margin-top: var(--tc-spacing-8);
+  padding: var(--tc-spacing-6) 0;
+  text-align: center;
+}
+
+.tc-footer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tc-spacing-2);
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .tc-footer-meta {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+.tc-footer-link {
+  color: var(--tc-primary);
+  text-decoration: none;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: color var(--tc-transition-fast);
+}
+
+.tc-footer-link:hover {
+  color: var(--tc-secondary);
+}
+
+.tc-footer-update {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(190, 201, 194, 0.4);
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+.tc-empty-state {
+  padding: var(--tc-spacing-8);
+  text-align: center;
+  color: rgba(218, 226, 253, 0.6);
+}
+
+.tc-empty-state p {
+  margin: var(--tc-spacing-2) 0;
+}
+
+/* ============================================
+   Utilities
+   ============================================ */
+.tc-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
