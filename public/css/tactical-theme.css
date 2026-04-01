@@ -938,12 +938,14 @@ body.leaderboard-active .tc-empty-state {
   display: none;
 }
 
-body.leaderboard-active #hero-round-title {
-  display: none;
-}
+@media (min-width: 1024px) {
+  body.leaderboard-active #hero-round-title {
+    display: none;
+  }
 
-body.leaderboard-active #hero-leaderboard-title {
-  display: block;
+  body.leaderboard-active #hero-leaderboard-title {
+    display: block;
+  }
 }
 
 /* Deactivate round selection indicators when leaderboard is active */
