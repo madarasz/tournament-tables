@@ -86,10 +86,16 @@ function formatTableNumber($number) {
                     <a href="/<?= $tournament->id ?>/round/<?= $r->roundNumber ?>"
                        class="<?= $linkClass ?>"
                        <?= $isActive ? 'aria-current="page"' : '' ?>>
-                        <span>R<?= $r->roundNumber ?></span>
-                        <span>Round <?= $r->roundNumber ?></span>
+                        Round <?= $r->roundNumber ?>
                     </a>
                 <?php endforeach; ?>
+                <?php if (!empty($rankedPlayers)): ?>
+                <a href="#leaderboard"
+                   class="tc-sidebar-nav-link"
+                   id="sidebar-leaderboard-link">
+                    Leaderboard
+                </a>
+                <?php endif; ?>
             </nav>
         </aside>
 
@@ -101,7 +107,8 @@ function formatTableNumber($number) {
                     <div class="tc-hero-content">
                         <!-- Tournament name (mobile only, desktop shows in sidebar) -->
                         <h2 class="tc-tournament-name"><?= htmlspecialchars($tournament->name) ?></h2>
-                        <h1 class="tc-round-title">Round <?= $round->roundNumber ?></h1>
+                        <h1 class="tc-round-title" id="hero-round-title">Round <?= $round->roundNumber ?></h1>
+                        <h1 class="tc-round-title" id="hero-leaderboard-title">Leaderboard</h1>
                     </div>
 
                     <!-- Round Pills (Mobile only) -->
@@ -118,6 +125,9 @@ function formatTableNumber($number) {
                                 Round <?= $r->roundNumber ?>
                             </a>
                         <?php endforeach; ?>
+                        <?php if (!empty($rankedPlayers)): ?>
+                        <a href="#leaderboard" class="tc-round-pill" id="pill-leaderboard-link">Leaderboard</a>
+                        <?php endif; ?>
                     </nav>
                     <?php endif; ?>
                 </div>
@@ -135,6 +145,14 @@ function formatTableNumber($number) {
                     <span class="tc-match-header-cell center"></span>
                     <span class="tc-match-header-cell center">Score</span>
                     <span class="tc-match-header-cell right">Player 2</span>
+                </div>
+
+                <!-- Column Headers (Mobile only) -->
+                <div class="tc-match-header-mobile">
+                    <span class="tc-mhm-table tc-match-header-cell">Table</span>
+                    <span class="tc-mhm-player tc-match-header-cell">Player 1</span>
+                    <span class="tc-mhm-score tc-match-header-cell">Score</span>
+                    <span class="tc-mhm-player tc-mhm-player-right tc-match-header-cell">Player 2</span>
                 </div>
 
                 <!-- Match Rows -->
@@ -249,6 +267,34 @@ function formatTableNumber($number) {
             </div>
             <?php endif; ?>
 
+            <?php if (!empty($rankedPlayers)): ?>
+            <!-- Leaderboard Section -->
+            <section class="tc-leaderboard" id="leaderboard" data-testid="leaderboard-section">
+                <div class="tc-leaderboard-list" data-testid="leaderboard-table">
+                    <div class="tc-leaderboard-row">
+                        <span class="tc-match-header-cell">Rank</span>
+                        <span class="tc-match-header-cell">Player</span>
+                        <span class="tc-match-header-cell right">Score</span>
+                    </div>
+                    <?php foreach ($rankedPlayers as $entry):
+                        $lbPlayer = $entry['player'];
+                        $lbRank   = $entry['rank'];
+                    ?>
+                    <div class="tc-leaderboard-row" data-testid="leaderboard-row">
+                        <span class="tc-lb-rank"><?= $lbRank ?></span>
+                        <div class="tc-lb-player">
+                            <span class="tc-player-name"><?= htmlspecialchars($lbPlayer->name) ?></span>
+                            <?php if ($lbPlayer->faction): ?>
+                            <span class="tc-faction-pill"><?= htmlspecialchars($lbPlayer->faction) ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <span class="tc-lb-score"><?= $lbPlayer->totalScore ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <?php endif; ?>
+
             <!-- Footer -->
             <footer class="tc-footer">
                 <div class="tc-footer-meta">
@@ -261,5 +307,21 @@ function formatTableNumber($number) {
             </footer>
         </main>
     </div>
+    <script>
+        // Toggle leaderboard visibility and nav active state based on hash
+        function syncLeaderboardActive() {
+            var isLb = window.location.hash === '#leaderboard';
+            document.body.classList.toggle('leaderboard-active', isLb);
+            var sidebar = document.getElementById('sidebar-leaderboard-link');
+            var pill = document.getElementById('pill-leaderboard-link');
+            if (sidebar) { sidebar.classList.toggle('active', isLb); }
+            if (pill) {
+                pill.classList.toggle('active', isLb);
+                if (isLb) { pill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' }); }
+            }
+        }
+        window.addEventListener('hashchange', syncLeaderboardActive);
+        syncLeaderboardActive();
+    </script>
 </body>
 </html>

@@ -207,6 +207,20 @@ class ViewController extends BaseController
         // Get all published rounds for navigation
         $publishedRounds = Round::findPublishedByTournament($tournamentId);
 
+        // Get ranked players for leaderboard
+        $players = $tournament->getPlayers();
+        usort($players, fn($a, $b) => $b->totalScore <=> $a->totalScore);
+        $rankedPlayers = [];
+        $rank = 1;
+        $previousScore = null;
+        foreach ($players as $index => $player) {
+            if ($previousScore !== null && $player->totalScore < $previousScore) {
+                $rank = $index + 1;
+            }
+            $rankedPlayers[] = ['rank' => $rank, 'player' => $player];
+            $previousScore = $player->totalScore;
+        }
+
         // Render the public round view
         include __DIR__ . '/../Views/public/round.php';
     }
