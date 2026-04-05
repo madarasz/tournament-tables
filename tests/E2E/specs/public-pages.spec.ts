@@ -36,12 +36,18 @@ test.describe('Public Pages', () => {
     const cardOrder = await page.locator('[data-testid^="tournament-link-"]').evaluateAll((elements) =>
       elements.map((element) => element.getAttribute('data-testid'))
     );
-    expect(cardOrder).toEqual([
+    const expectedCardOrder = [
       'tournament-link-Upcoming Open Test',
       'tournament-link-Public Page Test',
       'tournament-link-Finished Event Test',
       'tournament-link-Fallback Data Test',
-    ]);
+    ];
+    const seededCardOrder = cardOrder.filter(
+      (cardId): cardId is string =>
+        cardId !== null && expectedCardOrder.includes(cardId)
+    );
+
+    expect(seededCardOrder).toEqual(expectedCardOrder);
   });
 
   test('Navigate public pages with query-based round and leaderboard views', async ({ page }) => {
@@ -73,6 +79,14 @@ test.describe('Public Pages', () => {
     await expect(page).toHaveURL(/\/1001\?view=leaderboard$/);
     await expect(page.locator('body')).toHaveClass(/leaderboard-active/);
     await expect(page.getByTestId('leaderboard-section')).toBeVisible();
+    await expect(page.getByTestId('leaderboard-row').first().locator('.tc-lb-rank')).toHaveText('1');
+    await expect(page.getByTestId('leaderboard-row').first().locator('.tc-player-name')).toHaveText(
+      'Bob Test'
+    );
+    await expect(page.getByTestId('leaderboard-row').nth(1).locator('.tc-lb-rank')).toHaveText('2');
+    await expect(page.getByTestId('leaderboard-row').nth(1).locator('.tc-player-name')).toHaveText(
+      'Alice Test'
+    );
 
     await page.goto('/1001?round=1&view=leaderboard');
     await page.waitForLoadState('networkidle');

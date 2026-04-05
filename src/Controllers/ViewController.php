@@ -159,23 +159,106 @@ class ViewController extends BaseController
             }
         }
 
-        // Get players sorted by score for leaderboard.
+        // Get players sorted by persisted BCP placing for leaderboard (unknown placing last).
         $players = $tournament->getPlayers();
-        usort($players, fn($a, $b) => $b->totalScore <=> $a->totalScore);
+        usort($players, function ($a, $b) {
+            $aPlacing = $a->placing;
+            $bPlacing = $b->placing;
 
-        // Calculate ranks with tie handling (standard competition ranking: 1,1,3,4,4,6...).
-        $rankedPlayers = [];
-        $rank = 1;
-        $previousScore = null;
-        foreach ($players as $index => $player) {
-            if ($previousScore !== null && $player->totalScore < $previousScore) {
-                $rank = $index + 1;
+            if ($aPlacing === null && $bPlacing === null) {
+                $scoreCompare = $b->totalScore <=> $a->totalScore;
+                if ($scoreCompare !== 0) {
+                    return $scoreCompare;
+                }
+                return strcasecmp($a->name, $b->name);
             }
-            $rankedPlayers[] = ['rank' => $rank, 'player' => $player];
-            $previousScore = $player->totalScore;
-        }
+
+            if ($aPlacing === null) {
+                return 1;
+            }
+
+            if ($bPlacing === null) {
+                return -1;
+            }
+
+            if ($aPlacing !== $bPlacing) {
+                return $aPlacing <=> $bPlacing;
+            }
+
+            $scoreCompare = $b->totalScore <=> $a->totalScore;
+            if ($scoreCompare !== 0) {
+                return $scoreCompare;
+            }
+
+            return strcasecmp($a->name, $b->name);
+        });
+
+        $roundScoresByPlayer = $this->buildLeaderboardRoundScores($publishedRounds);
+
+        $rankedPlayers = array_map(function ($player) use ($roundScoresByPlayer) {
+            return [
+                'rank' => $player->placing,
+                'player' => $player,
+                'roundScores' => $roundScoresByPlayer[$player->id] ?? [],
+            ];
+        }, $players);
 
         include __DIR__ . '/../Views/public/round.php';
+    }
+
+    /**
+     * Build leaderboard round score breakdown by player.
+     *
+     * Each score item includes a CSS class aligned with round-table coloring:
+     * score-win (green), score-loss (red), score-tie (grey).
+     *
+     * @param Round[] $publishedRounds
+     * @return array<int, array<int, array{score: int, class: string}>>
+     */
+    private function buildLeaderboardRoundScores(array $publishedRounds): array
+    {
+        $roundScoresByPlayer = [];
+
+        foreach ($publishedRounds as $publishedRound) {
+            $roundAllocations = $publishedRound->getAllocations();
+
+            foreach ($roundAllocations as $allocation) {
+                $player1Id = (int) $allocation->player1Id;
+                $player2Id = $allocation->player2Id !== null ? (int) $allocation->player2Id : null;
+                $player1Score = (int) $allocation->player1Score;
+                $player2Score = (int) $allocation->player2Score;
+
+                $player1Class = $player2Id === null ? 'score-win' : 'score-tie';
+                if ($player2Id !== null) {
+                    if ($player1Score > $player2Score) {
+                        $player1Class = 'score-win';
+                    } elseif ($player1Score < $player2Score) {
+                        $player1Class = 'score-loss';
+                    }
+                }
+
+                $roundScoresByPlayer[$player1Id][] = [
+                    'score' => $player1Score,
+                    'class' => $player1Class,
+                ];
+
+                if ($player2Id !== null) {
+                    $player2Class = 'score-tie';
+                    if ($player2Score > $player1Score) {
+                        $player2Class = 'score-win';
+                    } elseif ($player2Score < $player1Score) {
+                        $player2Class = 'score-loss';
+                    }
+
+                    $roundScoresByPlayer[$player2Id][] = [
+                        'score' => $player2Score,
+                        'class' => $player2Class,
+                    ];
+                }
+            }
+        }
+
+        return $roundScoresByPlayer;
     }
 
     /**

@@ -16,6 +16,11 @@
                         "minLength": 1,
                         "description": "BCP player ID"
                     },
+                    "placing": {
+                        "type": ["integer", "null"],
+                        "minimum": 1,
+                        "description": "Current ranking position for the player (1-based)."
+                    },
                     "overall_metrics": {
                         "type": "array",
                         "description": "Player metrics including Overall Score",

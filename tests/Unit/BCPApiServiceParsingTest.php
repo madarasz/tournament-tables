@@ -159,41 +159,62 @@ class BCPApiServiceParsingTest extends TestCase
     // -------------------------------------------------------------------------
 
     /**
-     * Test that we can parse total scores from the placings fixture.
+     * Test that we can parse standings (total scores + placing) from the placings fixture.
      */
-    public function testCanParseTotalScores(): void
+    public function testCanParseStandings(): void
     {
-        // Use reflection to call private parsePlacingsResponse method
-        $scores = $this->invokeParsePlacingsResponse(self::$placingsFixture);
+        // Use reflection to call private parsePlacingsStandings method
+        $standings = $this->invokeParsePlacingsStandings(self::$placingsFixture);
 
-        $this->assertTrue(is_array($scores), 'Parsed scores should be an array');
-        $this->assertNotEmpty($scores, 'Should have at least one player score');
+        $this->assertTrue(is_array($standings), 'Parsed standings should be an array');
+        $this->assertNotEmpty($standings, 'Should have at least one player entry');
     }
 
     /**
-     * Test that parsed total scores are non-negative integers.
+     * Test that parsed standings have valid score and placing values.
      */
-    public function testParsedTotalScoresAreValid(): void
+    public function testParsedStandingsAreValid(): void
     {
-        $scores = $this->invokeParsePlacingsResponse(self::$placingsFixture);
+        $standings = $this->invokeParsePlacingsStandings(self::$placingsFixture);
 
-        foreach ($scores as $playerId => $score) {
+        foreach ($standings as $playerId => $entry) {
             $this->assertTrue(is_string($playerId), 'Player ID key should be string');
-            $this->assertTrue(is_int($score), 'Score should be integer');
-            $this->assertGreaterThanOrEqual(0, $score, 'Score should be non-negative');
+            $this->assertIsArray($entry, 'Standings entry should be an array');
+            $this->assertArrayHasKey('totalScore', $entry);
+            $this->assertArrayHasKey('placing', $entry);
+            $this->assertTrue(is_int($entry['totalScore']), 'totalScore should be integer');
+            $this->assertGreaterThanOrEqual(0, $entry['totalScore'], 'totalScore should be non-negative');
+            $this->assertTrue(
+                $entry['placing'] === null || is_int($entry['placing']),
+                'placing should be integer or null'
+            );
         }
     }
 
     /**
-     * Invoke the private parsePlacingsResponse method via reflection.
+     * Test that missing placing in fixture yields null placing.
+     */
+    public function testMissingPlacingParsesAsNull(): void
+    {
+        $standings = $this->invokeParsePlacingsStandings(self::$placingsFixture);
+
+        // player11 and player12 intentionally have no "placing" in fixture.
+        $this->assertArrayHasKey('player11_bcp_id', $standings);
+        $this->assertArrayHasKey('player12_bcp_id', $standings);
+        $this->assertNull($standings['player11_bcp_id']['placing']);
+        $this->assertNull($standings['player12_bcp_id']['placing']);
+    }
+
+    /**
+     * Invoke the private parsePlacingsStandings method via reflection.
      *
      * @param array $data Placings API response data
-     * @return array<string, int> Map of BCP player ID to total score
+     * @return array<string, array{totalScore: int, placing: int|null}> Map of BCP player ID to standings
      */
-    private function invokeParsePlacingsResponse(array $data): array
+    private function invokeParsePlacingsStandings(array $data): array
     {
         $reflection = new \ReflectionClass($this->apiService);
-        $method = $reflection->getMethod('parsePlacingsResponse');
+        $method = $reflection->getMethod('parsePlacingsStandings');
 
         return $method->invoke($this->apiService, $data);
     }

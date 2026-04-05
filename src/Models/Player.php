@@ -29,13 +29,17 @@ class Player extends BaseModel
     /** @var string|null */
     public $faction;
 
+    /** @var int|null */
+    public $placing;
+
     public function __construct(
         ?int $id = null,
         int $tournamentId = 0,
         string $bcpPlayerId = '',
         string $name = '',
         int $totalScore = 0,
-        ?string $faction = null
+        ?string $faction = null,
+        ?int $placing = null
     ) {
         $this->id = $id;
         $this->tournamentId = $tournamentId;
@@ -43,6 +47,7 @@ class Player extends BaseModel
         $this->name = $name;
         $this->totalScore = $totalScore;
         $this->faction = $faction;
+        $this->placing = $placing;
     }
 
     protected static function getTableName(): string
@@ -61,7 +66,8 @@ class Player extends BaseModel
             $row['bcp_player_id'],
             $row['name'],
             (int) ($row['total_score'] ?? 0),
-            $row['faction'] ?? null
+            $row['faction'] ?? null,
+            isset($row['placing']) ? (is_null($row['placing']) ? null : (int) $row['placing']) : null
         );
     }
 
@@ -96,11 +102,12 @@ class Player extends BaseModel
         string $bcpPlayerId,
         string $name,
         int $totalScore = 0,
-        ?string $faction = null
+        ?string $faction = null,
+        ?int $placing = null
     ): self {
         $player = self::findByTournamentAndBcpId($tournamentId, $bcpPlayerId);
         if ($player !== null) {
-            // Update name, total score, and faction if changed
+            // Update name, total score, faction, and placing if changed
             $needsUpdate = false;
             if ($player->name !== $name) {
                 $player->name = $name;
@@ -114,13 +121,17 @@ class Player extends BaseModel
                 $player->faction = $faction;
                 $needsUpdate = true;
             }
+            if ($player->placing !== $placing) {
+                $player->placing = $placing;
+                $needsUpdate = true;
+            }
             if ($needsUpdate) {
                 $player->save();
             }
             return $player;
         }
 
-        $player = new self(null, $tournamentId, $bcpPlayerId, $name, $totalScore, $faction);
+        $player = new self(null, $tournamentId, $bcpPlayerId, $name, $totalScore, $faction, $placing);
         $player->save();
         return $player;
     }
@@ -131,14 +142,15 @@ class Player extends BaseModel
     protected function insert(): bool
     {
         Connection::execute(
-            'INSERT INTO players (tournament_id, bcp_player_id, name, total_score, faction)
-             VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO players (tournament_id, bcp_player_id, name, total_score, faction, placing)
+             VALUES (?, ?, ?, ?, ?, ?)',
             [
                 $this->tournamentId,
                 $this->bcpPlayerId,
                 $this->name,
                 $this->totalScore,
                 $this->faction,
+                $this->placing,
             ]
         );
 
@@ -152,11 +164,12 @@ class Player extends BaseModel
     protected function update(): bool
     {
         Connection::execute(
-            'UPDATE players SET name = ?, total_score = ?, faction = ? WHERE id = ?',
+            'UPDATE players SET name = ?, total_score = ?, faction = ?, placing = ? WHERE id = ?',
             [
                 $this->name,
                 $this->totalScore,
                 $this->faction,
+                $this->placing,
                 $this->id,
             ]
         );
@@ -174,6 +187,7 @@ class Player extends BaseModel
             'name' => $this->name,
             'totalScore' => $this->totalScore,
             'faction' => $this->faction,
+            'placing' => $this->placing,
         ];
     }
 }

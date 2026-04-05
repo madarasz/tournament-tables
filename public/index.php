@@ -83,6 +83,7 @@ $routes = [
 if (getenv('APP_ENV') === 'testing' || getenv('BCP_MOCK_API_URL')) {
     // Order matters: more specific routes must come before more general ones
     $routes['GET /mock-bcp-api/{id}/pairings'] = ['MockBcpController', 'pairings'];
+    $routes['GET /mock-bcp-api/{id}/players'] = ['MockBcpController', 'players'];
     $routes['GET /mock-bcp-api/{id}'] = ['MockBcpController', 'eventDetails'];
 }
 

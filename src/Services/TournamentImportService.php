@@ -55,11 +55,11 @@ class TournamentImportService
             // Derive table count from max BCP table number
             $tableCount = $this->deriveTableCount($pairings);
 
-            // Fetch total scores from BCP placings API (gracefully handle failures)
-            $totalScores = $this->fetchPlayerScores($eventId);
+            // Fetch player standings (scores + placing) from BCP placings API (best-effort)
+            $standings = $this->fetchPlayerStandings($eventId);
 
             // Import pairings in a transaction
-            return $this->importPairings($tournament, $pairings, $totalScores, $tableCount);
+            return $this->importPairings($tournament, $pairings, $standings, $tableCount);
         } catch (\RuntimeException $e) {
             // BCP scraping failed
             return [
@@ -106,17 +106,17 @@ class TournamentImportService
     }
 
     /**
-     * Fetch player total scores from BCP (with graceful error handling).
+     * Fetch player standings from BCP (with graceful error handling).
      *
      * @param string $eventId BCP event ID
-     * @return array<string, int> Map of player BCP ID to total score
+     * @return array<string, array{totalScore: int, placing: int|null}> Map of player BCP ID to standings
      */
-    private function fetchPlayerScores(string $eventId): array
+    private function fetchPlayerStandings(string $eventId): array
     {
         try {
-            return $this->bcpService->fetchPlayerTotalScores($eventId);
+            return $this->bcpService->fetchPlayerStandings($eventId);
         } catch (\Exception $e) {
-            // Continue without total scores - not critical for round 1
+            // Continue without standings - not critical for round 1 import
             return [];
         }
     }
@@ -126,14 +126,14 @@ class TournamentImportService
      *
      * @param Tournament $tournament Tournament to import into
      * @param Pairing[] $pairings Pairings to import
-     * @param array<string, int> $totalScores Player total scores
+     * @param array<string, array{totalScore: int, placing: int|null}> $standings Player standings
      * @param int $tableCount Number of tables to create
      * @return array{success: bool, tableCount: int, pairingsImported: int}
      */
     private function importPairings(
         Tournament $tournament,
         array $pairings,
-        array $totalScores,
+        array $standings,
         int $tableCount
     ): array {
         // Skip transaction if already in one (e.g., test isolation)
@@ -156,8 +156,10 @@ class TournamentImportService
             $pairingsImported = 0;
 
             foreach ($pairings as $pairing) {
-                // Get total score for player 1 (always exists)
-                $player1TotalScore = $totalScores[$pairing->player1BcpId] ?? 0;
+                // Get standings for player 1 (always exists in pairing)
+                $player1Standing = $standings[$pairing->player1BcpId] ?? ['totalScore' => 0, 'placing' => null];
+                $player1TotalScore = $player1Standing['totalScore'];
+                $player1Placing = $player1Standing['placing'];
 
                 // Find or create player 1 with total score and faction
                 $player1 = Player::findOrCreate(
@@ -165,7 +167,8 @@ class TournamentImportService
                     $pairing->player1BcpId,
                     $pairing->player1Name,
                     $player1TotalScore,
-                    $pairing->player1Faction
+                    $pairing->player1Faction,
+                    $player1Placing
                 );
 
                 // Handle bye pairings (no opponent)
@@ -199,13 +202,16 @@ class TournamentImportService
                 }
 
                 // Regular pairing - find or create player 2
-                $player2TotalScore = $totalScores[$pairing->player2BcpId] ?? 0;
+                $player2Standing = $standings[$pairing->player2BcpId] ?? ['totalScore' => 0, 'placing' => null];
+                $player2TotalScore = $player2Standing['totalScore'];
+                $player2Placing = $player2Standing['placing'];
                 $player2 = Player::findOrCreate(
                     $tournament->id,
                     $pairing->player2BcpId,
                     $pairing->player2Name,
                     $player2TotalScore,
-                    $pairing->player2Faction
+                    $pairing->player2Faction,
+                    $player2Placing
                 );
 
                 // Round 1: Use BCP's table assignment

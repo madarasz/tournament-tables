@@ -2,6 +2,7 @@
   "active": [
     {
       "id": "player1_bcp_id",
+      "placing": 1,
       "overall_metrics": [
         {"name": "Overall Score", "value": 85},
         {"name": "Paint Score", "value": 42}
@@ -9,6 +10,7 @@
     },
     {
       "id": "player2_bcp_id",
+      "placing": 2,
       "overall_metrics": [
         {"name": "Overall Score", "value": 72},
         {"name": "Paint Score", "value": 38}
@@ -16,6 +18,7 @@
     },
     {
       "id": "player3_bcp_id",
+      "placing": 3,
       "overall_metrics": [
         {"name": "Overall Score", "value": 68},
         {"name": "Paint Score", "value": 35}
@@ -23,6 +26,7 @@
     },
     {
       "id": "player4_bcp_id",
+      "placing": 4,
       "overall_metrics": [
         {"name": "Overall Score", "value": 55},
         {"name": "Paint Score", "value": 30}
@@ -30,6 +34,7 @@
     },
     {
       "id": "player5_bcp_id",
+      "placing": 5,
       "overall_metrics": [
         {"name": "Overall Score", "value": 48},
         {"name": "Paint Score", "value": 28}
@@ -37,6 +42,7 @@
     },
     {
       "id": "player6_bcp_id",
+      "placing": 6,
       "overall_metrics": [
         {"name": "Overall Score", "value": 42},
         {"name": "Paint Score", "value": 25}
@@ -44,6 +50,7 @@
     },
     {
       "id": "player7_bcp_id",
+      "placing": 7,
       "overall_metrics": [
         {"name": "Overall Score", "value": 35},
         {"name": "Paint Score", "value": 22}
@@ -51,6 +58,7 @@
     },
     {
       "id": "player8_bcp_id",
+      "placing": 8,
       "overall_metrics": [
         {"name": "Overall Score", "value": 28},
         {"name": "Paint Score", "value": 20}
@@ -58,6 +66,7 @@
     },
     {
       "id": "player9_bcp_id",
+      "placing": 9,
       "overall_metrics": [
         {"name": "Overall Score", "value": 22},
         {"name": "Paint Score", "value": 18}
@@ -65,6 +74,7 @@
     },
     {
       "id": "player10_bcp_id",
+      "placing": 10,
       "overall_metrics": [
         {"name": "Overall Score", "value": 18},
         {"name": "Paint Score", "value": 15}

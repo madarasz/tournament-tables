@@ -55,29 +55,29 @@ INSERT INTO tables (id, tournament_id, table_number, terrain_type_id) VALUES
 (2201, 1003, 1, 2), (2202, 1003, 2, 1), (2203, 1003, 3, 2);
 
 -- Players
-INSERT INTO players (id, tournament_id, bcp_player_id, name, total_score, faction) VALUES
-(2001, 1001, 'pp1', 'Alice Test', 20, 'Corsair Voidscarred'),
-(2002, 1001, 'pp2', 'Bob Test', 18, 'Nemesis Claw'),
-(2003, 1001, 'pp3', 'Charlie Test', 16, 'Blades of Khaine'),
-(2004, 1001, 'pp4', 'Diana Test', 14, 'Warpcoven'),
-(2005, 1001, 'pp5', 'Edward Test', 12, 'Pathfinders'),
-(2006, 1001, 'pp6', 'Fiona Test', 10, 'Legionaries'),
-(2007, 1001, 'pp7', 'George Test', 8, 'Kommandos'),
-(2008, 1001, 'pp8', 'Hannah Test', 6, 'Intercession Squad'),
-(2009, 1001, 'pp9', 'Ivan Test', 5, 'Hand of the Archon'),
-(2010, 1001, 'pp10', 'Julia Test', 4, 'Kasrkin'),
-(2011, 1001, 'pp11', 'Kevin Test', 3, 'Hierotek Circle'),
-(2012, 1001, 'pp12', 'Laura Test', 2, 'Void-Dancer Troupe'),
-(2013, 1001, 'pp13', 'Mike Test', 1, 'Hunter Clade'),
-(2014, 1001, 'pp14', 'Nancy Test', 1, 'Wyrmblade'),
-(2015, 1001, 'pp15', 'Oscar Test', 0, 'Farstalker Kinband'),
-(2016, 1001, 'pp16', 'Paula Test', 0, 'Phobos Strike Team'),
-(2101, 1002, 'up1', 'Uma Future', 0, 'Kommandos'),
-(2102, 1002, 'up2', 'Victor Future', 0, 'Pathfinders'),
-(2103, 1002, 'up3', 'Wendy Future', 0, 'Legionaries'),
-(2104, 1002, 'up4', 'Xavier Future', 0, 'Intercession Squad'),
-(2201, 1003, 'fi1', 'Yara Past', 12, 'Kasrkin'),
-(2202, 1003, 'fi2', 'Zane Past', 9, 'Blades of Khaine');
+INSERT INTO players (id, tournament_id, bcp_player_id, name, total_score, faction, placing) VALUES
+(2001, 1001, 'pp1', 'Alice Test', 20, 'Corsair Voidscarred', 2),
+(2002, 1001, 'pp2', 'Bob Test', 18, 'Nemesis Claw', 1),
+(2003, 1001, 'pp3', 'Charlie Test', 16, 'Blades of Khaine', 3),
+(2004, 1001, 'pp4', 'Diana Test', 14, 'Warpcoven', 4),
+(2005, 1001, 'pp5', 'Edward Test', 12, 'Pathfinders', 5),
+(2006, 1001, 'pp6', 'Fiona Test', 10, 'Legionaries', 6),
+(2007, 1001, 'pp7', 'George Test', 8, 'Kommandos', 7),
+(2008, 1001, 'pp8', 'Hannah Test', 6, 'Intercession Squad', 8),
+(2009, 1001, 'pp9', 'Ivan Test', 5, 'Hand of the Archon', 9),
+(2010, 1001, 'pp10', 'Julia Test', 4, 'Kasrkin', 10),
+(2011, 1001, 'pp11', 'Kevin Test', 3, 'Hierotek Circle', 11),
+(2012, 1001, 'pp12', 'Laura Test', 2, 'Void-Dancer Troupe', 12),
+(2013, 1001, 'pp13', 'Mike Test', 1, 'Hunter Clade', 13),
+(2014, 1001, 'pp14', 'Nancy Test', 1, 'Wyrmblade', 14),
+(2015, 1001, 'pp15', 'Oscar Test', 0, 'Farstalker Kinband', 15),
+(2016, 1001, 'pp16', 'Paula Test', 0, 'Phobos Strike Team', 16),
+(2101, 1002, 'up1', 'Uma Future', 0, 'Kommandos', NULL),
+(2102, 1002, 'up2', 'Victor Future', 0, 'Pathfinders', NULL),
+(2103, 1002, 'up3', 'Wendy Future', 0, 'Legionaries', NULL),
+(2104, 1002, 'up4', 'Xavier Future', 0, 'Intercession Squad', NULL),
+(2201, 1003, 'fi1', 'Yara Past', 12, 'Kasrkin', 1),
+(2202, 1003, 'fi2', 'Zane Past', 9, 'Blades of Khaine', 2);
 
 -- Round 1 (Published) & Round 2 (Not Published)
 INSERT INTO rounds (id, tournament_id, round_number, is_published) VALUES

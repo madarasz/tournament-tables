@@ -475,35 +475,75 @@ class BCPApiService
      */
     public function fetchPlayerTotalScores(string $eventId): array
     {
+        $standings = $this->fetchPlayerStandings($eventId);
+        $scores = [];
+
+        foreach ($standings as $bcpPlayerId => $entry) {
+            $scores[$bcpPlayerId] = $entry['totalScore'];
+        }
+
+        return $scores;
+    }
+
+    /**
+     * Fetch player placings and total scores from BCP API.
+     *
+     * @param string $eventId BCP event ID
+     * @return array<string, array{totalScore: int, placing: int|null}> Map of BCP player ID to standings data
+     * @throws \RuntimeException If API request fails
+     */
+    public function fetchPlayerStandings(string $eventId): array
+    {
         $url = $this->buildPlacingsUrl($eventId);
         $data = $this->fetchJsonWithRetry($url);
 
-        return $this->parsePlacingsResponse($data);
+        return $this->parsePlacingsStandings($data);
     }
 
     /**
      * Parse placings response to extract total scores.
      *
-     * Response structure per player:
-     * {
-     *   "id": "FX29RXY6GP",
-     *   "overall_metrics": [
-     *     {"name": "Overall Score", "value": 57}
-     *   ]
-     * }
+     * Backwards-compatible helper that returns only total scores.
      *
      * @param array $data API response data
      * @return array<string, int> Map of BCP player ID to total score
      */
     private function parsePlacingsResponse(array $data): array
     {
+        $standings = $this->parsePlacingsStandings($data);
         $scores = [];
+
+        foreach ($standings as $bcpPlayerId => $entry) {
+            $scores[$bcpPlayerId] = $entry['totalScore'];
+        }
+
+        return $scores;
+    }
+
+    /**
+     * Parse placings response to extract total scores and placing.
+     *
+     * Response structure per player:
+     * {
+     *   "id": "FX29RXY6GP",
+     *   "placing": 1,
+     *   "overall_metrics": [
+     *     {"name": "Overall Score", "value": 57}
+     *   ]
+     * }
+     *
+     * @param array $data API response data
+     * @return array<string, array{totalScore: int, placing: int|null}> Map of BCP player ID to standings data
+     */
+    private function parsePlacingsStandings(array $data): array
+    {
+        $standings = [];
 
         // The API returns players in 'active' array
         $players = $data['active'] ?? $data;
 
         if (!is_array($players)) {
-            return $scores;
+            return $standings;
         }
 
         foreach ($players as $player) {
@@ -522,10 +562,22 @@ class BCPApiService
                 }
             }
 
-            $scores[$bcpPlayerId] = $totalScore;
+            $placingValue = $player['placing'] ?? null;
+            $placing = null;
+            if (is_int($placingValue)) {
+                $placing = $placingValue > 0 ? $placingValue : null;
+            } elseif (is_numeric($placingValue)) {
+                $parsedPlacing = (int) $placingValue;
+                $placing = $parsedPlacing > 0 ? $parsedPlacing : null;
+            }
+
+            $standings[$bcpPlayerId] = [
+                'totalScore' => $totalScore,
+                'placing' => $placing,
+            ];
         }
 
-        return $scores;
+        return $standings;
     }
 
     // Getters for retry configuration (used in tests)

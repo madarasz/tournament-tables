@@ -12,7 +12,7 @@
  * - $round: Round model|null
  * - $allocations: Array of Allocation models
  * - $publishedRounds: Array of Round models (for round navigation)
- * - $rankedPlayers: Array of ranked players (for leaderboard)
+ * - $rankedPlayers: Array of ranked players with leaderboard metadata (rank, player, roundScores)
  * - $isLeaderboardView: bool
  */
 
@@ -440,21 +440,53 @@ $dateRange = formatTournamentDateRange(
                     <div class="tc-leaderboard-row">
                         <span class="tc-match-header-cell">Rank</span>
                         <span class="tc-match-header-cell">Player</span>
-                        <span class="tc-match-header-cell right">Score</span>
+                        <span class="tc-match-header-cell right tc-lb-scores-col">Scores</span>
+                        <span class="tc-match-header-cell right">
+                            <span class="tc-lb-label-desktop">Total</span>
+                            <span class="tc-lb-label-mobile">Score</span>
+                        </span>
                     </div>
                     <?php foreach ($rankedPlayers as $entry):
                         $lbPlayer = $entry['player'];
                         $lbRank   = $entry['rank'];
+                        $lbRankDisplay = $lbRank === null ? '—' : (string) $lbRank;
+                        $lbRoundScores = $entry['roundScores'] ?? [];
                     ?>
                     <div class="tc-leaderboard-row" data-testid="leaderboard-row">
-                        <span class="tc-lb-rank"><?= $lbRank ?></span>
+                        <span class="tc-lb-rank"><?= $lbRankDisplay ?></span>
                         <div class="tc-lb-player">
                             <span class="tc-player-name"><?= htmlspecialchars($lbPlayer->name) ?></span>
                             <?php if ($lbPlayer->faction): ?>
                             <span class="tc-faction-pill"><?= htmlspecialchars($lbPlayer->faction) ?></span>
                             <?php endif; ?>
                         </div>
-                        <span class="tc-lb-score"><?= $lbPlayer->totalScore ?></span>
+                        <span class="tc-lb-scores tc-lb-scores-col">
+                            <?php if (!empty($lbRoundScores)): ?>
+                                <?php foreach ($lbRoundScores as $index => $scoreEntry): ?>
+                                    <?php if ($index > 0): ?>
+                                        <span class="tc-lb-score-sep">/</span>
+                                    <?php endif; ?>
+                                    <span class="<?= htmlspecialchars($scoreEntry['class']) ?>"><?= (int) $scoreEntry['score'] ?></span>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <span class="tc-lb-score-empty">—</span>
+                            <?php endif; ?>
+                        </span>
+                        <div class="tc-lb-total-cell">
+                            <span class="tc-lb-score"><?= $lbPlayer->totalScore ?></span>
+                            <span class="tc-lb-scores-mobile">
+                                <?php if (!empty($lbRoundScores)): ?>
+                                    <?php foreach ($lbRoundScores as $index => $scoreEntry): ?>
+                                        <?php if ($index > 0): ?>
+                                            <span class="tc-lb-score-sep">/</span>
+                                        <?php endif; ?>
+                                        <span class="<?= htmlspecialchars($scoreEntry['class']) ?>"><?= (int) $scoreEntry['score'] ?></span>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <span class="tc-lb-score-empty">—</span>
+                                <?php endif; ?>
+                            </span>
+                        </div>
                     </div>
                     <?php endforeach; ?>
                 </div>
@@ -466,6 +498,15 @@ $dateRange = formatTournamentDateRange(
                 <div class="tc-footer-meta">
                     <span class="tc-footer-update">
                         LAST UPDATED: <?= htmlspecialchars(formatLastUpdated($tournament->lastUpdated)) ?>
+                        <?php if (!empty($tournament->bcpUrl)): ?>
+                            | BCP:
+                            <a
+                                href="<?= htmlspecialchars((string) $tournament->bcpUrl) ?>"
+                                class="tc-footer-link"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >Event Page</a>
+                        <?php endif; ?>
                     </span>
                 </div>
             </footer>

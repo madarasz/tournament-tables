@@ -62,14 +62,47 @@ class MockBcpController extends BaseController
     }
 
     /**
-     * Generate mock pairing data for a given round.
+     * GET /mock-bcp-api/{eventId}/players - Return mock BCP player placings API response.
      *
-     * @param int $round Round number
-     * @return array Mock pairings in BCP API format
+     * Returns JSON mimicking BCP players endpoint used with placings=true.
      */
-    private function generateMockPairings(int $round): array
+    public function players(array $params, ?array $body): void
     {
-        $players = [
+        header('Content-Type: application/json');
+
+        $players = $this->getMockPlayers();
+
+        $active = [];
+        foreach ($players as $index => $player) {
+            $placing = $index + 1;
+
+            // Keep score monotonic with placing for predictable tests.
+            $overallScore = max(0, 20 - ($index * 2));
+
+            $active[] = [
+                'id' => $player['id'],
+                'placing' => $placing,
+                'overall_metrics' => [
+                    ['name' => 'Overall Score', 'value' => $overallScore],
+                    ['name' => 'Wins', 'value' => max(0, 3 - (int) floor($index / 2))],
+                ],
+            ];
+        }
+
+        echo json_encode([
+            'active' => $active,
+            'deleted' => [],
+        ]);
+    }
+
+    /**
+     * Shared mock players used by pairings and placings endpoints.
+     *
+     * @return array<int, array{id: string, firstName: string, lastName: string, faction: string}>
+     */
+    private function getMockPlayers(): array
+    {
+        return [
             ['id' => 'mock_player_1', 'firstName' => 'Alice', 'lastName' => 'Smith', 'faction' => 'Corsair Voidscarred'],
             ['id' => 'mock_player_2', 'firstName' => 'Bob', 'lastName' => 'Jones', 'faction' => 'Nemesis Claw'],
             ['id' => 'mock_player_3', 'firstName' => 'Charlie', 'lastName' => 'Brown', 'faction' => 'Blades of Khaine'],
@@ -79,6 +112,17 @@ class MockBcpController extends BaseController
             ['id' => 'mock_player_7', 'firstName' => 'Grace', 'lastName' => 'Lee', 'faction' => 'Kommandos'],
             ['id' => 'mock_player_8', 'firstName' => 'Henry', 'lastName' => 'Ford', 'faction' => 'Intercession Squad'],
         ];
+    }
+
+    /**
+     * Generate mock pairing data for a given round.
+     *
+     * @param int $round Round number
+     * @return array Mock pairings in BCP API format
+     */
+    private function generateMockPairings(int $round): array
+    {
+        $players = $this->getMockPlayers();
 
         $pairings = [];
         $tableNumber = 1;

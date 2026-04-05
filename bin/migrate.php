@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS players (
     bcp_player_id VARCHAR(50) NOT NULL,
     name VARCHAR(255) NOT NULL,
     total_score INT NOT NULL DEFAULT 0,
+    placing INT DEFAULT NULL,
     UNIQUE INDEX idx_tournament_bcp_player (tournament_id, bcp_player_id),
     FOREIGN KEY (tournament_id) REFERENCES tournaments(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -159,6 +160,11 @@ SQL;
             'table' => 'players',
             'column' => 'faction',
             'sql' => 'ALTER TABLE players ADD COLUMN faction VARCHAR(100) DEFAULT NULL AFTER name'
+        ],
+        [
+            'table' => 'players',
+            'column' => 'placing',
+            'sql' => 'ALTER TABLE players ADD COLUMN placing INT DEFAULT NULL AFTER total_score'
         ],
         [
             'table' => 'tables',

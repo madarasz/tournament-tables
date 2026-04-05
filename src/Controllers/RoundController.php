@@ -75,13 +75,13 @@ class RoundController extends BaseController
                 return;
             }
 
-            // Fetch total scores from BCP placings API
-            $totalScores = [];
+            // Fetch player standings (score + placing) from BCP placings API (best-effort)
+            $standings = [];
             try {
-                $totalScores = $scraper->fetchPlayerTotalScores($eventId);
+                $standings = $scraper->fetchPlayerStandings($eventId);
             } catch (\Exception $e) {
-                // Log warning but continue - total scores are not critical
-                error_log("Warning: Could not fetch total scores: " . $e->getMessage());
+                // Log warning but continue - standings are not critical for import
+                error_log("Warning: Could not fetch player standings: " . $e->getMessage());
             }
 
             // Import pairings in a transaction
@@ -129,16 +129,19 @@ class RoundController extends BaseController
                 $tableIndex = 0;
 
                 foreach ($pairings as $pairing) {
-                    // Get total scores for each player (default to 0 if not found)
-                    $player1TotalScore = $totalScores[$pairing->player1BcpId] ?? 0;
+                    // Get standings for each player (default to 0 / unknown rank if not found)
+                    $player1Standing = $this->getStandingEntry($standings, $pairing->player1BcpId);
+                    $player1TotalScore = $player1Standing['totalScore'];
+                    $player1Placing = $player1Standing['placing'];
 
-                    // Find or create player1 with total score
+                    // Find or create player1 with standings and faction
                     $player1 = Player::findOrCreate(
                         $tournamentId,
                         $pairing->player1BcpId,
                         $pairing->player1Name,
                         $player1TotalScore,
-                        $pairing->player1Faction
+                        $pairing->player1Faction,
+                        $player1Placing
                     );
 
                     // Handle bye pairings (no opponent)
@@ -174,13 +177,16 @@ class RoundController extends BaseController
                     }
 
                     // Regular pairing - find or create player2
-                    $player2TotalScore = $totalScores[$pairing->player2BcpId] ?? 0;
+                    $player2Standing = $this->getStandingEntry($standings, $pairing->player2BcpId);
+                    $player2TotalScore = $player2Standing['totalScore'];
+                    $player2Placing = $player2Standing['placing'];
                     $player2 = Player::findOrCreate(
                         $tournamentId,
                         $pairing->player2BcpId,
                         $pairing->player2Name,
                         $player2TotalScore,
-                        $pairing->player2Faction
+                        $pairing->player2Faction,
+                        $player2Placing
                     );
 
                     // Determine table assignment
@@ -417,7 +423,21 @@ class RoundController extends BaseController
             return;
         }
 
+        $tournament = Tournament::find($tournamentId);
+        if ($tournament === null) {
+            $this->notFound('Tournament');
+            return;
+        }
+
         try {
+            // Refresh player standings before generation (best-effort).
+            try {
+                $bcpService = new BCPApiService();
+                $this->refreshTournamentPlayerStandings($tournament, $bcpService);
+            } catch (\Exception $e) {
+                error_log('Warning: Could not refresh player standings before generation: ' . $e->getMessage());
+            }
+
             $result = $this->generationService->generate($tournamentId, $roundNumber, $round);
 
             $this->success([
@@ -542,6 +562,64 @@ class RoundController extends BaseController
         }
 
         return true;
+    }
+
+    /**
+     * Resolve standings entry for one BCP player.
+     *
+     * @param array<string, array{totalScore: int, placing: int|null}> $standings
+     * @return array{totalScore: int, placing: int|null}
+     */
+    private function getStandingEntry(array $standings, string $bcpPlayerId): array
+    {
+        $entry = $standings[$bcpPlayerId] ?? null;
+        if (!is_array($entry)) {
+            return ['totalScore' => 0, 'placing' => null];
+        }
+
+        $totalScore = isset($entry['totalScore']) ? (int) $entry['totalScore'] : 0;
+        $placing = null;
+        if (isset($entry['placing']) && $entry['placing'] !== null) {
+            $parsedPlacing = (int) $entry['placing'];
+            $placing = $parsedPlacing > 0 ? $parsedPlacing : null;
+        }
+
+        return ['totalScore' => $totalScore, 'placing' => $placing];
+    }
+
+    /**
+     * Refresh existing tournament players with latest standings from BCP.
+     *
+     * Best-effort update used by generate flow.
+     */
+    private function refreshTournamentPlayerStandings(Tournament $tournament, BCPApiService $bcpService): void
+    {
+        $eventId = $bcpService->extractEventId($tournament->bcpUrl);
+        $standings = $bcpService->fetchPlayerStandings($eventId);
+
+        if (empty($standings)) {
+            return;
+        }
+
+        foreach (Player::findByTournament($tournament->id) as $player) {
+            $entry = $standings[$player->bcpPlayerId] ?? null;
+            if (!is_array($entry)) {
+                continue;
+            }
+
+            $newTotalScore = isset($entry['totalScore']) ? (int) $entry['totalScore'] : $player->totalScore;
+            $newPlacing = null;
+            if (array_key_exists('placing', $entry) && $entry['placing'] !== null) {
+                $parsedPlacing = (int) $entry['placing'];
+                $newPlacing = $parsedPlacing > 0 ? $parsedPlacing : null;
+            }
+
+            if ($player->totalScore !== $newTotalScore || $player->placing !== $newPlacing) {
+                $player->totalScore = $newTotalScore;
+                $player->placing = $newPlacing;
+                $player->save();
+            }
+        }
     }
 
     /**
