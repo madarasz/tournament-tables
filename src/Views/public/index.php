@@ -122,10 +122,27 @@ function getTerrainEmojiList(string $terrainEmojiSummary): array
         return [];
     }
 
-    $parts = preg_split('/\s+/', $summary) ?: [];
-    $parts = array_values(array_filter($parts, fn($part) => trim($part) !== ''));
+    $parts = str_contains($summary, '||')
+        ? explode('||', $summary)
+        : (preg_split('/\s+/', $summary) ?: []);
 
-    return array_values(array_unique($parts));
+    $parts = array_map(
+        static fn(string $part): string => trim($part),
+        $parts
+    );
+    $parts = array_values(array_filter($parts, static fn(string $part): bool => $part !== ''));
+
+    // De-duplicate in PHP so uniqueness is byte-exact and independent of DB collation.
+    $seen = [];
+    $unique = [];
+    foreach ($parts as $part) {
+        if (!isset($seen[$part])) {
+            $seen[$part] = true;
+            $unique[] = $part;
+        }
+    }
+
+    return $unique;
 }
 
 $hasTournaments = !empty($tournaments);

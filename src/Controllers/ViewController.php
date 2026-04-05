@@ -295,14 +295,22 @@ class ViewController extends BaseController
                 ) r ON r.tournament_id = t.id
                 LEFT JOIN (
                     SELECT
-                        tb.tournament_id,
-                        GROUP_CONCAT(DISTINCT tt.emoji ORDER BY tt.sort_order SEPARATOR ' ') AS terrain_emojis
-                    FROM tables tb
-                    INNER JOIN terrain_types tt ON tt.id = tb.terrain_type_id
-                    WHERE tb.is_hidden = FALSE
-                      AND tt.emoji IS NOT NULL
-                      AND tt.emoji <> ''
-                    GROUP BY tb.tournament_id
+                        terrain_rows.tournament_id,
+                        GROUP_CONCAT(terrain_rows.emoji ORDER BY terrain_rows.sort_order SEPARATOR '||') AS terrain_emojis
+                    FROM (
+                        -- De-dup by terrain type ID (not emoji text) to avoid collation-dependent emoji DISTINCT behavior.
+                        SELECT DISTINCT
+                            tb.tournament_id,
+                            tb.terrain_type_id,
+                            tt.emoji,
+                            tt.sort_order
+                        FROM tables tb
+                        INNER JOIN terrain_types tt ON tt.id = tb.terrain_type_id
+                        WHERE tb.is_hidden = FALSE
+                          AND tt.emoji IS NOT NULL
+                          AND tt.emoji <> ''
+                    ) terrain_rows
+                    GROUP BY terrain_rows.tournament_id
                 ) te ON te.tournament_id = t.id
                 ORDER BY
                     CASE
