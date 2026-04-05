@@ -242,6 +242,9 @@ class TournamentImportService
                 }
             }
 
+            // Round 1 was imported from BCP - update tournament timestamp.
+            $tournament->touchLastUpdated();
+
             if ($ownTransaction) {
                 Connection::commit();
             }

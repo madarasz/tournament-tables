@@ -42,6 +42,7 @@ class RoundController extends BaseController
     {
         $tournamentId = (int) ($params['id'] ?? 0);
         $roundNumber = (int) ($params['n'] ?? 0);
+        $generateAllocations = $this->parseGenerateAllocationsFlag($body);
 
         // Verify authenticated tournament matches requested tournament
         if (!$this->verifyTournamentAuth($tournamentId)) {
@@ -89,6 +90,11 @@ class RoundController extends BaseController
             try {
                 // Find or create round
                 $round = Round::findOrCreate($tournamentId, $roundNumber);
+
+                // Preserve existing table assignments when refresh-only mode is requested
+                $existingTableAssignments = $generateAllocations
+                    ? []
+                    : $this->buildExistingTableAssignmentLookup(Allocation::findByRound($round->id));
 
                 // Clear existing allocations for this round (FR-015: refresh)
                 $round->clearAllocations();
@@ -183,7 +189,32 @@ class RoundController extends BaseController
                     $pairingConflicts = [];
                     $reasonMessage = '';
 
-                    if ($roundNumber === 1) {
+                    if (!$generateAllocations) {
+                        $pairingKey = $this->buildPairingKey($pairing->player1BcpId, $pairing->player2BcpId);
+                        $preservedTableId = $existingTableAssignments[$pairingKey] ?? null;
+
+                        if ($preservedTableId !== null) {
+                            $candidateTable = Table::find($preservedTableId);
+                            if ($candidateTable !== null && $candidateTable->tournamentId === $tournamentId) {
+                                $table = $candidateTable;
+                                $reasonMessage = 'Imported from BCP - preserved existing table assignment';
+                            }
+                        }
+
+                        if ($table === null) {
+                            $reasonMessage = 'Imported from BCP - no previous table assignment, pending generation';
+                        }
+
+                        $reason = [
+                            'timestamp' => date('c'),
+                            'totalCost' => 0,
+                            'costBreakdown' => ['tableReuse' => 0, 'terrainReuse' => 0, 'tableNumber' => 0],
+                            'reasons' => [$reasonMessage],
+                            'alternativesConsidered' => [],
+                            'isRound1' => $roundNumber === 1,
+                            'conflicts' => [],
+                        ];
+                    } elseif ($roundNumber === 1) {
                         // Round 1: Use BCP table assignment when the target table is auto-assignable
                         if (
                             $pairing->bcpTableNumber !== null &&
@@ -284,6 +315,9 @@ class RoundController extends BaseController
                     $pairingsImported++;
                 }
 
+                // Mark tournament as refreshed from BCP.
+                $tournament->touchLastUpdated();
+
                 Connection::commit();
 
                 // Refresh scores for the previous round (games should be completed)
@@ -301,7 +335,7 @@ class RoundController extends BaseController
                 }
 
                 // For round 2+, automatically run allocation generation to optimize table assignments
-                if ($roundNumber > 1) {
+                if ($roundNumber > 1 && $generateAllocations) {
                     $generationResult = $this->generationService->generate($tournamentId, $roundNumber, $round);
 
                     $response = [
@@ -318,12 +352,21 @@ class RoundController extends BaseController
                     }
                     $this->success($response);
                 } else {
-                    $this->success([
+                    $message = "Imported {$pairingsImported} pairings for round {$roundNumber}";
+                    if ($roundNumber > 1 && !$generateAllocations) {
+                        $message .= ' (allocation generation skipped)';
+                    }
+
+                    $response = [
                         'roundNumber' => $roundNumber,
                         'pairingsImported' => $pairingsImported,
                         'playersImported' => $playersImported,
-                        'message' => "Imported {$pairingsImported} pairings for round {$roundNumber}",
-                    ]);
+                        'message' => $message,
+                    ];
+                    if (!empty($scoreRefreshMessages)) {
+                        $response['scoreRefresh'] = $scoreRefreshMessages;
+                    }
+                    $this->success($response);
                 }
             } catch (\Exception $e) {
                 Connection::rollBack();
@@ -464,5 +507,82 @@ class RoundController extends BaseController
             'allocations' => $this->toArrayMap($allocations),
             'conflicts' => $conflicts,
         ]);
+    }
+
+    /**
+     * Parse generateAllocations import flag from request body.
+     * Defaults to true when omitted or invalid.
+     */
+    private function parseGenerateAllocationsFlag(?array $body): bool
+    {
+        if ($body === null || !array_key_exists('generateAllocations', $body)) {
+            return true;
+        }
+
+        $value = $body['generateAllocations'];
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return (int) $value !== 0;
+        }
+
+        if (is_string($value)) {
+            $normalized = strtolower(trim($value));
+
+            if (in_array($normalized, ['false', '0', 'no', 'off'], true)) {
+                return false;
+            }
+
+            if (in_array($normalized, ['true', '1', 'yes', 'on'], true)) {
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Build lookup map of existing table assignments keyed by matchup identity.
+     *
+     * @param Allocation[] $allocations
+     * @return array<string, int> map "playerA:playerB" => tableId
+     */
+    private function buildExistingTableAssignmentLookup(array $allocations): array
+    {
+        $lookup = [];
+
+        foreach ($allocations as $allocation) {
+            if ($allocation->isBye() || $allocation->tableId === null) {
+                continue;
+            }
+
+            $player1 = Player::find($allocation->player1Id);
+            $player2 = Player::find($allocation->player2Id);
+
+            if ($player1 === null || $player2 === null) {
+                continue;
+            }
+
+            $key = $this->buildPairingKey($player1->bcpPlayerId, $player2->bcpPlayerId);
+
+            if (!isset($lookup[$key])) {
+                $lookup[$key] = $allocation->tableId;
+            }
+        }
+
+        return $lookup;
+    }
+
+    /**
+     * Build order-insensitive matchup key from two BCP player IDs.
+     */
+    private function buildPairingKey(string $playerA, string $playerB): string
+    {
+        return strcmp($playerA, $playerB) <= 0
+            ? $playerA . ':' . $playerB
+            : $playerB . ':' . $playerA;
     }
 }

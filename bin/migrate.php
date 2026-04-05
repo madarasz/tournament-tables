@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS tournaments (
     bcp_event_id VARCHAR(50) NOT NULL UNIQUE,
     bcp_url VARCHAR(500) NOT NULL,
     table_count INT NOT NULL,
+    last_updated DATETIME DEFAULT NULL,
     admin_token CHAR(16) NOT NULL UNIQUE,
     INDEX idx_admin_token (admin_token)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -164,6 +165,11 @@ SQL;
             'table' => 'tables',
             'column' => 'optional',
             'sql' => 'ALTER TABLE tables ADD COLUMN optional BOOLEAN NOT NULL DEFAULT FALSE'
+        ],
+        [
+            'table' => 'tournaments',
+            'column' => 'last_updated',
+            'sql' => 'ALTER TABLE tournaments ADD COLUMN last_updated DATETIME DEFAULT NULL AFTER table_count'
         ],
     ];
 

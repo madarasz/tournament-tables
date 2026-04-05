@@ -196,10 +196,10 @@ $hasTableCollisions = !empty($tableCollisions);
                 <!-- Refresh from BCP button -->
                 <button
                     hx-post="/api/tournaments/<?= $tournament->id ?>/rounds/<?= $round->roundNumber ?>/import"
+                    hx-vals='{"generateAllocations": false}'
                     hx-target="#allocation-results"
                     hx-swap="innerHTML"
                     hx-indicator="#refresh-indicator"
-                    hx-confirm="This will re-import pairings from BCP. Existing allocations will be cleared. Continue?"
                     class="secondary"
                 >
                     <span id="refresh-indicator" class="htmx-indicator">Loading...</span>

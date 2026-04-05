@@ -26,6 +26,9 @@ class Tournament extends BaseModel
     /** @var int */
     public $tableCount;
 
+    /** @var string|null */
+    public $lastUpdated;
+
     /** @var string */
     public $adminToken;
 
@@ -35,7 +38,8 @@ class Tournament extends BaseModel
         string $bcpEventId = '',
         string $bcpUrl = '',
         int $tableCount = 0,
-        string $adminToken = ''
+        string $adminToken = '',
+        ?string $lastUpdated = null
     ) {
         $this->id = $id;
         $this->name = $name;
@@ -43,6 +47,7 @@ class Tournament extends BaseModel
         $this->bcpUrl = $bcpUrl;
         $this->tableCount = $tableCount;
         $this->adminToken = $adminToken;
+        $this->lastUpdated = $lastUpdated;
     }
 
     protected static function getTableName(): string
@@ -61,7 +66,8 @@ class Tournament extends BaseModel
             $row['bcp_event_id'],
             $row['bcp_url'],
             (int) $row['table_count'],
-            $row['admin_token']
+            $row['admin_token'],
+            $row['last_updated'] ?? null
         );
     }
 
@@ -97,14 +103,15 @@ class Tournament extends BaseModel
     protected function insert(): bool
     {
         Connection::execute(
-            'INSERT INTO tournaments (name, bcp_event_id, bcp_url, table_count, admin_token)
-             VALUES (?, ?, ?, ?, ?)',
+            'INSERT INTO tournaments (name, bcp_event_id, bcp_url, table_count, admin_token, last_updated)
+             VALUES (?, ?, ?, ?, ?, ?)',
             [
                 $this->name,
                 $this->bcpEventId,
                 $this->bcpUrl,
                 $this->tableCount,
                 $this->adminToken,
+                $this->lastUpdated,
             ]
         );
 
@@ -118,10 +125,11 @@ class Tournament extends BaseModel
     protected function update(): bool
     {
         Connection::execute(
-            'UPDATE tournaments SET name = ?, table_count = ? WHERE id = ?',
+            'UPDATE tournaments SET name = ?, table_count = ?, last_updated = ? WHERE id = ?',
             [
                 $this->name,
                 $this->tableCount,
+                $this->lastUpdated,
                 $this->id,
             ]
         );
@@ -160,6 +168,15 @@ class Tournament extends BaseModel
     }
 
     /**
+     * Update BCP refresh timestamp.
+     */
+    public function touchLastUpdated(): bool
+    {
+        $this->lastUpdated = date('Y-m-d H:i:s');
+        return $this->save();
+    }
+
+    /**
      * Convert to array for JSON serialization.
      */
     public function toArray(): array
@@ -170,6 +187,7 @@ class Tournament extends BaseModel
             'bcpEventId' => $this->bcpEventId,
             'bcpUrl' => $this->bcpUrl,
             'tableCount' => $this->tableCount,
+            'lastUpdated' => $this->lastUpdated,
         ];
     }
 }

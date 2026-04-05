@@ -55,6 +55,46 @@ function publicTournamentUrl(int $tournamentId, array $params = []): string
     $query = http_build_query($params);
     return '/' . $tournamentId . ($query === '' ? '' : ('?' . $query));
 }
+
+/**
+ * Format tournament last-updated timestamp for public display.
+ *
+ * Rules:
+ * - < 60 minutes: "X minutes ago"
+ * - Today: "HH:MM" (24h)
+ * - Otherwise: "YYYY.MM.DD. HH:MM"
+ */
+function formatLastUpdated(?string $lastUpdated): string
+{
+    if ($lastUpdated === null || trim($lastUpdated) === '') {
+        return '—';
+    }
+
+    try {
+        $updatedAt = new DateTimeImmutable($lastUpdated);
+    } catch (Exception $e) {
+        return '—';
+    }
+
+    $now = new DateTimeImmutable('now', $updatedAt->getTimezone());
+    $diffSeconds = $now->getTimestamp() - $updatedAt->getTimestamp();
+    if ($diffSeconds < 0) {
+        $diffSeconds = 0;
+    }
+
+    $diffMinutes = (int) floor($diffSeconds / 60);
+    if ($diffMinutes < 60) {
+        return $diffMinutes === 1
+            ? '1 minute ago'
+            : $diffMinutes . ' minutes ago';
+    }
+
+    if ($updatedAt->format('Y-m-d') === $now->format('Y-m-d')) {
+        return $updatedAt->format('H:i');
+    }
+
+    return $updatedAt->format('Y.m.d. H:i');
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -324,11 +364,9 @@ function publicTournamentUrl(int $tournamentId, array $params = []): string
             <!-- Footer -->
             <footer class="tc-footer">
                 <div class="tc-footer-meta">
-                    <?php if ($hasAllocations): ?>
                     <span class="tc-footer-update">
-                        <?= count($allocations) ?> game(s) • Last updated: <?= date('g:i A') ?>
+                        LAST UPDATED: <?= htmlspecialchars(formatLastUpdated($tournament->lastUpdated)) ?>
                     </span>
-                    <?php endif; ?>
                 </div>
             </footer>
         </main>

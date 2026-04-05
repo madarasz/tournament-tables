@@ -118,6 +118,38 @@ class TournamentCreationTest extends DatabaseTestCase
         $this->assertEquals($url, $result['tournament']->bcpUrl);
     }
 
+    public function testCreateTournamentInitialLastUpdatedIsNull(): void
+    {
+        $result = $this->service->createTournament(
+            'Last Updated Null Test',
+            'https://www.bestcoastpairings.com/event/lastupdatednull123',
+            5
+        );
+
+        $found = Tournament::find($result['tournament']->id);
+        $this->assertNotNull($found);
+        $this->assertNull($found->lastUpdated);
+    }
+
+    public function testTouchLastUpdatedPersistsTimestamp(): void
+    {
+        $result = $this->service->createTournament(
+            'Last Updated Touch Test',
+            'https://www.bestcoastpairings.com/event/lastupdatedtouch123',
+            5
+        );
+
+        $tournament = Tournament::find($result['tournament']->id);
+        $this->assertNotNull($tournament);
+        $this->assertNull($tournament->lastUpdated);
+
+        $tournament->touchLastUpdated();
+
+        $reloaded = Tournament::find($result['tournament']->id);
+        $this->assertNotNull($reloaded);
+        $this->assertNotNull($reloaded->lastUpdated);
+    }
+
     public function testCreateTournamentWithInvalidUrlThrowsException(): void
     {
         $this->expectException(\InvalidArgumentException::class);
