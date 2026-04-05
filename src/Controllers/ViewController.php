@@ -183,13 +183,50 @@ class ViewController extends BaseController
      */
     public function publicIndex(array $params, ?array $body): void
     {
-        // Query tournaments with at least one published round
-        // Only select safe columns (exclude admin_token)
-        $sql = 'SELECT DISTINCT t.id, t.name, t.bcp_event_id, t.bcp_url, t.table_count,
-                (SELECT COUNT(*) FROM players WHERE tournament_id = t.id) as player_count
+        // Query all tournaments (public-safe columns only, exclude admin_token).
+        // Aggregate related display metadata for tactical public cards.
+        $sql = "SELECT
+                    t.id,
+                    t.name,
+                    t.bcp_event_id,
+                    t.bcp_url,
+                    t.photo_url,
+                    t.event_date,
+                    t.event_end_date,
+                    t.table_count,
+                    t.last_updated,
+                    COALESCE(p.player_count, 0) AS player_count,
+                    COALESCE(r.round_count, 0) AS round_count,
+                    COALESCE(te.terrain_emojis, '') AS terrain_emojis
                 FROM tournaments t
-                INNER JOIN rounds r ON r.tournament_id = t.id AND r.is_published = TRUE
-                ORDER BY t.id DESC';
+                LEFT JOIN (
+                    SELECT tournament_id, COUNT(*) AS player_count
+                    FROM players
+                    GROUP BY tournament_id
+                ) p ON p.tournament_id = t.id
+                LEFT JOIN (
+                    SELECT tournament_id, COUNT(*) AS round_count
+                    FROM rounds
+                    GROUP BY tournament_id
+                ) r ON r.tournament_id = t.id
+                LEFT JOIN (
+                    SELECT
+                        tb.tournament_id,
+                        GROUP_CONCAT(DISTINCT tt.emoji ORDER BY tt.sort_order SEPARATOR ' ') AS terrain_emojis
+                    FROM tables tb
+                    INNER JOIN terrain_types tt ON tt.id = tb.terrain_type_id
+                    WHERE tb.is_hidden = FALSE
+                      AND tt.emoji IS NOT NULL
+                      AND tt.emoji <> ''
+                    GROUP BY tb.tournament_id
+                ) te ON te.tournament_id = t.id
+                ORDER BY
+                    CASE
+                        WHEN t.event_date IS NULL OR TRIM(t.event_date) = '' THEN 1
+                        ELSE 0
+                    END ASC,
+                    t.event_date DESC,
+                    t.id DESC";
 
         $tournaments = Connection::fetchAll($sql);
 

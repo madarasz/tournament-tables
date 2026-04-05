@@ -27,6 +27,7 @@ class MockBcpController extends BaseController
             'id' => $eventId,
             'name' => "Test Tournament {$eventId}",
             'photoUrl' => "https://example.com/mock-event-{$eventId}.png",
+            'locationName' => "Test Venue {$eventId}",
             'city' => 'Test City',
             'country' => 'Test Country',
             'eventDate' => '2026-01-01T00:00:00.000Z',

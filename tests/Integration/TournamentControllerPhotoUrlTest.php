@@ -44,6 +44,7 @@ class TournamentControllerPhotoUrlTest extends DatabaseTestCase
         $photoUrl = 'https://example.com/events/controllerphoto123.png';
         $eventDate = '2026-10-15T08:00:00.000Z';
         $eventEndDate = '2026-10-15T20:00:00.000Z';
+        $locationName = 'Metagame Klub';
 
         $bcpService = $this->createMock(BCPApiService::class);
         $bcpService
@@ -55,6 +56,7 @@ class TournamentControllerPhotoUrlTest extends DatabaseTestCase
                 'photoUrl' => $photoUrl,
                 'eventDate' => $eventDate,
                 'eventEndDate' => $eventEndDate,
+                'locationName' => $locationName,
             ]);
 
         $importService = $this->createMock(TournamentImportService::class);
@@ -85,6 +87,7 @@ class TournamentControllerPhotoUrlTest extends DatabaseTestCase
         $this->assertSame($photoUrl, $controller->successResponse['tournament']['photoUrl']);
         $this->assertSame($eventDate, $controller->successResponse['tournament']['eventDate']);
         $this->assertSame($eventEndDate, $controller->successResponse['tournament']['eventEndDate']);
+        $this->assertSame($locationName, $controller->successResponse['tournament']['locationName']);
 
         $tournamentId = (int) $controller->successResponse['tournament']['id'];
         $found = Tournament::find($tournamentId);
@@ -92,6 +95,7 @@ class TournamentControllerPhotoUrlTest extends DatabaseTestCase
         $this->assertSame($photoUrl, $found->photoUrl);
         $this->assertSame($eventDate, $found->eventDate);
         $this->assertSame($eventEndDate, $found->eventEndDate);
+        $this->assertSame($locationName, $found->locationName);
     }
 
     public function testCreateStoresNullPhotoUrlWhenBcpMetadataPhotoMissingOrBlank(): void
@@ -108,6 +112,7 @@ class TournamentControllerPhotoUrlTest extends DatabaseTestCase
                 'photoUrl' => '   ',
                 'eventDate' => '   ',
                 'eventEndDate' => null,
+                'locationName' => '   ',
             ]);
 
         $importService = $this->createMock(TournamentImportService::class);
@@ -138,6 +143,7 @@ class TournamentControllerPhotoUrlTest extends DatabaseTestCase
         $this->assertNull($controller->successResponse['tournament']['photoUrl']);
         $this->assertNull($controller->successResponse['tournament']['eventDate']);
         $this->assertNull($controller->successResponse['tournament']['eventEndDate']);
+        $this->assertNull($controller->successResponse['tournament']['locationName']);
 
         $tournamentId = (int) $controller->successResponse['tournament']['id'];
         $found = Tournament::find($tournamentId);
@@ -145,6 +151,7 @@ class TournamentControllerPhotoUrlTest extends DatabaseTestCase
         $this->assertNull($found->photoUrl);
         $this->assertNull($found->eventDate);
         $this->assertNull($found->eventEndDate);
+        $this->assertNull($found->locationName);
     }
 }
 

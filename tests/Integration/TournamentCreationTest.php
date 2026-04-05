@@ -205,6 +205,52 @@ class TournamentCreationTest extends DatabaseTestCase
         $this->assertNull($foundBlankDates->eventEndDate);
     }
 
+    public function testCreateTournamentStoresLocationNameWhenProvided(): void
+    {
+        $locationName = 'Metagame Klub';
+
+        $result = $this->service->createTournament(
+            'Location Name Test',
+            'https://www.bestcoastpairings.com/event/locationname123',
+            5,
+            null,
+            null,
+            null,
+            $locationName
+        );
+
+        $found = Tournament::find($result['tournament']->id);
+        $this->assertNotNull($found);
+        $this->assertSame($locationName, $found->locationName);
+    }
+
+    public function testCreateTournamentStoresNullLocationNameWhenMissingOrBlank(): void
+    {
+        $resultWithoutLocation = $this->service->createTournament(
+            'No Location Name Test',
+            'https://www.bestcoastpairings.com/event/nolocationname123',
+            5
+        );
+
+        $foundWithoutLocation = Tournament::find($resultWithoutLocation['tournament']->id);
+        $this->assertNotNull($foundWithoutLocation);
+        $this->assertNull($foundWithoutLocation->locationName);
+
+        $resultBlankLocation = $this->service->createTournament(
+            'Blank Location Name Test',
+            'https://www.bestcoastpairings.com/event/blanklocationname123',
+            5,
+            null,
+            null,
+            null,
+            '   '
+        );
+
+        $foundBlankLocation = Tournament::find($resultBlankLocation['tournament']->id);
+        $this->assertNotNull($foundBlankLocation);
+        $this->assertNull($foundBlankLocation->locationName);
+    }
+
     public function testCreateTournamentInitialLastUpdatedIsNull(): void
     {
         $result = $this->service->createTournament(

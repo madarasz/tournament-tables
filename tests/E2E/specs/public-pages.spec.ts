@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { seedTestData, cleanupTestData } from '../helpers/database';
 
-const TEST_TOURNAMENT_ID = 1001;
+const TEST_TOURNAMENT_IDS = [1001, 1002, 1003, 1004];
 
 test.describe('Public Pages', () => {
   test.beforeAll(async () => {
@@ -9,7 +9,39 @@ test.describe('Public Pages', () => {
   });
 
   test.afterAll(async () => {
-    await cleanupTestData(TEST_TOURNAMENT_ID);
+    for (const tournamentId of TEST_TOURNAMENT_IDS) {
+      await cleanupTestData(tournamentId);
+    }
+  });
+
+  test('Public list page renders all tournament cards with tactical metadata', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.getByTestId('tournaments-heading')).toHaveText('Tournaments');
+
+    await expect(page.getByTestId('tournament-link-Public Page Test')).toBeVisible();
+    await expect(page.getByTestId('tournament-link-Upcoming Open Test')).toBeVisible();
+    await expect(page.getByTestId('tournament-link-Finished Event Test')).toBeVisible();
+    await expect(page.getByTestId('tournament-link-Fallback Data Test')).toBeVisible();
+
+    await expect(page.getByTestId('status-Public Page Test')).toHaveText(/LIVE/);
+    await expect(page.getByTestId('status-Upcoming Open Test')).toHaveText(/UPCOMING/);
+    await expect(page.getByTestId('status-Finished Event Test')).toHaveText(/FINISHED/);
+    await expect(page.getByTestId('status-Fallback Data Test')).toHaveText(/UPCOMING/);
+
+    await expect(page.getByTestId('event-date-Fallback Data Test')).toHaveText(/Date TBD/i);
+    await expect(page.getByTestId('player-count-Fallback Data Test')).toHaveText(/0 players/i);
+
+    const cardOrder = await page.locator('[data-testid^="tournament-link-"]').evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute('data-testid'))
+    );
+    expect(cardOrder).toEqual([
+      'tournament-link-Upcoming Open Test',
+      'tournament-link-Public Page Test',
+      'tournament-link-Finished Event Test',
+      'tournament-link-Fallback Data Test',
+    ]);
   });
 
   test('Navigate public pages with query-based round and leaderboard views', async ({ page }) => {

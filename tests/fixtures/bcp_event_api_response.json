@@ -2,6 +2,7 @@
   "id": "testEvent123",
   "name": "Contrast Clash - October 2026",
   "photoUrl": "https://example.com/contrast-clash.png",
+  "locationName": "Metagame Klub",
   "city": "Budapest",
   "country": "Hungary",
   "eventDate": "2026-10-15T08:00:00.000Z",

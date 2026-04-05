@@ -29,6 +29,7 @@ class TournamentService
      * @param string|null $photoUrl Tournament photo URL from BCP event metadata
      * @param string|null $eventDate Tournament start date/time from BCP metadata
      * @param string|null $eventEndDate Tournament end date/time from BCP metadata
+     * @param string|null $locationName Tournament venue/location name from BCP metadata
      * @return array{tournament: Tournament, adminToken: string}
      * @throws InvalidArgumentException If validation fails
      * @throws RuntimeException If tournament already exists
@@ -39,7 +40,8 @@ class TournamentService
         int $tableCount,
         ?string $photoUrl = null,
         ?string $eventDate = null,
-        ?string $eventEndDate = null
+        ?string $eventEndDate = null,
+        ?string $locationName = null
     ): array
     {
         // Validate inputs
@@ -59,6 +61,7 @@ class TournamentService
         $normalizedPhotoUrl = $this->normalizePhotoUrl($photoUrl);
         $normalizedEventDate = $this->normalizeMetadataDate($eventDate);
         $normalizedEventEndDate = $this->normalizeMetadataDate($eventEndDate);
+        $normalizedLocationName = $this->normalizeLocationName($locationName);
 
         // Create tournament and tables in transaction
         return Connection::executeInTransaction(function () use (
@@ -69,7 +72,8 @@ class TournamentService
             $adminToken,
             $normalizedPhotoUrl,
             $normalizedEventDate,
-            $normalizedEventEndDate
+            $normalizedEventEndDate,
+            $normalizedLocationName
         ) {
             // Create tournament
             $tournament = new Tournament(
@@ -82,7 +86,8 @@ class TournamentService
                 null,
                 $normalizedPhotoUrl,
                 $normalizedEventDate,
-                $normalizedEventEndDate
+                $normalizedEventEndDate,
+                $normalizedLocationName
             );
             $tournament->save();
 
@@ -216,6 +221,20 @@ class TournamentService
         $dateValue = trim($dateValue);
 
         return $dateValue === '' ? null : $dateValue;
+    }
+
+    /**
+     * Normalize location name metadata values before persistence.
+     */
+    private function normalizeLocationName(?string $locationName): ?string
+    {
+        if ($locationName === null) {
+            return null;
+        }
+
+        $locationName = trim($locationName);
+
+        return $locationName === '' ? null : $locationName;
     }
 
     /**

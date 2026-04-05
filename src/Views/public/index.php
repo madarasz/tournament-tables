@@ -1,162 +1,233 @@
 <?php
-
 declare(strict_types=1);
 
 /**
- * Public tournaments list view.
- *
- * Shows all tournaments with at least one published round.
+ * Public tournament list view - Tactical Command Theme.
  *
  * Expected variables:
- * - $tournaments: Array of tournament rows with player_count
+ * - $tournaments: Array<int, array<string, mixed>>
  */
 
+/**
+ * Parse a date string into DateTimeImmutable.
+ */
+function parseTournamentDate(?string $rawDate): ?DateTimeImmutable
+{
+    if ($rawDate === null || trim($rawDate) === '') {
+        return null;
+    }
+
+    try {
+        return new DateTimeImmutable($rawDate);
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
+/**
+ * Determine tournament status from date fields only.
+ */
+function getTournamentStatus(?string $eventDate, ?string $eventEndDate, DateTimeImmutable $now): string
+{
+    $start = parseTournamentDate($eventDate);
+    $end = parseTournamentDate($eventEndDate);
+
+    if ($start !== null && $end !== null) {
+        if ($now < $start) {
+            return 'UPCOMING';
+        }
+        if ($now > $end) {
+            return 'FINISHED';
+        }
+        return 'LIVE';
+    }
+
+    if ($start !== null && $end === null) {
+        return $now < $start ? 'UPCOMING' : 'LIVE';
+    }
+
+    if ($start === null && $end !== null) {
+        return $now > $end ? 'FINISHED' : 'UPCOMING';
+    }
+
+    return 'UPCOMING';
+}
+
+/**
+ * Format event date range for display.
+ */
+function formatTournamentDateRange(?string $eventDate, ?string $eventEndDate): string
+{
+    $start = parseTournamentDate($eventDate);
+    $end = parseTournamentDate($eventEndDate);
+
+    if ($start === null && $end === null) {
+        return 'Date TBD';
+    }
+
+    if ($start !== null && $end === null) {
+        return $start->format('M j, Y');
+    }
+
+    if ($start === null && $end !== null) {
+        return $end->format('M j, Y');
+    }
+
+    if ($start->format('Y-m-d') === $end->format('Y-m-d')) {
+        return $start->format('M j, Y');
+    }
+
+    if ($start->format('Y') === $end->format('Y')) {
+        if ($start->format('n') === $end->format('n')) {
+            return sprintf(
+                '%s %d-%d, %s',
+                $start->format('M'),
+                (int) $start->format('j'),
+                (int) $end->format('j'),
+                $start->format('Y')
+            );
+        }
+
+        return sprintf(
+            '%s %d - %s %d, %s',
+            $start->format('M'),
+            (int) $start->format('j'),
+            $end->format('M'),
+            (int) $end->format('j'),
+            $start->format('Y')
+        );
+    }
+
+    return $start->format('M j, Y') . ' - ' . $end->format('M j, Y');
+}
+
+/**
+ * Normalize terrain emoji string into list.
+ *
+ * @return string[]
+ */
+function getTerrainEmojiList(string $terrainEmojiSummary): array
+{
+    $summary = trim($terrainEmojiSummary);
+    if ($summary === '') {
+        return [];
+    }
+
+    $parts = preg_split('/\s+/', $summary) ?: [];
+    $parts = array_values(array_filter($parts, fn($part) => trim($part) !== ''));
+
+    return array_values(array_unique($parts));
+}
+
 $hasTournaments = !empty($tournaments);
-$title = 'Tournaments';
-$isPublic = true;
-
-// Start capturing content for layout
-ob_start();
+$now = new DateTimeImmutable('now');
 ?>
-<style>
-    /*
-     * Public view styling for venue readability
-     * Large fonts, high contrast for tournament venue displays
-     */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournaments - Tournament Tables</title>
 
-    :root {
-        --primary: #1095c1;
-        --primary-hover: #0d7ea8;
-        --font-size-base: 1.25rem;
-    }
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-    body {
-        font-size: var(--font-size-base);
-        line-height: 1.6;
-    }
+    <link rel="stylesheet" href="/css/tactical-theme.css">
+</head>
+<body class="tc-page tc-list-page">
+    <header class="tc-header">
+        <a href="/" class="tc-header-brand">
+            <span class="tc-header-brand-icon">⚔️</span>
+            <span class="tc-header-brand-text">Tournament Tables</span>
+        </a>
+    </header>
 
-    /* Header styling */
-    .public-header {
-        background: linear-gradient(135deg, var(--primary) 0%, #0d7ea8 100%);
-        color: white;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        text-align: center;
-    }
+    <main class="tc-list-main">
+        <section class="tc-list-hero">
+            <h1 data-testid="tournaments-heading">Tournaments</h1>
+        </section>
 
-    .public-header h1 {
-        color: white;
-        margin: 0;
-        font-size: 2.5rem;
-        font-weight: 700;
-    }
+        <?php if ($hasTournaments): ?>
+        <section class="tc-list-grid" data-testid="tournament-list">
+            <?php foreach ($tournaments as $tournament): ?>
+                <?php
+                $name = (string) ($tournament['name'] ?? 'Unnamed Tournament');
+                $safeName = htmlspecialchars($name);
+                $status = getTournamentStatus(
+                    (string) ($tournament['event_date'] ?? ''),
+                    (string) ($tournament['event_end_date'] ?? ''),
+                    $now
+                );
+                $statusClass = strtolower($status);
+                $dateRange = formatTournamentDateRange(
+                    (string) ($tournament['event_date'] ?? ''),
+                    (string) ($tournament['event_end_date'] ?? '')
+                );
+                $playerCount = (int) ($tournament['player_count'] ?? 0);
+                $roundCount = (int) ($tournament['round_count'] ?? 0);
+                $terrainEmojis = getTerrainEmojiList((string) ($tournament['terrain_emojis'] ?? ''));
+                $actionLabel = $status === 'FINISHED' ? 'Archives' : 'View';
+                $photoUrl = trim((string) ($tournament['photo_url'] ?? ''));
+                $showLiveDot = $status === 'LIVE';
+                ?>
+                <a
+                    href="/<?= (int) $tournament['id'] ?>"
+                    class="tc-list-card status-<?= $statusClass ?>"
+                    data-testid="tournament-link-<?= $safeName ?>"
+                >
+                    <div class="tc-list-card-media" aria-hidden="true">
+                        <?php if ($photoUrl !== ''): ?>
+                            <img
+                                src="<?= htmlspecialchars($photoUrl) ?>"
+                                alt="<?= $safeName ?> banner"
+                                loading="lazy"
+                            >
+                        <?php else: ?>
+                            <div class="tc-list-card-media-fallback"></div>
+                        <?php endif; ?>
+                    </div>
 
-    .public-header .subtitle {
-        margin: 0.5rem 0 0 0;
-        font-size: 1.25rem;
-        opacity: 0.9;
-    }
+                    <span class="tc-list-status status-<?= $statusClass ?>" data-testid="status-<?= $safeName ?>">
+                        <?php if ($showLiveDot): ?>
+                        <span class="tc-list-status-dot" aria-hidden="true"></span>
+                        <?php endif; ?>
+                        <?= $status ?>
+                    </span>
 
-    /* Tournament list */
-    .tournament-list {
-        display: grid;
-        gap: 1rem;
-    }
+                    <div class="tc-list-card-body">
+                        <h2><?= $safeName ?></h2>
+                        <p class="tc-list-venue">Venue TBD</p>
+                        <p class="tc-list-date" data-testid="event-date-<?= $safeName ?>"><?= htmlspecialchars($dateRange) ?></p>
 
-    .tournament-card {
-        display: block;
-        background: #f5f5f5;
-        border-radius: 8px;
-        padding: 1.5rem 2rem;
-        text-decoration: none;
-        color: inherit;
-        transition: transform 0.1s, box-shadow 0.2s;
-    }
+                        <div class="tc-list-stats">
+                            <span data-testid="player-count-<?= $safeName ?>"><?= $playerCount ?> players</span>
+                            <span><?= $roundCount ?> rounds</span>
+                        </div>
 
-    .tournament-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        background: #eef7ff;
-    }
-
-    .tournament-card h2 {
-        margin: 0;
-        font-size: 1.5rem;
-        color: var(--primary);
-    }
-
-    .tournament-meta {
-        margin-top: 0.5rem;
-        color: #666;
-        font-size: 1.1rem;
-    }
-
-    /* No tournaments message */
-    .no-tournaments {
-        background: #fff3cd;
-        border: 1px solid #ffeeba;
-        border-radius: 8px;
-        padding: 2rem;
-        text-align: center;
-        font-size: 1.25rem;
-        color: #856404;
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .public-header h1 {
-            font-size: 1.75rem;
-        }
-
-        .tournament-card {
-            padding: 1rem 1.5rem;
-        }
-
-        .tournament-card h2 {
-            font-size: 1.25rem;
-        }
-    }
-
-    /* Large display mode - for TV/monitor at venue */
-    @media (min-width: 1600px) {
-        :root {
-            --font-size-base: 1.5rem;
-        }
-
-        .public-header h1 {
-            font-size: 3rem;
-        }
-
-        .tournament-card h2 {
-            font-size: 1.75rem;
-        }
-    }
-</style>
-
-<header class="public-header">
-    <h1 data-testid="tournaments-heading">Tournaments</h1>
-    <p class="subtitle">Table Allocations</p>
-</header>
-
-<?php if ($hasTournaments): ?>
-<div class="tournament-list">
-    <?php foreach ($tournaments as $tournament): ?>
-    <a href="/<?= (int) $tournament['id'] ?>" class="tournament-card" data-testid="tournament-link-<?= htmlspecialchars($tournament['name']) ?>">
-        <h2><?= htmlspecialchars($tournament['name']) ?></h2>
-        <div class="tournament-meta" data-testid="player-count-<?= htmlspecialchars($tournament['name']) ?>">
-            <?= (int) $tournament['player_count'] ?> players
-        </div>
-    </a>
-    <?php endforeach; ?>
-</div>
-<?php else: ?>
-<div class="no-tournaments">
-    <p>No tournaments available.</p>
-    <p>Please check back later.</p>
-</div>
-<?php endif; ?>
-<?php
-$content = ob_get_clean();
-
-// Include the layout template
-include __DIR__ . '/../layout.php';
+                        <footer class="tc-list-meta">
+                            <?php if (!empty($terrainEmojis)): ?>
+                                <span class="tc-list-terrain" aria-label="Terrain types">
+                                    <?php foreach ($terrainEmojis as $emoji): ?>
+                                        <span><?= htmlspecialchars($emoji) ?></span>
+                                    <?php endforeach; ?>
+                                </span>
+                            <?php else: ?>
+                                <span class="tc-list-terrain tc-list-terrain-empty">No terrain data</span>
+                            <?php endif; ?>
+                            <span class="tc-list-action"><?= $actionLabel ?></span>
+                            <span class="tc-list-chevron" aria-hidden="true">›</span>
+                        </footer>
+                    </div>
+                </a>
+            <?php endforeach; ?>
+        </section>
+        <?php else: ?>
+        <section class="tc-list-empty">
+            <p>No tournaments available.</p>
+            <p>Please check back later.</p>
+        </section>
+        <?php endif; ?>
+    </main>
+</body>
+</html>

@@ -66,6 +66,7 @@ class TournamentController extends BaseController
                 $photoUrl = $metadata['photoUrl'];
                 $eventDate = $metadata['eventDate'] ?? null;
                 $eventEndDate = $metadata['eventEndDate'] ?? null;
+                $locationName = $metadata['locationName'] ?? null;
             } catch (\InvalidArgumentException $e) {
                 $this->validationError([
                     'bcpUrl' => [
@@ -89,7 +90,8 @@ class TournamentController extends BaseController
                 $tableCount,
                 $photoUrl,
                 $eventDate,
-                $eventEndDate
+                $eventEndDate,
+                $locationName
             );
 
             // Attempt to auto-import Round 1 and create tables

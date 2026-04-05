@@ -27,6 +27,9 @@ class Tournament extends BaseModel
     public $photoUrl;
 
     /** @var string|null */
+    public $locationName;
+
+    /** @var string|null */
     public $eventDate;
 
     /** @var string|null */
@@ -51,13 +54,15 @@ class Tournament extends BaseModel
         ?string $lastUpdated = null,
         ?string $photoUrl = null,
         ?string $eventDate = null,
-        ?string $eventEndDate = null
+        ?string $eventEndDate = null,
+        ?string $locationName = null
     ) {
         $this->id = $id;
         $this->name = $name;
         $this->bcpEventId = $bcpEventId;
         $this->bcpUrl = $bcpUrl;
         $this->photoUrl = $photoUrl;
+        $this->locationName = $locationName;
         $this->eventDate = $eventDate;
         $this->eventEndDate = $eventEndDate;
         $this->tableCount = $tableCount;
@@ -85,7 +90,8 @@ class Tournament extends BaseModel
             $row['last_updated'] ?? null,
             $row['photo_url'] ?? null,
             $row['event_date'] ?? null,
-            $row['event_end_date'] ?? null
+            $row['event_end_date'] ?? null,
+            $row['location_name'] ?? null
         );
     }
 
@@ -121,13 +127,14 @@ class Tournament extends BaseModel
     protected function insert(): bool
     {
         Connection::execute(
-            'INSERT INTO tournaments (name, bcp_event_id, bcp_url, photo_url, event_date, event_end_date, table_count, admin_token, last_updated)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO tournaments (name, bcp_event_id, bcp_url, photo_url, location_name, event_date, event_end_date, table_count, admin_token, last_updated)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $this->name,
                 $this->bcpEventId,
                 $this->bcpUrl,
                 $this->photoUrl,
+                $this->locationName,
                 $this->eventDate,
                 $this->eventEndDate,
                 $this->tableCount,
@@ -208,6 +215,7 @@ class Tournament extends BaseModel
             'bcpEventId' => $this->bcpEventId,
             'bcpUrl' => $this->bcpUrl,
             'photoUrl' => $this->photoUrl,
+            'locationName' => $this->locationName,
             'eventDate' => $this->eventDate,
             'eventEndDate' => $this->eventEndDate,
             'tableCount' => $this->tableCount,

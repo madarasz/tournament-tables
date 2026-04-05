@@ -388,6 +388,7 @@ class BCPApiServiceTest extends TestCase
         $this->assertArrayHasKey('name', $data);
         $this->assertArrayHasKey('id', $data);
         $this->assertArrayHasKey('photoUrl', $data);
+        $this->assertArrayHasKey('locationName', $data);
         $this->assertArrayHasKey('eventDate', $data);
         $this->assertArrayHasKey('eventEndDate', $data);
         $this->assertEquals('testEvent123', $data['id']);

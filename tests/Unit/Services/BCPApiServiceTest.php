@@ -183,7 +183,7 @@ class BCPApiServiceTest extends TestCase
     // Tournament Metadata Tests
     // -------------------------------------------------------------------------
 
-    public function testFetchTournamentMetadataReturnsSanitizedNamePhotoAndDates(): void
+    public function testFetchTournamentMetadataReturnsSanitizedNamePhotoDatesAndLocation(): void
     {
         $url = 'https://www.bestcoastpairings.com/event/testMeta123';
 
@@ -206,6 +206,7 @@ class BCPApiServiceTest extends TestCase
                 'photoUrl' => ' https://example.com/meta-clash.png ',
                 'eventDate' => ' 2026-10-15T08:00:00.000Z ',
                 'eventEndDate' => ' 2026-10-15T20:00:00.000Z ',
+                'locationName' => ' Metagame Klub ',
             ]);
 
         $metadata = $apiService->fetchTournamentMetadata($url);
@@ -214,6 +215,7 @@ class BCPApiServiceTest extends TestCase
         $this->assertSame('https://example.com/meta-clash.png', $metadata['photoUrl']);
         $this->assertSame('2026-10-15T08:00:00.000Z', $metadata['eventDate']);
         $this->assertSame('2026-10-15T20:00:00.000Z', $metadata['eventEndDate']);
+        $this->assertSame('Metagame Klub', $metadata['locationName']);
     }
 
     public function testFetchTournamentMetadataReturnsNullForBlankOrMissingMetadataFields(): void
@@ -238,6 +240,7 @@ class BCPApiServiceTest extends TestCase
                 'name' => 'No Photo Event',
                 'photoUrl' => '   ',
                 'eventDate' => '   ',
+                'locationName' => '   ',
             ]);
 
         $metadata = $apiService->fetchTournamentMetadata($url);
@@ -246,5 +249,6 @@ class BCPApiServiceTest extends TestCase
         $this->assertNull($metadata['photoUrl']);
         $this->assertNull($metadata['eventDate']);
         $this->assertNull($metadata['eventEndDate']);
+        $this->assertNull($metadata['locationName']);
     }
 }

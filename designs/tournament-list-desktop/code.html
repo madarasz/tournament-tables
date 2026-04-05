@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tournament Tables | Public Tournaments</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary-fixed": "#a6f2d1",
+              "on-primary-fixed": "#002116",
+              "outline": "#89938d",
+              "on-tertiary-container": "#b9c8de",
+              "secondary-fixed-dim": "#4de082",
+              "on-tertiary-fixed-variant": "#39485a",
+              "on-tertiary-fixed": "#0d1c2d",
+              "tertiary-fixed": "#d4e4fa",
+              "primary-fixed-dim": "#8bd6b6",
+              "tertiary-container": "#465467",
+              "on-error": "#690005",
+              "error": "#ffb4ab",
+              "surface-container": "#171f33",
+              "secondary-container": "#00b55d",
+              "tertiary-fixed-dim": "#b9c8de",
+              "primary-container": "#065f46",
+              "on-background": "#dae2fd",
+              "on-tertiary": "#233143",
+              "on-secondary-container": "#003e1c",
+              "surface-variant": "#2d3449",
+              "error-container": "#93000a",
+              "surface-container-lowest": "#060e20",
+              "inverse-surface": "#dae2fd",
+              "background": "#0b1326",
+              "on-surface": "#dae2fd",
+              "surface-container-low": "#131b2e",
+              "surface-bright": "#31394d",
+              "on-secondary-fixed": "#00210c",
+              "inverse-primary": "#1b6b51",
+              "surface-container-highest": "#2d3449",
+              "surface-tint": "#8bd6b6",
+              "on-error-container": "#ffdad6",
+              "on-surface-variant": "#bec9c2",
+              "secondary": "#4de082",
+              "on-primary": "#003828",
+              "surface": "#0b1326",
+              "on-secondary": "#003919",
+              "surface-container-high": "#222a3d",
+              "on-primary-fixed-variant": "#00513b",
+              "primary": "#8bd6b6",
+              "on-secondary-fixed-variant": "#005227",
+              "outline-variant": "#3f4944",
+              "tertiary": "#b9c8de",
+              "inverse-on-surface": "#283044",
+              "surface-dim": "#0b1326",
+              "on-primary-container": "#8bd6b7",
+              "secondary-fixed": "#6dfe9c"
+            },
+            fontFamily: {
+              "headline": ["Inter"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#065f46] flex items-center px-6 h-16 w-full max-w-none border-b border-[#dae2fd]/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#dae2fd] text-2xl">swords</span>
+<span class="text-xl font-black tracking-widest text-[#dae2fd] uppercase">Tournament Tables</span>
+</div>
+</header>
+<main class="flex-grow pt-28 pb-20 px-8">
+<div class="max-w-[1200px] mx-auto">
+<!-- Header Section -->
+<div class="mb-12">
+<h1 class="font-black tracking-tighter text-[3.5rem] uppercase leading-none text-on-background">Tournaments</h1>
+</div>
+<!-- Tournament Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- LIVE CARD: Grand Tournament 2026 -->
+<div class="bg-surface-container-low group border-l-2 border-secondary hover:bg-surface-container-high transition-all duration-200 rounded-sm overflow-hidden">
+<div class="relative h-48 overflow-hidden bg-surface-container-highest">
+<img alt="Wargaming Battlefield" class="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuqJojtvrbr62Vc3ThM2jfiOrLmGPVfnKobZ7hI20EApdTMc3jCMNHiBrRs4jWXfr7pYCKaSUNr0O3YRnS7Hz9wTUV7J20UjdP4V_3yyenDkPZ46CXrJBr6ZoOKEMot68r1HaQiZWvToy1Pg2YkZuU6oymSM1FNo2SufGmh2pMVliiuHMroQJWtm-VWa2p68CkG40z2MKz7GHsOa5aLG2Kz9LLXxDxMO1bF8afPKrRB0Z5I5V3HjzqcJ9Ht8j-Gk88frMf49ujlmw"/>
+<div class="absolute top-4 left-4 bg-surface-container-lowest/90 px-3 py-1 flex items-center gap-2">
+<span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
+<span class="text-[0.625rem] font-black uppercase tracking-widest text-secondary">Live</span>
+</div>
+</div>
+<div class="p-6">
+<h2 class="text-xl font-black text-on-surface mb-1 uppercase tracking-tight">Grand Tournament 2026</h2>
+<p class="text-[0.65rem] font-black text-secondary uppercase tracking-widest mb-1">Contrast Phase</p>
+<p class="text-[0.7rem] text-on-surface-variant font-bold mb-6 uppercase tracking-widest">March 20-22, 2026</p>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div>
+<p class="text-sm font-black text-on-surface">64 PLAYERS</p>
+</div>
+<div>
+<p class="text-sm font-black text-on-surface">5 ROUNDS</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-outline-variant/10">
+<div class="flex gap-2 text-lg">
+<span>🌲</span>
+<span>🏛️</span>
+<span>🏭</span>
+</div>
+<button class="text-[0.65rem] font-black uppercase tracking-widest text-secondary hover:text-secondary-fixed transition-colors">View</button>
+</div>
+</div>
+</div>
+<!-- UPCOMING CARD: Summer Bash Open -->
+<div class="bg-surface-container-low group border-l-2 border-outline-variant hover:border-secondary hover:bg-surface-container-high transition-all duration-200 rounded-sm overflow-hidden">
+<div class="relative h-48 overflow-hidden bg-surface-container-highest">
+<img alt="Terrain Table" class="w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4kjI3btxGgtg_fBT-QJ6zZ26CgtTWB6Q75Q92e4n608Fe9HZdM_pQLaA4rwEUfw7f7HoGQbYm1PGNqs3KH193AYIhjrFR5iYkvmVjvpACuS_uJBtIv-Nj6FNsyIRn1RK8bYGJUxSn8_-RRXuQ7zXvzF7_sYuWbCvOeNJPHz8S6td-d6iykmDA1J--0Tx4qwVssILd7k3uMqHFViACo1bqGKbXZJ9czmVyeSluv3vNXwSwf1mcR7j450sMgEz13utQPuuDMMMo0WA"/>
+<div class="absolute top-4 left-4 bg-surface-container-lowest/90 px-3 py-1">
+<span class="text-[0.625rem] font-black uppercase tracking-widest text-on-surface-variant/80">Upcoming</span>
+</div>
+</div>
+<div class="p-6">
+<h2 class="text-xl font-black text-on-surface mb-1 uppercase tracking-tight">Summer Bash Open</h2>
+<p class="text-[0.65rem] font-black text-secondary uppercase tracking-widest mb-1">Metagames</p>
+<p class="text-[0.7rem] text-on-surface-variant font-bold mb-6 uppercase tracking-widest">June 12-14, 2026</p>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div>
+<p class="text-sm font-black text-on-surface">32 PLAYERS</p>
+</div>
+<div>
+<p class="text-sm font-black text-on-surface">3 ROUNDS</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-outline-variant/10">
+<div class="flex gap-2 text-lg">
+<span>🌲</span>
+<span>🏭</span>
+</div>
+<button class="text-[0.65rem] font-black uppercase tracking-widest text-on-surface-variant hover:text-secondary transition-colors">Register</button>
+</div>
+</div>
+</div>
+<!-- UPCOMING CARD: Regional Championship -->
+<div class="bg-surface-container-low group border-l-2 border-outline-variant hover:border-secondary hover:bg-surface-container-high transition-all duration-200 rounded-sm overflow-hidden">
+<div class="relative h-48 overflow-hidden bg-surface-container-highest">
+<img alt="Tactical Map" class="w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBY1Oo1YYd5UAVZRQ5Rvjm3KWsssnpoR1nlLAxd4AePfbHfq4pDQm3QOTP6QFtpgrm_stNbK-bliIemG95F79AiETxK8SstAIPR9GFcm5pG1svDxqR-Anc0ldlEF3OzOiV8Ruc8WHGYgI-anteC-5n4pl98nIsD7homzuko6Yz18eEEj3SuEs9qJDG6kRImpVETmbNLIueJcsziO8wOkmGdagp5Ap9UteGn_fq__bsKiDpDmST1HAsLM94SAvW43Gt7m7-F1NzdLTg"/>
+<div class="absolute top-4 left-4 bg-surface-container-lowest/90 px-3 py-1">
+<span class="text-[0.625rem] font-black uppercase tracking-widest text-on-surface-variant/80">Upcoming</span>
+</div>
+</div>
+<div class="p-6">
+<h2 class="text-xl font-black text-on-surface mb-1 uppercase tracking-tight">Regional Championship</h2>
+<p class="text-[0.65rem] font-black text-secondary uppercase tracking-widest mb-1">Metagames</p>
+<p class="text-[0.7rem] text-on-surface-variant font-bold mb-6 uppercase tracking-widest">August 05-07, 2026</p>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div>
+<p class="text-sm font-black text-on-surface">128 PLAYERS</p>
+</div>
+<div>
+<p class="text-sm font-black text-on-surface">6 ROUNDS</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-outline-variant/10">
+<div class="flex gap-2 text-lg">
+<span>🏛️</span>
+<span>🏛️</span>
+<span>🏭</span>
+</div>
+<button class="text-[0.65rem] font-black uppercase tracking-widest text-on-surface-variant hover:text-secondary transition-colors">Register</button>
+</div>
+</div>
+</div>
+<!-- FINISHED CARD: Winter Skirmish -->
+<div class="bg-surface-container-low group border-l-2 border-transparent grayscale-[0.5] hover:grayscale-0 hover:bg-surface-container-high transition-all duration-200 rounded-sm overflow-hidden">
+<div class="relative h-48 overflow-hidden bg-surface-container-highest">
+<img alt="Trophy" class="w-full h-full object-cover opacity-20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhiGOIaRVy3PHbmYHA1kwwZDxj3R3Zn1CLxWkv7-k9nwX-pfs96PptEUGnDub81X2h6MXck4eNAKyVi70ebNW5TOYD9M9JT1kGDIDbg42Prtb_vXtjIx8CLY0cREYCZnTC5kJFoPbeD20HOOamtul5J8ZXRa4JyuyC-IG1m46z1caokHv1b40Fe8Ma0m1wN1SNNGTp4RwLCGzHLEfjhfOfI8j42rl62UsHz3KOcyQZPa64WZ3PSc2L4-eHRIPnELPhY0RnAZ-HjEc"/>
+<div class="absolute top-4 left-4 bg-surface-container-lowest/90 px-3 py-1">
+<span class="text-[0.625rem] font-black uppercase tracking-widest text-on-surface-variant/40">Finished</span>
+</div>
+</div>
+<div class="p-6">
+<h2 class="text-xl font-black text-on-surface/50 mb-1 uppercase tracking-tight">Winter Skirmish</h2>
+<p class="text-[0.65rem] font-black text-secondary/40 uppercase tracking-widest mb-1">Metagames</p>
+<p class="text-[0.7rem] text-on-surface-variant/40 font-bold mb-6 uppercase tracking-widest">January 15, 2026</p>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div>
+<p class="text-sm font-black text-on-surface/30">16 PLAYERS</p>
+</div>
+<div>
+<p class="text-sm font-black text-on-surface/30">3 ROUNDS</p>
+</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-outline-variant/5">
+<div class="flex gap-2 text-lg opacity-40">
+<span>🌲</span>
+<span>🏛️</span>
+</div>
+<button class="text-[0.65rem] font-black uppercase tracking-widest text-on-surface-variant/40 hover:text-on-surface transition-colors">Archives</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

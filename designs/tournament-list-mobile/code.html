@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Tournament Tables - Command Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "surface-tint": "#7ff3be",
+                "secondary-container": "#006b57",
+                "primary-fixed": "#7ff3be",
+                "outline-variant": "#484847",
+                "on-secondary-fixed-variant": "#006854",
+                "surface": "#0e0e0e",
+                "primary": "#7ff3be",
+                "tertiary-dim": "#00cded",
+                "on-surface-variant": "#adaaaa",
+                "inverse-primary": "#006d4b",
+                "primary-dim": "#71e4b1",
+                "inverse-surface": "#fcf9f8",
+                "surface-container-low": "#131313",
+                "on-error-container": "#ffa8a3",
+                "background": "#0e0e0e",
+                "primary-container": "#065f46", // Updated to match SCREEN_49 dark green
+                "surface-variant": "#262626",
+                "on-tertiary-container": "#004955",
+                "tertiary": "#7be6ff",
+                "inverse-on-surface": "#565555",
+                "secondary": "#59fcd3",
+                "surface-container": "#1a1a1a",
+                "on-primary-fixed": "#00452e",
+                "on-secondary-container": "#defff2",
+                "secondary-dim": "#45edc5",
+                "outline": "#767575",
+                "on-error": "#490006",
+                "error-container": "#9f0519",
+                "primary-fixed-dim": "#71e4b1",
+                "on-primary-fixed-variant": "#006545",
+                "tertiary-container": "#00dcfe",
+                "on-primary-container": "#00291a",
+                "surface-container-lowest": "#000000",
+                "on-secondary-fixed": "#00493a",
+                "surface-dim": "#0e0e0e",
+                "error-dim": "#d7383b",
+                "on-tertiary-fixed-variant": "#005361",
+                "on-background": "#ffffff",
+                "error": "#ff716c",
+                "on-primary": "#005a3d",
+                "on-tertiary": "#005360",
+                "secondary-fixed": "#59fcd3",
+                "surface-container-high": "#20201f",
+                "tertiary-fixed": "#00dcfe",
+                "tertiary-fixed-dim": "#00cded",
+                "surface-container-highest": "#262626",
+                "secondary-fixed-dim": "#45edc5",
+                "on-secondary": "#005d4b",
+                "on-tertiary-fixed": "#00333d",
+                "surface-bright": "#2c2c2c",
+                "on-surface": "#ffffff"
+              },
+              fontFamily: {
+                "headline": ["Inter"],
+                "body": ["Inter"],
+                "label": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+        }
+        body {
+            background-color: #0b1326; /* Specific requested Navy background override from SCREEN_49 */
+        }
+        .status-pulse {
+            box-shadow: 0 0 0 0 rgba(89, 252, 211, 0.4);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(89, 252, 211, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(89, 252, 211, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(89, 252, 211, 0); }
+        }
+        .card-surface { background-color: #131b2e; } 
+    </style>
+</head>
+<body class="font-body text-on-surface antialiased min-h-screen">
+<!-- TopAppBar -->
+<header class="flex items-center px-6 h-16 w-full fixed top-0 z-50 bg-[#065f46] border-b border-white/10">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-white" data-icon="swords">swords</span>
+<h1 class="font-['Inter'] font-extrabold uppercase tracking-widest text-sm text-white">Tournament Tables</h1>
+</div>
+</header>
+<main class="pt-20 px-4 max-w-3xl mx-auto">
+<!-- Page Title Section -->
+<div class="py-6 mb-2">
+<h2 class="text-4xl font-black tracking-tight text-white uppercase">Tournaments</h2>
+</div>
+<!-- Tournament List Container -->
+<div class="flex flex-col gap-3 pb-8">
+<!-- Card 1: Live -->
+<div class="card-surface p-5 flex items-center justify-between group cursor-pointer transition-all active:scale-[0.98] border-l-2 border-secondary">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center gap-3">
+<span class="flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-secondary/10 text-secondary text-[10px] font-black uppercase tracking-widest border border-secondary/20">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary status-pulse"></span>
+                            Live
+                        </span>
+</div>
+<div class="flex flex-col">
+<h3 class="text-white font-black text-lg leading-tight uppercase">Grand Tournament 2026</h3>
+<span class="text-[10px] font-black text-secondary uppercase tracking-widest">Contrast Phase</span>
+</div>
+<div class="flex flex-col text-on-surface-variant text-[11px] gap-1 font-bold uppercase tracking-wide">
+<span class="flex items-center gap-1.5">
+                            March 28–30, 2026
+                        </span>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+<span class="flex items-center gap-1.5">80 Players</span>
+<span class="flex items-center gap-1.5">6 Rounds</span>
+<span class="flex items-center gap-1">🌲 🏛️ 🏭</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-secondary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Card 2: Upcoming -->
+<div class="card-surface p-5 flex items-center justify-between group cursor-pointer transition-all active:scale-[0.98] border-l-2 border-outline-variant">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded-sm bg-surface-variant text-on-surface-variant text-[10px] font-black uppercase tracking-widest border border-outline-variant/20">
+                            Upcoming
+                        </span>
+</div>
+<div class="flex flex-col">
+<h3 class="text-white font-black text-lg leading-tight uppercase">Summer Bash Open</h3>
+<span class="text-[10px] font-black text-secondary uppercase tracking-widest">Metagames</span>
+</div>
+<div class="flex flex-col text-on-surface-variant text-[11px] gap-1 font-bold uppercase tracking-wide">
+<span class="flex items-center gap-1.5">
+                            July 12, 2026
+                        </span>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+<span class="flex items-center gap-1.5">32 Players</span>
+<span class="flex items-center gap-1.5">3 Rounds</span>
+<span class="flex items-center gap-1">🌲 🏭</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-secondary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Card 3: Upcoming -->
+<div class="card-surface p-5 flex items-center justify-between group cursor-pointer transition-all active:scale-[0.98] border-l-2 border-outline-variant">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded-sm bg-surface-variant text-on-surface-variant text-[10px] font-black uppercase tracking-widest border border-outline-variant/20">
+                            Upcoming
+                        </span>
+</div>
+<div class="flex flex-col">
+<h3 class="text-white font-black text-lg leading-tight uppercase">Regional Championship</h3>
+<span class="text-[10px] font-black text-secondary uppercase tracking-widest">Metagames</span>
+</div>
+<div class="flex flex-col text-on-surface-variant text-[11px] gap-1 font-bold uppercase tracking-wide">
+<span class="flex items-center gap-1.5">
+                            April 15–17, 2026
+                        </span>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+<span class="flex items-center gap-1.5">64 Players</span>
+<span class="flex items-center gap-1.5">5 Rounds</span>
+<span class="flex items-center gap-1">🏛️ 🏛️ 🏭</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-secondary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Card 4: Finished -->
+<div class="card-surface p-5 flex items-center justify-between group cursor-pointer opacity-50 transition-all active:scale-[0.98] border-l-2 border-transparent">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded-sm bg-surface-variant text-on-surface-variant text-[10px] font-black uppercase tracking-widest border border-outline-variant/20">
+                            Finished
+                        </span>
+</div>
+<div class="flex flex-col">
+<h3 class="text-white font-black text-lg leading-tight uppercase">Winter Skirmish</h3>
+<span class="text-[10px] font-black text-secondary/60 uppercase tracking-widest">Metagames</span>
+</div>
+<div class="flex flex-col text-on-surface-variant text-[11px] gap-1 font-bold uppercase tracking-wide">
+<span class="flex items-center gap-1.5">
+                            Jan 10, 2026
+                        </span>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+<span class="flex items-center gap-1.5">16 Players</span>
+<span class="flex items-center gap-1.5">3 Rounds</span>
+<span class="flex items-center gap-1">🌲 🏛️</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-secondary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+<!-- Card 5: Upcoming -->
+<div class="card-surface p-5 flex items-center justify-between group cursor-pointer transition-all active:scale-[0.98] border-l-2 border-outline-variant">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center gap-3">
+<span class="px-2 py-0.5 rounded-sm bg-surface-variant text-on-surface-variant text-[10px] font-black uppercase tracking-widest border border-outline-variant/20">
+                            Upcoming
+                        </span>
+</div>
+<div class="flex flex-col">
+<h3 class="text-white font-black text-lg leading-tight uppercase">Spring Assault</h3>
+<span class="text-[10px] font-black text-secondary uppercase tracking-widest">Contrast Phase</span>
+</div>
+<div class="flex flex-col text-on-surface-variant text-[11px] gap-1 font-bold uppercase tracking-wide">
+<span class="flex items-center gap-1.5">
+                            May 20, 2026
+                        </span>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+<span class="flex items-center gap-1.5">24 Players</span>
+<span class="flex items-center gap-1.5">3 Rounds</span>
+<span class="flex items-center gap-1">🏭 🏭</span>
+</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-secondary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+</div>
+</main>
+</body></html>

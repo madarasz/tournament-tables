@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS tournaments (
     bcp_event_id VARCHAR(50) NOT NULL UNIQUE,
     bcp_url VARCHAR(500) NOT NULL,
     photo_url VARCHAR(500) DEFAULT NULL,
+    location_name VARCHAR(255) DEFAULT NULL,
     event_date VARCHAR(50) DEFAULT NULL,
     event_end_date VARCHAR(50) DEFAULT NULL,
     table_count INT NOT NULL,
@@ -181,8 +182,13 @@ SQL;
         ],
         [
             'table' => 'tournaments',
+            'column' => 'location_name',
+            'sql' => 'ALTER TABLE tournaments ADD COLUMN location_name VARCHAR(255) DEFAULT NULL AFTER photo_url'
+        ],
+        [
+            'table' => 'tournaments',
             'column' => 'event_date',
-            'sql' => 'ALTER TABLE tournaments ADD COLUMN event_date VARCHAR(50) DEFAULT NULL AFTER photo_url'
+            'sql' => 'ALTER TABLE tournaments ADD COLUMN event_date VARCHAR(50) DEFAULT NULL AFTER location_name'
         ],
         [
             'table' => 'tournaments',

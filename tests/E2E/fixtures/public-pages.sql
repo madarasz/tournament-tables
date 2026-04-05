@@ -2,29 +2,59 @@
 -- This fixture creates a test scenario for testing public tournament pages navigation.
 --
 -- Design notes:
--- - Tournament 1001 with 8 tables (1-4 Volkus, 5-8 Tomb World)
--- - 16 players across 8 pairings per round
--- - Round 1: Published (is_published = 1)
--- - Round 2: Not published (is_published = 0)
+-- - Multiple tournaments for public list behavior:
+--   - 1002 Upcoming (future date)
+--   - 1001 Live (current date window)
+--   - 1003 Finished (past date)
+--   - 1004 Fallback (missing date/photo)
+-- - Tournament 1001 has round data used by query-based round/leaderboard navigation tests
 
 -- Clean up any existing test data (in correct order due to foreign keys)
-DELETE FROM allocations WHERE round_id IN (SELECT id FROM rounds WHERE tournament_id = 1001);
-DELETE FROM rounds WHERE tournament_id = 1001;
-DELETE FROM players WHERE tournament_id = 1001;
-DELETE FROM tables WHERE tournament_id = 1001;
-DELETE FROM tournaments WHERE id = 1001;
+DELETE FROM allocations WHERE round_id IN (SELECT id FROM rounds WHERE tournament_id IN (1001, 1002, 1003, 1004));
+DELETE FROM rounds WHERE tournament_id IN (1001, 1002, 1003, 1004);
+DELETE FROM players WHERE tournament_id IN (1001, 1002, 1003, 1004);
+DELETE FROM tables WHERE tournament_id IN (1001, 1002, 1003, 1004);
+DELETE FROM tournaments WHERE id IN (1001, 1002, 1003, 1004);
 
--- Tournament
-INSERT INTO tournaments (id, name, bcp_event_id, bcp_url, table_count, admin_token)
-VALUES (1001, 'Public Page Test', 'publicPageTest',
-        'https://www.bestcoastpairings.com/event/publicPageTest', 8, 'pubPagesToken123');
+-- Tournaments
+INSERT INTO tournaments (id, name, bcp_event_id, bcp_url, photo_url, event_date, event_end_date, table_count, admin_token)
+VALUES
+(1001, 'Public Page Test', 'publicPageTest',
+ 'https://www.bestcoastpairings.com/event/publicPageTest',
+ 'https://example.com/public-page-test.png',
+ '2026-04-05T08:00:00.000Z',
+ '2026-04-06T20:00:00.000Z',
+ 8, 'pubPagesToken123'),
+(1002, 'Upcoming Open Test', 'upcomingOpenTest',
+ 'https://www.bestcoastpairings.com/event/upcomingOpenTest',
+ 'https://example.com/upcoming-open-test.png',
+ '2026-07-12T08:00:00.000Z',
+ '2026-07-14T20:00:00.000Z',
+ 4, 'pubPagesToken124'),
+(1003, 'Finished Event Test', 'finishedEventTest',
+ 'https://www.bestcoastpairings.com/event/finishedEventTest',
+ 'https://example.com/finished-event-test.png',
+ '2026-01-10T08:00:00.000Z',
+ '2026-01-10T20:00:00.000Z',
+ 3, 'pubPagesToken125'),
+(1004, 'Fallback Data Test', 'fallbackDataTest',
+ 'https://www.bestcoastpairings.com/event/fallbackDataTest',
+ NULL,
+ NULL,
+ NULL,
+ 0, 'pubPagesToken126');
 
--- Tables (4 Volkus terrain_type_id=1, 4 Tomb World terrain_type_id=2)
+-- Tables for tournament 1001 (4 Volkus terrain_type_id=1, 4 Tomb World terrain_type_id=2)
 INSERT INTO tables (id, tournament_id, table_number, terrain_type_id) VALUES
 (2001, 1001, 1, 1), (2002, 1001, 2, 1), (2003, 1001, 3, 1), (2004, 1001, 4, 1),
 (2005, 1001, 5, 2), (2006, 1001, 6, 2), (2007, 1001, 7, 2), (2008, 1001, 8, 2);
 
--- 16 Players
+-- Tables for tournament 1002 and 1003
+INSERT INTO tables (id, tournament_id, table_number, terrain_type_id) VALUES
+(2101, 1002, 1, 1), (2102, 1002, 2, 2), (2103, 1002, 3, 2), (2104, 1002, 4, 1),
+(2201, 1003, 1, 2), (2202, 1003, 2, 1), (2203, 1003, 3, 2);
+
+-- Players
 INSERT INTO players (id, tournament_id, bcp_player_id, name, total_score, faction) VALUES
 (2001, 1001, 'pp1', 'Alice Test', 20, 'Corsair Voidscarred'),
 (2002, 1001, 'pp2', 'Bob Test', 18, 'Nemesis Claw'),
@@ -41,12 +71,19 @@ INSERT INTO players (id, tournament_id, bcp_player_id, name, total_score, factio
 (2013, 1001, 'pp13', 'Mike Test', 1, 'Hunter Clade'),
 (2014, 1001, 'pp14', 'Nancy Test', 1, 'Wyrmblade'),
 (2015, 1001, 'pp15', 'Oscar Test', 0, 'Farstalker Kinband'),
-(2016, 1001, 'pp16', 'Paula Test', 0, 'Phobos Strike Team');
+(2016, 1001, 'pp16', 'Paula Test', 0, 'Phobos Strike Team'),
+(2101, 1002, 'up1', 'Uma Future', 0, 'Kommandos'),
+(2102, 1002, 'up2', 'Victor Future', 0, 'Pathfinders'),
+(2103, 1002, 'up3', 'Wendy Future', 0, 'Legionaries'),
+(2104, 1002, 'up4', 'Xavier Future', 0, 'Intercession Squad'),
+(2201, 1003, 'fi1', 'Yara Past', 12, 'Kasrkin'),
+(2202, 1003, 'fi2', 'Zane Past', 9, 'Blades of Khaine');
 
 -- Round 1 (Published) & Round 2 (Not Published)
 INSERT INTO rounds (id, tournament_id, round_number, is_published) VALUES
 (2001, 1001, 1, 1),
-(2002, 1001, 2, 0);
+(2002, 1001, 2, 0),
+(2201, 1003, 1, 1);
 
 -- Round 1 Allocations (8 games on tables 1-8)
 INSERT INTO allocations (id, round_id, table_id, player1_id, player2_id, player1_score, player2_score, bcp_table_number, allocation_reason) VALUES

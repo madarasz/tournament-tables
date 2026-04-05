@@ -52,7 +52,7 @@ class BCPApiService
      * Fetch tournament metadata (name and image URL) from BCP API.
      *
      * @param string $bcpUrl BCP event URL
-     * @return array{name: string, photoUrl: string|null, eventDate: string|null, eventEndDate: string|null}
+     * @return array{name: string, photoUrl: string|null, eventDate: string|null, eventEndDate: string|null, locationName: string|null}
      * @throws \RuntimeException If API fetch fails or name not found
      */
     public function fetchTournamentMetadata(string $bcpUrl): array
@@ -68,12 +68,14 @@ class BCPApiService
         $photoUrl = $this->normalizePhotoUrl($eventData['photoUrl'] ?? null);
         $eventDate = $this->normalizeMetadataDate($eventData['eventDate'] ?? null);
         $eventEndDate = $this->normalizeMetadataDate($eventData['eventEndDate'] ?? null);
+        $locationName = $this->normalizeLocationName($eventData['locationName'] ?? null);
 
         return [
             'name' => $name,
             'photoUrl' => $photoUrl,
             'eventDate' => $eventDate,
             'eventEndDate' => $eventEndDate,
+            'locationName' => $locationName,
         ];
     }
 
@@ -422,6 +424,20 @@ class BCPApiService
         $dateValue = trim($dateValue);
 
         return $dateValue === '' ? null : $dateValue;
+    }
+
+    /**
+     * Normalize location name metadata values from event payload.
+     */
+    private function normalizeLocationName($locationName): ?string
+    {
+        if (!is_string($locationName)) {
+            return null;
+        }
+
+        $locationName = trim($locationName);
+
+        return $locationName === '' ? null : $locationName;
     }
 
     /**
