@@ -26,11 +26,21 @@ class TournamentService
      * @param string $name Tournament name
      * @param string $bcpUrl BCP event URL
      * @param int $tableCount Number of tables (0-100, where 0 means auto-import from Round 1)
+     * @param string|null $photoUrl Tournament photo URL from BCP event metadata
+     * @param string|null $eventDate Tournament start date/time from BCP metadata
+     * @param string|null $eventEndDate Tournament end date/time from BCP metadata
      * @return array{tournament: Tournament, adminToken: string}
      * @throws InvalidArgumentException If validation fails
      * @throws RuntimeException If tournament already exists
      */
-    public function createTournament(string $name, string $bcpUrl, int $tableCount): array
+    public function createTournament(
+        string $name,
+        string $bcpUrl,
+        int $tableCount,
+        ?string $photoUrl = null,
+        ?string $eventDate = null,
+        ?string $eventEndDate = null
+    ): array
     {
         // Validate inputs
         $this->validateOrThrow($name, $bcpUrl, $tableCount);
@@ -46,9 +56,21 @@ class TournamentService
 
         // Generate admin token
         $adminToken = TokenGenerator::generate();
+        $normalizedPhotoUrl = $this->normalizePhotoUrl($photoUrl);
+        $normalizedEventDate = $this->normalizeMetadataDate($eventDate);
+        $normalizedEventEndDate = $this->normalizeMetadataDate($eventEndDate);
 
         // Create tournament and tables in transaction
-        return Connection::executeInTransaction(function () use ($name, $bcpEventId, $bcpUrl, $tableCount, $adminToken) {
+        return Connection::executeInTransaction(function () use (
+            $name,
+            $bcpEventId,
+            $bcpUrl,
+            $tableCount,
+            $adminToken,
+            $normalizedPhotoUrl,
+            $normalizedEventDate,
+            $normalizedEventEndDate
+        ) {
             // Create tournament
             $tournament = new Tournament(
                 null,
@@ -56,7 +78,11 @@ class TournamentService
                 $bcpEventId,
                 $this->normalizeUrl($bcpUrl),
                 $tableCount,
-                $adminToken
+                $adminToken,
+                null,
+                $normalizedPhotoUrl,
+                $normalizedEventDate,
+                $normalizedEventEndDate
             );
             $tournament->save();
 
@@ -162,6 +188,34 @@ class TournamentService
     private function normalizeUrl(string $url): string
     {
         return BcpUrlValidator::normalize($url);
+    }
+
+    /**
+     * Normalize photo URL value before persistence.
+     */
+    private function normalizePhotoUrl(?string $photoUrl): ?string
+    {
+        if ($photoUrl === null) {
+            return null;
+        }
+
+        $photoUrl = trim($photoUrl);
+
+        return $photoUrl === '' ? null : $photoUrl;
+    }
+
+    /**
+     * Normalize date/time metadata values before persistence.
+     */
+    private function normalizeMetadataDate(?string $dateValue): ?string
+    {
+        if ($dateValue === null) {
+            return null;
+        }
+
+        $dateValue = trim($dateValue);
+
+        return $dateValue === '' ? null : $dateValue;
     }
 
     /**

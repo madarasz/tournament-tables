@@ -118,6 +118,93 @@ class TournamentCreationTest extends DatabaseTestCase
         $this->assertEquals($url, $result['tournament']->bcpUrl);
     }
 
+    public function testCreateTournamentStoresPhotoUrlWhenProvided(): void
+    {
+        $photoUrl = 'https://example.com/events/photo123.png';
+        $result = $this->service->createTournament(
+            'Photo URL Test',
+            'https://www.bestcoastpairings.com/event/photourl123',
+            5,
+            $photoUrl
+        );
+
+        $found = Tournament::find($result['tournament']->id);
+        $this->assertNotNull($found);
+        $this->assertEquals($photoUrl, $found->photoUrl);
+    }
+
+    public function testCreateTournamentStoresNullPhotoUrlWhenMissingOrBlank(): void
+    {
+        $resultWithoutPhoto = $this->service->createTournament(
+            'No Photo URL Test',
+            'https://www.bestcoastpairings.com/event/nophotourl123',
+            5
+        );
+
+        $foundWithoutPhoto = Tournament::find($resultWithoutPhoto['tournament']->id);
+        $this->assertNotNull($foundWithoutPhoto);
+        $this->assertNull($foundWithoutPhoto->photoUrl);
+
+        $resultBlankPhoto = $this->service->createTournament(
+            'Blank Photo URL Test',
+            'https://www.bestcoastpairings.com/event/blankphotourl123',
+            5,
+            '   '
+        );
+
+        $foundBlankPhoto = Tournament::find($resultBlankPhoto['tournament']->id);
+        $this->assertNotNull($foundBlankPhoto);
+        $this->assertNull($foundBlankPhoto->photoUrl);
+    }
+
+    public function testCreateTournamentStoresEventDatesWhenProvided(): void
+    {
+        $eventDate = '2026-10-15T08:00:00.000Z';
+        $eventEndDate = '2026-10-15T20:00:00.000Z';
+
+        $result = $this->service->createTournament(
+            'Event Date Test',
+            'https://www.bestcoastpairings.com/event/eventdate123',
+            5,
+            null,
+            $eventDate,
+            $eventEndDate
+        );
+
+        $found = Tournament::find($result['tournament']->id);
+        $this->assertNotNull($found);
+        $this->assertSame($eventDate, $found->eventDate);
+        $this->assertSame($eventEndDate, $found->eventEndDate);
+    }
+
+    public function testCreateTournamentStoresNullEventDatesWhenMissingOrBlank(): void
+    {
+        $resultWithoutDates = $this->service->createTournament(
+            'No Event Dates Test',
+            'https://www.bestcoastpairings.com/event/noeventdates123',
+            5
+        );
+
+        $foundWithoutDates = Tournament::find($resultWithoutDates['tournament']->id);
+        $this->assertNotNull($foundWithoutDates);
+        $this->assertNull($foundWithoutDates->eventDate);
+        $this->assertNull($foundWithoutDates->eventEndDate);
+
+        $resultBlankDates = $this->service->createTournament(
+            'Blank Event Dates Test',
+            'https://www.bestcoastpairings.com/event/blankeventdates123',
+            5,
+            null,
+            '   ',
+            '   '
+        );
+
+        $foundBlankDates = Tournament::find($resultBlankDates['tournament']->id);
+        $this->assertNotNull($foundBlankDates);
+        $this->assertNull($foundBlankDates->eventDate);
+        $this->assertNull($foundBlankDates->eventEndDate);
+    }
+
     public function testCreateTournamentInitialLastUpdatedIsNull(): void
     {
         $result = $this->service->createTournament(

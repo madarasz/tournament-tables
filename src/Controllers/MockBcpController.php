@@ -26,9 +26,11 @@ class MockBcpController extends BaseController
         echo json_encode([
             'id' => $eventId,
             'name' => "Test Tournament {$eventId}",
+            'photoUrl' => "https://example.com/mock-event-{$eventId}.png",
             'city' => 'Test City',
             'country' => 'Test Country',
             'eventDate' => '2026-01-01T00:00:00.000Z',
+            'eventEndDate' => '2026-01-01T18:00:00.000Z',
             'numberOfRounds' => 3,
             'totalPlayers' => 8,
             'active' => true,

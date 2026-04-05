@@ -22,10 +22,18 @@ class TournamentController extends BaseController
     /** @var TournamentImportService */
     private $importService;
 
-    public function __construct()
+    /** @var BCPApiService */
+    private $bcpService;
+
+    public function __construct(
+        ?TournamentService $service = null,
+        ?TournamentImportService $importService = null,
+        ?BCPApiService $bcpService = null
+    )
     {
-        $this->service = new TournamentService();
-        $this->importService = new TournamentImportService();
+        $this->service = $service ?? new TournamentService();
+        $this->importService = $importService ?? new TournamentImportService();
+        $this->bcpService = $bcpService ?? new BCPApiService();
     }
 
     /**
@@ -51,11 +59,13 @@ class TournamentController extends BaseController
         }
 
         try {
-            // Fetch tournament name from BCP page
-            $scraper = new BCPApiService();
+            // Fetch tournament metadata from BCP event details API
             try {
-                $scraper->extractEventId($bcpUrl);
-                $tournamentName = $scraper->fetchTournamentName($bcpUrl);
+                $metadata = $this->bcpService->fetchTournamentMetadata($bcpUrl);
+                $tournamentName = $metadata['name'];
+                $photoUrl = $metadata['photoUrl'];
+                $eventDate = $metadata['eventDate'] ?? null;
+                $eventEndDate = $metadata['eventEndDate'] ?? null;
             } catch (\InvalidArgumentException $e) {
                 $this->validationError([
                     'bcpUrl' => [
@@ -76,7 +86,10 @@ class TournamentController extends BaseController
             $result = $this->service->createTournament(
                 $tournamentName,
                 $bcpUrl,
-                $tableCount
+                $tableCount,
+                $photoUrl,
+                $eventDate,
+                $eventEndDate
             );
 
             // Attempt to auto-import Round 1 and create tables

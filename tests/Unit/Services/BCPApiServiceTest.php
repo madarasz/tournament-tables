@@ -178,4 +178,73 @@ class BCPApiServiceTest extends TestCase
         $this->assertEquals(1000, $this->apiService->getBaseDelayMs());
         $this->assertEquals(2.0, $this->apiService->getBackoffMultiplier());
     }
+
+    // -------------------------------------------------------------------------
+    // Tournament Metadata Tests
+    // -------------------------------------------------------------------------
+
+    public function testFetchTournamentMetadataReturnsSanitizedNamePhotoAndDates(): void
+    {
+        $url = 'https://www.bestcoastpairings.com/event/testMeta123';
+
+        $apiService = $this->getMockBuilder(BCPApiService::class)
+            ->onlyMethods(['extractEventId', 'fetchEventDetails'])
+            ->getMock();
+
+        $apiService
+            ->expects($this->once())
+            ->method('extractEventId')
+            ->with($url)
+            ->willReturn('testMeta123');
+
+        $apiService
+            ->expects($this->once())
+            ->method('fetchEventDetails')
+            ->with('testMeta123')
+            ->willReturn([
+                'name' => '  <Meta Clash>  ',
+                'photoUrl' => ' https://example.com/meta-clash.png ',
+                'eventDate' => ' 2026-10-15T08:00:00.000Z ',
+                'eventEndDate' => ' 2026-10-15T20:00:00.000Z ',
+            ]);
+
+        $metadata = $apiService->fetchTournamentMetadata($url);
+
+        $this->assertSame('&lt;Meta Clash&gt;', $metadata['name']);
+        $this->assertSame('https://example.com/meta-clash.png', $metadata['photoUrl']);
+        $this->assertSame('2026-10-15T08:00:00.000Z', $metadata['eventDate']);
+        $this->assertSame('2026-10-15T20:00:00.000Z', $metadata['eventEndDate']);
+    }
+
+    public function testFetchTournamentMetadataReturnsNullForBlankOrMissingMetadataFields(): void
+    {
+        $url = 'https://www.bestcoastpairings.com/event/testMetaNoPhoto123';
+
+        $apiService = $this->getMockBuilder(BCPApiService::class)
+            ->onlyMethods(['extractEventId', 'fetchEventDetails'])
+            ->getMock();
+
+        $apiService
+            ->expects($this->once())
+            ->method('extractEventId')
+            ->with($url)
+            ->willReturn('testMetaNoPhoto123');
+
+        $apiService
+            ->expects($this->once())
+            ->method('fetchEventDetails')
+            ->with('testMetaNoPhoto123')
+            ->willReturn([
+                'name' => 'No Photo Event',
+                'photoUrl' => '   ',
+                'eventDate' => '   ',
+            ]);
+
+        $metadata = $apiService->fetchTournamentMetadata($url);
+
+        $this->assertSame('No Photo Event', $metadata['name']);
+        $this->assertNull($metadata['photoUrl']);
+        $this->assertNull($metadata['eventDate']);
+        $this->assertNull($metadata['eventEndDate']);
+    }
 }

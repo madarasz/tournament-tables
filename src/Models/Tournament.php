@@ -23,6 +23,15 @@ class Tournament extends BaseModel
     /** @var string */
     public $bcpUrl;
 
+    /** @var string|null */
+    public $photoUrl;
+
+    /** @var string|null */
+    public $eventDate;
+
+    /** @var string|null */
+    public $eventEndDate;
+
     /** @var int */
     public $tableCount;
 
@@ -39,12 +48,18 @@ class Tournament extends BaseModel
         string $bcpUrl = '',
         int $tableCount = 0,
         string $adminToken = '',
-        ?string $lastUpdated = null
+        ?string $lastUpdated = null,
+        ?string $photoUrl = null,
+        ?string $eventDate = null,
+        ?string $eventEndDate = null
     ) {
         $this->id = $id;
         $this->name = $name;
         $this->bcpEventId = $bcpEventId;
         $this->bcpUrl = $bcpUrl;
+        $this->photoUrl = $photoUrl;
+        $this->eventDate = $eventDate;
+        $this->eventEndDate = $eventEndDate;
         $this->tableCount = $tableCount;
         $this->adminToken = $adminToken;
         $this->lastUpdated = $lastUpdated;
@@ -67,7 +82,10 @@ class Tournament extends BaseModel
             $row['bcp_url'],
             (int) $row['table_count'],
             $row['admin_token'],
-            $row['last_updated'] ?? null
+            $row['last_updated'] ?? null,
+            $row['photo_url'] ?? null,
+            $row['event_date'] ?? null,
+            $row['event_end_date'] ?? null
         );
     }
 
@@ -103,12 +121,15 @@ class Tournament extends BaseModel
     protected function insert(): bool
     {
         Connection::execute(
-            'INSERT INTO tournaments (name, bcp_event_id, bcp_url, table_count, admin_token, last_updated)
-             VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO tournaments (name, bcp_event_id, bcp_url, photo_url, event_date, event_end_date, table_count, admin_token, last_updated)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $this->name,
                 $this->bcpEventId,
                 $this->bcpUrl,
+                $this->photoUrl,
+                $this->eventDate,
+                $this->eventEndDate,
                 $this->tableCount,
                 $this->adminToken,
                 $this->lastUpdated,
@@ -186,6 +207,9 @@ class Tournament extends BaseModel
             'name' => $this->name,
             'bcpEventId' => $this->bcpEventId,
             'bcpUrl' => $this->bcpUrl,
+            'photoUrl' => $this->photoUrl,
+            'eventDate' => $this->eventDate,
+            'eventEndDate' => $this->eventEndDate,
             'tableCount' => $this->tableCount,
             'lastUpdated' => $this->lastUpdated,
         ];

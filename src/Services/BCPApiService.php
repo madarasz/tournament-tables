@@ -44,6 +44,19 @@ class BCPApiService
      */
     public function fetchTournamentName(string $bcpUrl): string
     {
+        $metadata = $this->fetchTournamentMetadata($bcpUrl);
+        return $metadata['name'];
+    }
+
+    /**
+     * Fetch tournament metadata (name and image URL) from BCP API.
+     *
+     * @param string $bcpUrl BCP event URL
+     * @return array{name: string, photoUrl: string|null, eventDate: string|null, eventEndDate: string|null}
+     * @throws \RuntimeException If API fetch fails or name not found
+     */
+    public function fetchTournamentMetadata(string $bcpUrl): array
+    {
         $eventId = $this->extractEventId($bcpUrl);
         $eventData = $this->fetchEventDetails($eventId);
 
@@ -51,15 +64,17 @@ class BCPApiService
             throw new \RuntimeException("Tournament name not found in BCP API response.");
         }
 
-        $name = trim((string) $eventData['name']);
-        $name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $name = $this->sanitizeTournamentName((string) $eventData['name']);
+        $photoUrl = $this->normalizePhotoUrl($eventData['photoUrl'] ?? null);
+        $eventDate = $this->normalizeMetadataDate($eventData['eventDate'] ?? null);
+        $eventEndDate = $this->normalizeMetadataDate($eventData['eventEndDate'] ?? null);
 
-        // Truncate if too long (database VARCHAR 255 limit)
-        if (strlen($name) > 255) {
-            $name = substr($name, 0, 252) . '...';
-        }
-
-        return $name;
+        return [
+            'name' => $name,
+            'photoUrl' => $photoUrl,
+            'eventDate' => $eventDate,
+            'eventEndDate' => $eventEndDate,
+        ];
     }
 
     /**
@@ -363,6 +378,50 @@ class BCPApiService
         $firstName = $user['firstName'] ?? '';
         $lastName = $user['lastName'] ?? '';
         return trim("{$firstName} {$lastName}");
+    }
+
+    /**
+     * Sanitize and truncate tournament name for storage.
+     */
+    private function sanitizeTournamentName(string $name): string
+    {
+        $name = trim($name);
+        $name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+
+        // Truncate if too long (database VARCHAR 255 limit)
+        if (strlen($name) > 255) {
+            $name = substr($name, 0, 252) . '...';
+        }
+
+        return $name;
+    }
+
+    /**
+     * Normalize photo URL values from event metadata.
+     */
+    private function normalizePhotoUrl($photoUrl): ?string
+    {
+        if (!is_string($photoUrl)) {
+            return null;
+        }
+
+        $photoUrl = trim($photoUrl);
+
+        return $photoUrl === '' ? null : $photoUrl;
+    }
+
+    /**
+     * Normalize date/time metadata values from event payload.
+     */
+    private function normalizeMetadataDate($dateValue): ?string
+    {
+        if (!is_string($dateValue)) {
+            return null;
+        }
+
+        $dateValue = trim($dateValue);
+
+        return $dateValue === '' ? null : $dateValue;
     }
 
     /**
