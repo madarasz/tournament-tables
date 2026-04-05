@@ -102,6 +102,15 @@ function formatTournamentDateRange(?string $eventDate, ?string $eventEndDate): s
 }
 
 /**
+ * Normalize tournament date for client-side localization.
+ */
+function formatTournamentDateForClient(?string $rawDate): ?string
+{
+    $parsed = parseTournamentDate($rawDate);
+    return $parsed === null ? null : $parsed->format('Y-m-d');
+}
+
+/**
  * Normalize terrain emoji string into list.
  *
  * @return string[]
@@ -160,6 +169,8 @@ $now = new DateTimeImmutable('now');
                     $now
                 );
                 $statusClass = strtolower($status);
+                $startDateForClient = formatTournamentDateForClient((string) ($tournament['event_date'] ?? ''));
+                $endDateForClient = formatTournamentDateForClient((string) ($tournament['event_end_date'] ?? ''));
                 $dateRange = formatTournamentDateRange(
                     (string) ($tournament['event_date'] ?? ''),
                     (string) ($tournament['event_end_date'] ?? '')
@@ -200,7 +211,13 @@ $now = new DateTimeImmutable('now');
                     <div class="tc-list-card-body">
                         <h2><?= $safeName ?></h2>
                         <p class="tc-list-venue"><?= htmlspecialchars($venueName) ?></p>
-                        <p class="tc-list-date" data-testid="event-date-<?= $safeName ?>"><?= htmlspecialchars($dateRange) ?></p>
+                        <p
+                            class="tc-list-date"
+                            data-testid="event-date-<?= $safeName ?>"
+                            data-local-date-range
+                            <?= $startDateForClient !== null ? 'data-local-date-start="' . htmlspecialchars($startDateForClient) . '"' : '' ?>
+                            <?= $endDateForClient !== null ? 'data-local-date-end="' . htmlspecialchars($endDateForClient) . '"' : '' ?>
+                        ><?= htmlspecialchars($dateRange) ?></p>
 
                         <div class="tc-list-stats">
                             <span data-testid="player-count-<?= $safeName ?>"><?= $playerCount ?> players</span>
@@ -231,5 +248,6 @@ $now = new DateTimeImmutable('now');
         </section>
         <?php endif; ?>
     </main>
+    <script src="/js/date-localization.js"></script>
 </body>
 </html>

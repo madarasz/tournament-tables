@@ -48,6 +48,79 @@ function formatTableNumber($number) {
 }
 
 /**
+ * Parse tournament date text safely.
+ */
+function parseTournamentDate(?string $rawDate): ?DateTimeImmutable
+{
+    if ($rawDate === null || trim($rawDate) === '') {
+        return null;
+    }
+
+    try {
+        return new DateTimeImmutable($rawDate);
+    } catch (Exception $e) {
+        return null;
+    }
+}
+
+/**
+ * Format event date range for display.
+ */
+function formatTournamentDateRange(?string $eventDate, ?string $eventEndDate): string
+{
+    $start = parseTournamentDate($eventDate);
+    $end = parseTournamentDate($eventEndDate);
+
+    if ($start === null && $end === null) {
+        return 'Date TBD';
+    }
+
+    if ($start !== null && $end === null) {
+        return $start->format('M j, Y');
+    }
+
+    if ($start === null && $end !== null) {
+        return $end->format('M j, Y');
+    }
+
+    if ($start->format('Y-m-d') === $end->format('Y-m-d')) {
+        return $start->format('M j, Y');
+    }
+
+    if ($start->format('Y') === $end->format('Y')) {
+        if ($start->format('n') === $end->format('n')) {
+            return sprintf(
+                '%s %d-%d, %s',
+                $start->format('M'),
+                (int) $start->format('j'),
+                (int) $end->format('j'),
+                $start->format('Y')
+            );
+        }
+
+        return sprintf(
+            '%s %d - %s %d, %s',
+            $start->format('M'),
+            (int) $start->format('j'),
+            $end->format('M'),
+            (int) $end->format('j'),
+            $start->format('Y')
+        );
+    }
+
+    return $start->format('M j, Y') . ' - ' . $end->format('M j, Y');
+}
+
+/**
+ * Normalize tournament date for client-side localization.
+ */
+function formatTournamentDateForClient(?string $rawDate): ?string
+{
+    $parsed = parseTournamentDate($rawDate);
+    return $parsed === null ? null : $parsed->format('Y-m-d');
+}
+
+/**
  * Build public tournament URL with query parameters.
  */
 function publicTournamentUrl(int $tournamentId, array $params = []): string
@@ -95,6 +168,15 @@ function formatLastUpdated(?string $lastUpdated): string
 
     return $updatedAt->format('Y.m.d. H:i');
 }
+
+$locationName = trim((string) ($tournament->locationName ?? ''));
+$venueName = $locationName !== '' ? $locationName : 'Venue TBD';
+$startDateForClient = formatTournamentDateForClient(isset($tournament->eventDate) ? (string) $tournament->eventDate : null);
+$endDateForClient = formatTournamentDateForClient(isset($tournament->eventEndDate) ? (string) $tournament->eventEndDate : null);
+$dateRange = formatTournamentDateRange(
+    isset($tournament->eventDate) ? (string) $tournament->eventDate : null,
+    isset($tournament->eventEndDate) ? (string) $tournament->eventEndDate : null
+);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -130,6 +212,15 @@ function formatLastUpdated(?string $lastUpdated): string
         <aside class="tc-sidebar">
             <div class="tc-sidebar-header">
                 <span class="tc-sidebar-tournament-name"><?= htmlspecialchars($tournament->name) ?></span>
+                <span class="tc-sidebar-tournament-meta">
+                    <span><?= htmlspecialchars($venueName) ?></span>
+                    <span aria-hidden="true"> | </span>
+                    <span
+                        data-local-date-range
+                        <?= $startDateForClient !== null ? 'data-local-date-start="' . htmlspecialchars($startDateForClient) . '"' : '' ?>
+                        <?= $endDateForClient !== null ? 'data-local-date-end="' . htmlspecialchars($endDateForClient) . '"' : '' ?>
+                    ><?= htmlspecialchars($dateRange) ?></span>
+                </span>
                 <span class="tc-sidebar-table-count"><?= $tableCount ?> Tables</span>
             </div>
             <nav class="tc-sidebar-nav" aria-label="Round navigation">
@@ -163,6 +254,15 @@ function formatLastUpdated(?string $lastUpdated): string
                     <div class="tc-hero-content">
                         <!-- Tournament name (mobile only, desktop shows in sidebar) -->
                         <h2 class="tc-tournament-name"><?= htmlspecialchars($tournament->name) ?></h2>
+                        <p class="tc-tournament-meta">
+                            <span><?= htmlspecialchars($venueName) ?></span>
+                            <span aria-hidden="true"> | </span>
+                            <span
+                                data-local-date-range
+                                <?= $startDateForClient !== null ? 'data-local-date-start="' . htmlspecialchars($startDateForClient) . '"' : '' ?>
+                                <?= $endDateForClient !== null ? 'data-local-date-end="' . htmlspecialchars($endDateForClient) . '"' : '' ?>
+                            ><?= htmlspecialchars($dateRange) ?></span>
+                        </p>
                         <h1 class="tc-round-title" id="hero-round-title"><?= $round !== null ? ('Round ' . $round->roundNumber) : 'No Published Rounds' ?></h1>
                         <h1 class="tc-round-title" id="hero-leaderboard-title">Leaderboard</h1>
                     </div>
@@ -371,6 +471,7 @@ function formatLastUpdated(?string $lastUpdated): string
             </footer>
         </main>
     </div>
+    <script src="/js/date-localization.js"></script>
     <script>
         (function () {
             var pillsNav = document.querySelector('.tc-round-pills');
