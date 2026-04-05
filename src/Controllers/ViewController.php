@@ -131,8 +131,13 @@ class ViewController extends BaseController
         $publishedRounds = Round::findPublishedByTournament($tournamentId);
 
         $requestedView = strtolower(trim((string) ($_GET['view'] ?? '')));
-        $isLeaderboardView = $requestedView === 'leaderboard';
         $roundQuery = (int) ($_GET['round'] ?? 0);
+        $hasRequestedView = $requestedView !== '';
+        $hasRequestedRound = $roundQuery > 0;
+        $defaultToLeaderboard = !$hasRequestedView
+            && !$hasRequestedRound
+            && $this->hasTournamentDatePassed($tournament);
+        $isLeaderboardView = $requestedView === 'leaderboard' || $defaultToLeaderboard;
 
         $round = null;
         $allocations = [];
@@ -259,6 +264,42 @@ class ViewController extends BaseController
         }
 
         return $roundScoresByPlayer;
+    }
+
+    /**
+     * Determine if tournament date is in the past.
+     *
+     * Uses event end date when available, otherwise falls back to event date.
+     */
+    private function hasTournamentDatePassed(Tournament $tournament): bool
+    {
+        $comparisonDate = $this->parseTournamentDate($tournament->eventEndDate);
+        if ($comparisonDate === null) {
+            $comparisonDate = $this->parseTournamentDate($tournament->eventDate);
+        }
+
+        if ($comparisonDate === null) {
+            return false;
+        }
+
+        $now = new \DateTimeImmutable('now', $comparisonDate->getTimezone());
+        return $now > $comparisonDate;
+    }
+
+    /**
+     * Parse tournament date text safely.
+     */
+    private function parseTournamentDate(?string $rawDate): ?\DateTimeImmutable
+    {
+        if ($rawDate === null || trim($rawDate) === '') {
+            return null;
+        }
+
+        try {
+            return new \DateTimeImmutable($rawDate);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     /**

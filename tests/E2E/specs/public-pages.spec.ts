@@ -103,6 +103,17 @@ test.describe('Public Pages', () => {
     await expect(page.getByTestId('tournaments-heading')).toHaveText('Tournaments');
   });
 
+  test('Finished tournament defaults to leaderboard view', async ({ page }) => {
+    await page.goto('/1003');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('body')).toHaveClass(/leaderboard-active/);
+    await expect(page.getByTestId('leaderboard-section')).toBeVisible();
+    await expect(page.getByTestId('leaderboard-row').first().locator('.tc-player-name')).toHaveText(
+      'Yara Past'
+    );
+  });
+
   test('Old public round route returns 404', async ({ page }) => {
     await page.goto('/1001/round/1');
     await page.waitForLoadState('networkidle');
