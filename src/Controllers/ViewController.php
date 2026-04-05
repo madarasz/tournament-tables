@@ -191,6 +191,7 @@ class ViewController extends BaseController
                     t.bcp_event_id,
                     t.bcp_url,
                     t.photo_url,
+                    t.location_name,
                     t.event_date,
                     t.event_end_date,
                     t.table_count,

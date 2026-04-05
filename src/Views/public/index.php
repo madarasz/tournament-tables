@@ -170,6 +170,8 @@ $now = new DateTimeImmutable('now');
                 $actionLabel = $status === 'FINISHED' ? 'Archives' : 'View';
                 $photoUrl = trim((string) ($tournament['photo_url'] ?? ''));
                 $showLiveDot = $status === 'LIVE';
+                $locationName = trim((string) ($tournament['location_name'] ?? ''));
+                $venueName = $locationName !== '' ? $locationName : 'Venue TBD';
                 ?>
                 <a
                     href="/<?= (int) $tournament['id'] ?>"
@@ -197,7 +199,7 @@ $now = new DateTimeImmutable('now');
 
                     <div class="tc-list-card-body">
                         <h2><?= $safeName ?></h2>
-                        <p class="tc-list-venue">Venue TBD</p>
+                        <p class="tc-list-venue"><?= htmlspecialchars($venueName) ?></p>
                         <p class="tc-list-date" data-testid="event-date-<?= $safeName ?>"><?= htmlspecialchars($dateRange) ?></p>
 
                         <div class="tc-list-stats">
