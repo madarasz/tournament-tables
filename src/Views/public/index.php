@@ -178,16 +178,21 @@ $now = new DateTimeImmutable('now');
                 $playerCount = (int) ($tournament['player_count'] ?? 0);
                 $roundCount = (int) ($tournament['round_count'] ?? 0);
                 $terrainEmojis = getTerrainEmojiList((string) ($tournament['terrain_emojis'] ?? ''));
-                $actionLabel = $status === 'FINISHED' ? 'Archives' : 'View';
+                $bcpUrl = trim((string) ($tournament['bcp_url'] ?? ''));
+                $isUpcoming = $status === 'UPCOMING';
+                $useBcpLink = $isUpcoming && $bcpUrl !== '';
+                $cardHref = $useBcpLink ? $bcpUrl : '/' . (int) $tournament['id'];
+                $actionLabel = $status === 'FINISHED' ? 'Archives' : ($useBcpLink ? 'BCP' : 'View');
                 $photoUrl = trim((string) ($tournament['photo_url'] ?? ''));
                 $showLiveDot = $status === 'LIVE';
                 $locationName = trim((string) ($tournament['location_name'] ?? ''));
                 $venueName = $locationName !== '' ? $locationName : 'Venue TBD';
                 ?>
                 <a
-                    href="/<?= (int) $tournament['id'] ?>"
+                    href="<?= htmlspecialchars($cardHref) ?>"
                     class="tc-list-card status-<?= $statusClass ?>"
                     data-testid="tournament-link-<?= $safeName ?>"
+                    <?= $useBcpLink ? 'target="_blank" rel="noopener noreferrer"' : '' ?>
                 >
                     <div class="tc-list-card-media" aria-hidden="true">
                         <?php if ($photoUrl !== ''): ?>
