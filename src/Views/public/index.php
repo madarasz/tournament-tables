@@ -199,7 +199,7 @@ $now = new DateTimeImmutable('now');
                 $isUpcoming = $status === 'UPCOMING';
                 $useBcpLink = $isUpcoming && $bcpUrl !== '';
                 $cardHref = $useBcpLink ? $bcpUrl : '/' . (int) $tournament['id'];
-                $actionLabel = $status === 'FINISHED' ? 'Archives' : ($useBcpLink ? 'BCP' : 'View');
+                $actionLabel = $status === 'FINISHED' ? 'Archives' : ($useBcpLink ? 'Register on BCP' : 'View');
                 $photoUrl = trim((string) ($tournament['photo_url'] ?? ''));
                 $showLiveDot = $status === 'LIVE';
                 $locationName = trim((string) ($tournament['location_name'] ?? ''));
@@ -241,10 +241,12 @@ $now = new DateTimeImmutable('now');
                             <?= $endDateForClient !== null ? 'data-local-date-end="' . htmlspecialchars($endDateForClient) . '"' : '' ?>
                         ><?= htmlspecialchars($dateRange) ?></p>
 
+                        <?php if (!$isUpcoming): ?>
                         <div class="tc-list-stats">
-                            <span data-testid="player-count-<?= $safeName ?>"><?= $playerCount ?> players</span>
-                            <span><?= $roundCount ?> rounds</span>
+                                <span data-testid="player-count-<?= $safeName ?>"><?= $playerCount ?> players</span>
+                                <span><?= $roundCount ?> rounds</span>
                         </div>
+                        <?php endif; ?>
 
                         <footer class="tc-list-meta">
                             <?php if (!empty($terrainEmojis)): ?>

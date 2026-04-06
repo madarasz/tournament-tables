@@ -1246,7 +1246,7 @@ body.tc-list-page {
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(190, 201, 194, 0.7);
+  color: var(--tc-secondary);
 }
 
 .tc-list-chevron {

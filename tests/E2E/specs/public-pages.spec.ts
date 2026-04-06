@@ -31,7 +31,7 @@ test.describe('Public Pages', () => {
     await expect(page.getByTestId('status-Fallback Data Test')).toHaveText(/UPCOMING/);
 
     await expect(page.getByTestId('event-date-Fallback Data Test')).toHaveText(/Date TBD/i);
-    await expect(page.getByTestId('player-count-Fallback Data Test')).toHaveText(/0 players/i);
+    await expect(page.getByTestId('player-count-Fallback Data Test')).toHaveCount(0);
 
     const cardOrder = await page.locator('[data-testid^="tournament-link-"]').evaluateAll((elements) =>
       elements.map((element) => element.getAttribute('data-testid'))
