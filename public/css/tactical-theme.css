@@ -1201,7 +1201,19 @@ body.tc-list-page {
   color: inherit;
   background-color: var(--tc-surface-container-low);
   border-left: 2px solid rgba(63, 73, 68, 0.5);
+  overflow: hidden;
+  min-height: 12.5rem;
   transition: background-color var(--tc-transition-fast), border-color var(--tc-transition-fast), transform var(--tc-transition-fast);
+}
+
+.tc-list-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(8, 12, 20, 0.2) 0%, rgba(8, 12, 20, 0.66) 46%, rgba(8, 12, 20, 0.9) 100%);
 }
 
 .tc-list-card:hover {
@@ -1218,10 +1230,36 @@ body.tc-list-page {
 }
 
 .tc-list-card-media {
-  display: none;
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-color: var(--tc-surface-container-highest);
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.tc-list-card-media img,
+.tc-list-card-media-fallback {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tc-list-card-media img {
+  object-fit: cover;
+  opacity: 0.64;
+}
+
+.tc-list-card-media-fallback {
+  background:
+    linear-gradient(135deg, rgba(45, 52, 73, 0.75), rgba(23, 31, 51, 0.9)),
+    radial-gradient(circle at 15% 20%, rgba(139, 214, 182, 0.16), transparent 55%);
 }
 
 .tc-list-card-body {
+  position: relative;
+  z-index: 2;
   padding: var(--tc-spacing-4);
   display: flex;
   flex-direction: column;
@@ -1233,7 +1271,13 @@ body.tc-list-page {
   line-height: 1.05;
   font-weight: 900;
   text-transform: uppercase;
-  color: var(--tc-on-surface);
+  color: #f6f9ff;
+  text-shadow:
+    -1px -1px 0 rgba(10, 14, 24, 0.72),
+    1px -1px 0 rgba(10, 14, 24, 0.72),
+    -1px 1px 0 rgba(10, 14, 24, 0.72),
+    1px 1px 0 rgba(10, 14, 24, 0.72),
+    0 1px 2px rgba(10, 14, 24, 0.55);
 }
 
 .tc-list-venue {
@@ -1242,7 +1286,8 @@ body.tc-list-page {
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--tc-primary);
+  color: #d4eedf;
+  text-shadow: 0 1px 2px rgba(10, 14, 24, 0.6);
 }
 
 .tc-list-date {
@@ -1251,10 +1296,13 @@ body.tc-list-page {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(190, 201, 194, 0.8);
+  color: rgba(236, 244, 241, 0.9);
+  text-shadow: 0 1px 2px rgba(10, 14, 24, 0.65);
 }
 
 .tc-list-stats {
+  position: relative;
+  z-index: 2;
   margin-top: var(--tc-spacing-3);
   display: flex;
   align-items: center;
@@ -1267,6 +1315,8 @@ body.tc-list-page {
 }
 
 .tc-list-meta {
+  position: relative;
+  z-index: 2;
   margin-top: var(--tc-spacing-3);
   display: flex;
   align-items: center;
@@ -1304,6 +1354,8 @@ body.tc-list-page {
 }
 
 .tc-list-status {
+  position: relative;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: var(--tc-spacing-2);
@@ -1400,8 +1452,13 @@ body.tc-list-page {
     min-height: 23rem;
   }
 
+  .tc-list-card::before {
+    display: none;
+  }
+
   .tc-list-card-media {
     position: relative;
+    inset: auto;
     display: block;
     height: 11rem;
     background-color: var(--tc-surface-container-highest);
@@ -1445,10 +1502,19 @@ body.tc-list-page {
 
   .tc-list-card h2 {
     font-size: 1.9rem;
+    color: var(--tc-on-surface);
+    text-shadow: none;
   }
 
   .tc-list-date {
     margin-top: var(--tc-spacing-1);
+    color: rgba(190, 201, 194, 0.8);
+    text-shadow: none;
+  }
+
+  .tc-list-venue {
+    color: var(--tc-primary);
+    text-shadow: none;
   }
 
   .tc-list-stats {
