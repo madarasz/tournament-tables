@@ -183,6 +183,10 @@ body.tc-page {
   border-bottom: 1px solid rgba(63, 73, 68, 0.1);
 }
 
+.tc-sidebar-header .tc-round-tournament-media {
+  display: none;
+}
+
 .tc-sidebar-tournament-name {
   display: block;
   font-size: 1.5rem;
@@ -309,6 +313,32 @@ body.tc-page {
   padding-bottom: 0;
 }
 
+.tc-hero-content .tc-round-tournament-media {
+  display: block;
+  margin: calc(-1 * var(--tc-spacing-6)) calc(-1 * var(--tc-spacing-6)) var(--tc-spacing-4);
+  height: 9rem;
+  background-color: var(--tc-surface-container-highest);
+  overflow: hidden;
+}
+
+.tc-round-tournament-media img,
+.tc-round-tournament-media .tc-list-card-media-fallback {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.tc-round-tournament-media img {
+  object-fit: cover;
+  opacity: 0.72;
+}
+
+.tc-round-tournament-media .tc-list-card-media-fallback {
+  background:
+    linear-gradient(135deg, rgba(45, 52, 73, 0.75), rgba(23, 31, 51, 0.9)),
+    radial-gradient(circle at 15% 20%, rgba(139, 214, 182, 0.16), transparent 55%);
+}
+
 /* Tournament name - hidden on desktop (shown in sidebar) */
 .tc-tournament-name {
   margin: 0;
@@ -320,6 +350,22 @@ body.tc-page {
 }
 
 @media (min-width: 1024px) {
+  .tc-hero-content .tc-round-tournament-media-mobile {
+    display: none;
+  }
+
+  .tc-sidebar-header .tc-round-tournament-media-desktop {
+    display: block;
+    margin: calc(-1 * var(--tc-spacing-6)) calc(-1 * var(--tc-spacing-6)) var(--tc-spacing-4);
+    height: 9rem;
+    background-color: var(--tc-surface-container-highest);
+    overflow: hidden;
+  }
+
+  .tc-sidebar-header .tc-round-tournament-media-desktop img {
+    opacity: 0.62;
+  }
+
   .tc-tournament-name {
     display: none;
   }

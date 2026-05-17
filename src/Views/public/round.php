@@ -171,6 +171,8 @@ function formatLastUpdated(?string $lastUpdated): string
 
 $locationName = trim((string) ($tournament->locationName ?? ''));
 $venueName = $locationName !== '' ? $locationName : 'Venue TBD';
+$photoUrl = trim((string) ($tournament->photoUrl ?? ''));
+$safeTournamentName = htmlspecialchars($tournament->name);
 $startDateForClient = formatTournamentDateForClient(isset($tournament->eventDate) ? (string) $tournament->eventDate : null);
 $endDateForClient = formatTournamentDateForClient(isset($tournament->eventEndDate) ? (string) $tournament->eventEndDate : null);
 $dateRange = formatTournamentDateRange(
@@ -211,7 +213,18 @@ $dateRange = formatTournamentDateRange(
         <!-- Sidebar (Desktop only) -->
         <aside class="tc-sidebar">
             <div class="tc-sidebar-header">
-                <span class="tc-sidebar-tournament-name"><?= htmlspecialchars($tournament->name) ?></span>
+                <div class="tc-list-card-media tc-round-tournament-media tc-round-tournament-media-desktop" aria-hidden="true">
+                    <?php if ($photoUrl !== ''): ?>
+                        <img
+                            src="<?= htmlspecialchars($photoUrl) ?>"
+                            alt="<?= $safeTournamentName ?> banner"
+                            loading="lazy"
+                        >
+                    <?php else: ?>
+                        <div class="tc-list-card-media-fallback"></div>
+                    <?php endif; ?>
+                </div>
+                <span class="tc-sidebar-tournament-name"><?= $safeTournamentName ?></span>
                 <span class="tc-sidebar-tournament-meta">
                     <span><?= htmlspecialchars($venueName) ?></span>
                     <span aria-hidden="true"> | </span>
@@ -252,8 +265,19 @@ $dateRange = formatTournamentDateRange(
             <section class="tc-hero">
                 <div class="tc-hero-inner">
                     <div class="tc-hero-content">
+                        <div class="tc-list-card-media tc-round-tournament-media tc-round-tournament-media-mobile" aria-hidden="true">
+                            <?php if ($photoUrl !== ''): ?>
+                                <img
+                                    src="<?= htmlspecialchars($photoUrl) ?>"
+                                    alt="<?= $safeTournamentName ?> banner"
+                                    loading="lazy"
+                                >
+                            <?php else: ?>
+                                <div class="tc-list-card-media-fallback"></div>
+                            <?php endif; ?>
+                        </div>
                         <!-- Tournament name (mobile only, desktop shows in sidebar) -->
-                        <h2 class="tc-tournament-name"><?= htmlspecialchars($tournament->name) ?></h2>
+                        <h2 class="tc-tournament-name"><?= $safeTournamentName ?></h2>
                         <p class="tc-tournament-meta">
                             <span><?= htmlspecialchars($venueName) ?></span>
                             <span aria-hidden="true"> | </span>
