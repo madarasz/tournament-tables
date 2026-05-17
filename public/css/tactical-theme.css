@@ -356,10 +356,13 @@ body.tc-page {
 
   .tc-sidebar-header .tc-round-tournament-media-desktop {
     display: block;
-    margin: calc(-1 * var(--tc-spacing-6)) calc(-1 * var(--tc-spacing-6)) var(--tc-spacing-4);
+    margin: 0 0 var(--tc-spacing-4);
     height: 9rem;
     background-color: var(--tc-surface-container-highest);
     overflow: hidden;
+    border-radius: var(--tc-radius-md);
+    border: 1px solid rgba(63, 73, 68, 0.5);
+    box-shadow: 0 8px 18px rgba(5, 9, 16, 0.42);
   }
 
   .tc-sidebar-header .tc-round-tournament-media-desktop img {
