@@ -1229,7 +1229,7 @@ body.tc-list-page {
   opacity: 0.62;
 }
 
-.tc-list-card-media {
+.tc-list-card .tc-list-card-media {
   position: absolute;
   inset: 0;
   display: block;
@@ -1239,19 +1239,19 @@ body.tc-list-page {
   pointer-events: none;
 }
 
-.tc-list-card-media img,
-.tc-list-card-media-fallback {
+.tc-list-card .tc-list-card-media img,
+.tc-list-card .tc-list-card-media-fallback {
   width: 100%;
   height: 100%;
   display: block;
 }
 
-.tc-list-card-media img {
+.tc-list-card .tc-list-card-media img {
   object-fit: cover;
   opacity: 0.64;
 }
 
-.tc-list-card-media-fallback {
+.tc-list-card .tc-list-card-media-fallback {
   background:
     linear-gradient(135deg, rgba(45, 52, 73, 0.75), rgba(23, 31, 51, 0.9)),
     radial-gradient(circle at 15% 20%, rgba(139, 214, 182, 0.16), transparent 55%);
@@ -1456,7 +1456,7 @@ body.tc-list-page {
     display: none;
   }
 
-  .tc-list-card-media {
+  .tc-list-card .tc-list-card-media {
     position: relative;
     inset: auto;
     display: block;
@@ -1465,14 +1465,14 @@ body.tc-list-page {
     overflow: hidden;
   }
 
-  .tc-list-card-media img,
-  .tc-list-card-media-fallback {
+  .tc-list-card .tc-list-card-media img,
+  .tc-list-card .tc-list-card-media-fallback {
     width: 100%;
     height: 100%;
     display: block;
   }
 
-  .tc-list-card-media img {
+  .tc-list-card .tc-list-card-media img {
     object-fit: cover;
     opacity: 0.62;
     transition: transform var(--tc-transition-normal);
@@ -1482,7 +1482,7 @@ body.tc-list-page {
     transform: scale(1.04);
   }
 
-  .tc-list-card-media-fallback {
+  .tc-list-card .tc-list-card-media-fallback {
     background:
       linear-gradient(135deg, rgba(45, 52, 73, 0.75), rgba(23, 31, 51, 0.9)),
       radial-gradient(circle at 15% 20%, rgba(139, 214, 182, 0.16), transparent 55%);
